@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>語素切割練習室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --ground:#F2F4F7; --surface:#FFFFFF; --ink:#1B2230; --muted:#5B6475; --line:#D9DEE7;
+  --accent:#2F5BD3; --accent-soft:#E4EBFB; --cut:#D2463A; --cut-soft:#FBE7E4;
+  --ok:#2E7D4F; --ok-soft:#E2F2E8; --warn:#9A6A12; --warn-soft:#F7EED9;
+  --sans:"IBM Plex Sans","Noto Sans TC",system-ui,sans-serif;
+  --serif:"IBM Plex Serif","Noto Sans TC",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#12151C; --surface:#1A1F29; --ink:#E6E9EF; --muted:#9AA3B2; --line:#2C3340;
+    --accent:#8FA8F7; --accent-soft:#232D47; --cut:#F07A6E; --cut-soft:#3A2224;
+    --ok:#6CC894; --ok-soft:#1C3326; --warn:#E0B55C; --warn-soft:#352C18;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#12151C; --surface:#1A1F29; --ink:#E6E9EF; --muted:#9AA3B2; --line:#2C3340;
+  --accent:#8FA8F7; --accent-soft:#232D47; --cut:#F07A6E; --cut-soft:#3A2224;
+  --ok:#6CC894; --ok-soft:#1C3326; --warn:#E0B55C; --warn-soft:#352C18;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;padding:0 16px}
+.wrap{max-width:760px;margin:0 auto;padding-block:32px 64px;display:flex;flex-direction:column;gap:24px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,5vw,38px);line-height:1.2;margin:0;text-wrap:balance}
+h1 .plus{color:var(--cut);font-family:var(--mono);font-weight:500;padding:0 .12em}
+.lede{color:var(--muted);margin:0;max-width:62ch}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:10px 14px;font:inherit;font-weight:500;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tab .score{font-family:var(--mono);font-size:13px;margin-left:6px;color:var(--muted);font-variant-numeric:tabular-nums}
+.levels{display:flex;gap:8px;flex-wrap:wrap}
+.lv{appearance:none;font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.lv[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:18px}
+.meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:4px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dot.ok{background:var(--ok)} .dot.no{background:var(--cut)} .dot.cur{outline:2px solid var(--accent);outline-offset:1px}
+.q{font-size:18px;margin:0}
+.q em,.expl em{font-family:var(--serif);font-style:italic}
+.data{font-family:var(--mono);font-size:14px;background:var(--ground);border-radius:6px;padding:10px 14px;overflow-x:auto;white-space:pre;line-height:1.7}
+.opts{display:grid;gap:8px}
+.opt{appearance:none;text-align:left;font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;display:flex;gap:10px;align-items:baseline}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt .k{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.opt.seg{font-family:var(--mono);font-size:17px}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--cut);background:var(--cut-soft)}
+.opt:disabled{cursor:default}
+.expl{border-left:3px solid var(--ok);padding:4px 0 4px 14px;margin:0;display:flex;flex-direction:column;gap:6px}
+.expl.bad{border-left-color:var(--cut)}
+.expl .verdict{font-weight:600}
+.expl .src{font-size:13px;color:var(--muted)}
+.gloss{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.gm{display:flex;flex-direction:column;align-items:center;border:1px solid var(--line);border-radius:6px;padding:4px 10px;min-width:48px}
+.gm b{font-family:var(--mono);font-weight:600;font-size:16px}
+.gm span{font-size:12px;color:var(--muted);text-align:center;line-height:1.35}
+.gplus{align-self:center;color:var(--cut);font-family:var(--mono)}
+.cutter{overflow-x:auto;padding-block:8px}
+.word{display:inline-flex;align-items:stretch;font-family:var(--mono);font-size:clamp(24px,6vw,36px);font-weight:500;user-select:none}
+.ch{padding:4px 0;line-height:1.3}
+.gap{appearance:none;border:0;background:none;width:14px;padding:0;cursor:pointer;position:relative;color:inherit}
+.gap::after{content:"";position:absolute;left:6px;top:14%;bottom:14%;width:2px;border-radius:1px;background:transparent}
+.gap:hover::after{background:var(--line)}
+.gap.on::after{background:var(--cut)}
+.gap.miss::after{background:transparent;border-left:2px dashed var(--ok);width:0}
+.gap.extra::after{background:var(--cut);opacity:.35}
+.gap:disabled{cursor:default}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.readout{font-family:var(--mono);font-size:15px;color:var(--muted);min-height:1.5em}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;font:inherit;font-weight:500;font-size:15px;border-radius:8px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:disabled{opacity:.45;cursor:default}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:0;border-top:2px solid var(--cut);vertical-align:middle;margin-right:6px}
+.legend i.m{border-top:2px dashed var(--ok)}
+.done{text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.done .big{font-family:var(--serif);font-size:40px;font-weight:600;font-variant-numeric:tabular-nums}
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.who b{color:var(--ink);font-weight:500;font-family:var(--mono)}
+.linkbtn{appearance:none;border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.sync{font-family:var(--mono);font-size:13px}
+.sync .ok{color:var(--ok)} .sync .pend{color:var(--warn)}
+.login{display:flex;flex-direction:column;gap:14px;max-width:420px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:14px;font-weight:500}
+.field input{font:inherit;font-size:16px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.field input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.err{color:var(--cut);font-size:14px;margin:0;min-height:1.4em}
+@media (prefers-reduced-motion:no-preference){.expl{animation:fade .2s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+@media (max-width:480px){.card{padding:18px}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">語言學概論 · Ch. 1 Morphology</div>
+    <h1>re<span class="plus">+</span>place<span class="plus">+</span>s：語素切割練習室</h1>
+  </header>
+
+  <div class="who" id="who" hidden></div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-a" aria-selected="true" data-part="a">第一部分　課本範例<span class="score" id="score-a"></span></button>
+    <button class="tab" role="tab" id="tab-b" aria-selected="false" data-part="b">第二部分　切詞練習<span class="score" id="score-b"></span></button>
+  </nav>
+
+  <div class="levels" id="levels" hidden></div>
+  <main id="stage"></main>
+
+</div>
+
+<script>
+const PART_A = [
+  {q:"<em>gentlemanliness</em> 由幾個語素組成？", o:["2","3","4","5"], a:2,
+   e:"gentle + man + li + ness，四個。-li 就是 -ly，拼寫受後面的 -ness 影響改成 i。", p:"p. 42"},
+  {q:"下面哪個詞裡的 <em>-er</em> 不是語素？", o:["singer","taller","finger","painter"], a:2,
+   e:"finger 不是「會 fing 的人」，所以 -er 在這裡只是聲音，沒有意義，finger 是單語素詞（monomorphemic word）。singer、painter 的 -er 是施事者，taller 的 -er 是比較級。", p:"p. 42"},
+  {q:"<em>singer</em> 的 -er 和 <em>taller</em> 的 -er，關係是什麼？", o:["同一個語素，只是接在不同詞上","兩個不同的語素，只是發音相同","都不是語素","一個是詞根，一個是詞綴"], a:1,
+   e:"語素是「聲音 + 意義」的組合。-er「做某事的人」和 -er「更…」意義不同，所以是兩個語素。反過來，-er 和 -ster（songster）意義相同、形式不同。", p:"p. 42"},
+  {q:"下面哪一個是黏著語素（bound morpheme）？", o:["boy","desire","-ish","man"], a:2,
+   e:"boy、desire、man 可以自己成詞，是自由語素。-ish 永遠要接在別的語素上。", p:"p. 43"},
+  {q:"<em>receive, conceive, perceive, deceive</em> 共有的 <em>-ceive</em> 屬於哪一類？", o:["自由詞根","黏著詞根（bound root）","屈折後綴","衍生前綴"], a:1,
+   e:"-ceive 是拉丁來源的詞根，對現代英語使用者沒有獨立意義，只能跟其他語素一起出現。同類還有 remit、permit 的 -mit，cranberry 的 cran-。", p:"p. 47"},
+  {q:"Isthmus Zapotec（墨西哥）的資料：", d:"zigi   \"chin\"      kazigi   \"chins\"\nzike   \"shoulder\"  kazike   \"shoulders\"\ndiaga  \"ear\"       kadiaga  \"ears\"", q2:"複數語素 ka- 是哪一種詞綴？", o:["前綴","後綴","中綴","環綴"], a:0,
+   e:"ka- 放在詞前面，是前綴。英文的複數 -s 是後綴，同一個意義在不同語言可以用不同位置的詞綴表達。", p:"p. 44"},
+  {q:"Bontoc（菲律賓）的資料：", d:"fikas  \"strong\"   fumikas  \"to be strong\"\nkilad  \"red\"      kumilad  \"to be red\"\nfusul  \"enemy\"    fumusul  \"to be an enemy\"", q2:"已知 <em>pusi</em> 是「窮」，「變窮／是窮的」怎麼說？", o:["umpusi","pusium","pumusi","pusumi"], a:2,
+   e:"-um- 是中綴，插在第一個子音後面：p + um + usi = pumusi。", p:"p. 45"},
+  {q:"Chickasaw（奧克拉荷馬）：<em>chokma</em>「他很好」→ <em>ik + chokm + o</em>「他不好」。否定用的是哪一種詞綴？", o:["前綴","中綴","環綴（circumfix）","重疊"], a:2,
+   e:"否定由前面的 ik- 和後面的 -o 一起構成，是不連續語素，也就是環綴。德文過去分詞 ge-lieb-t 也是環綴。", p:"pp. 45–46"},
+  {q:"Egyptian Arabic 的 <em>katab</em>「他寫了」、<em>kaatib</em>「作家」、<em>kitáab</em>「書」、<em>kútub</em>「書（複數）」，共同的詞根是什麼？", o:["kat","ab","k-t-b 三個子音","kitáab"], a:2,
+   e:"閃語的詞根是三個子音 ktb，靠插入不同的母音型態造出相關的詞。", p:"p. 46"},
+  {q:"下面哪一個是屈折（inflectional）語素？", o:["<em>sails</em> 的 -s","<em>kingdom</em> 的 -dom","<em>boyish</em> 的 -ish","<em>moralize</em> 的 -ize"], a:0,
+   e:"He sails 的 -s 標示第三人稱單數現在式，是文法功能，不改詞類，也不增加詞彙意義。其他三個都是衍生語素。", p:"pp. 50–51"},
+  {q:"現代英語一共有幾個黏著的屈折詞綴？", o:["4","6","8","12"], a:2,
+   e:"-s（第三人稱單數）、-ed、-ing、-en、-s（複數）、-'s、-er（比較級）、-est，共八個。", p:"p. 51"},
+  {q:"為什麼 <em>*commitsment</em> 不是英文的詞？", o:["commit 不能加 -ment","屈折語素必須接在衍生語素後面","-s 不能接在動詞後面","一個詞只能有兩個語素"], a:1,
+   e:"commit + ment + s 可以，順序倒過來就不行。屈折語素永遠在衍生語素外層。", p:"p. 51"},
+  {q:"<em>unsystematic</em> 的結構裡，un- 直接接在哪個成分上？", o:["system（名詞）","systematic（形容詞）","-atic","整個詞之外"], a:1,
+   e:"先 system + atic 得到形容詞 systematic，再加 un-。英文沒有讓 un- 接在名詞上的規則，所以 *unsystem 不成詞。", p:"pp. 53–55"},
+  {q:"門是 <em>unlockable</em>，意思是「可以被打開鎖」。這時它的結構是？", o:["[un + [lock + able]]","[[un + lock] + able]","[un + lock + able]，沒有層次","[[un + able] + lock]"], a:1,
+   e:"un- 先接動詞 lock 得到 unlock，再加 -able，得到「可被解鎖」。另一個讀法 [un + [lockable]] 是「無法上鎖」。同樣三個語素、兩種結構、兩種意思。", p:"pp. 55–56"},
+  {q:"下面哪一個 un- 詞一般不被接受？", o:["unhappy","unfit","unsad","uncool"], a:2,
+   e:"un- 不是完全能產的。課本指出單音節詞幹常常不接受 un-：*unsad、*unbig、*untall。unfit、uncool 是例外。", p:"p. 57"},
+  {q:"<em>went</em> 取代 *goed，這種現象叫什麼？", o:["逆構詞（back-formation）","異根（suppletion）","複合（compounding）","阻斷（blocking）"], a:1,
+   e:"不規則形式不能用規則加詞綴得到，要整個換掉、個別記住，稱為 suppletive form。", p:"p. 58"},
+  {q:"「The police ___ the bank with armed men.」（包圍）空格該填？", o:["rang","rung","ringed","rings"], a:2,
+   e:"「包圍」的 ring 是從名詞 ring 衍生出來的動詞，所以走規則變化 ringed。棒球的 flied out 也是同一個道理。", p:"p. 59"},
+  {q:"<em>edit</em> 是從 <em>editor</em> 來的，因為人們以為 -or 是施事者後綴。這叫什麼？", o:["逆構詞（back-formation）","異根","屈折","中綴"], a:0,
+   e:"先有 editor，後人把它誤析成 edit + or，才造出動詞 edit。peddle、hawk、stoke、swindle 也是這樣來的。", p:"p. 60"},
+  {q:"<em>headstrong</em>（名詞 head + 形容詞 strong）整個複合詞是什麼詞類？", o:["名詞","形容詞","動詞","看語境"], a:1,
+   e:"英文複合詞的中心語（head）在最右邊，決定整個詞的詞類。strong 是形容詞，所以 headstrong 是形容詞。pickpocket 最右邊是名詞，所以是名詞。", p:"p. 61"},
+  {q:"Michoacan Aztec（墨西哥）：", d:"nokali    \"my house\"     mopelo    \"your dog\"\nnokalimes \"my houses\"    mopelomes \"your dogs\"\nmokali    \"your house\"   ikwahmili \"his cornfield\"\nikali     \"his house\"    nokwahmili \"my cornfield\"\nnopelo    \"my dog\"       mokwahmili \"your cornfield\"", q2:"「my dogs」怎麼說？", o:["pelonomes","nopelomes","mopelomes","nomespelo"], a:1,
+   e:"no-「我的」+ pelo「狗」+ -mes「複數」= nopelomes。找法是先抓重複出現、意義固定的片段：kali 一直跟「house」一起出現，no 一直跟「my」一起出現。", p:"pp. 66–67"}
+];
+
+// Part B: m = morphemes as written (must concatenate to w); g = glosses
+const LEVELS = [
+  {name:"第 1 關　兩個語素", mode:"mc", note:"選出正確的切法。", items:[
+    {w:"unhappy", opts:["un + happy","u + nhappy","unhap + py","unhappy（不切）"], a:0, m:["un","happy"], g:["否定前綴","形容詞詞根"], e:"un- 意思是 not，接在形容詞前。"},
+    {w:"boyish", opts:["bo + yish","boy + ish","boyi + sh","boyish（不切）"], a:1, m:["boy","ish"], g:["名詞詞根","衍生後綴：名→形"], e:"-ish 把名詞變成形容詞，意思是「像…的」。"},
+    {w:"singer", opts:["sin + ger","si + nger","sing + er","singer（不切）"], a:2, m:["sing","er"], g:["動詞詞根","施事者後綴：動→名"], e:"singer 是 one who sings，-er 有自己的意義，跟 finger 不同。"},
+    {w:"taller", opts:["tal + ler","tall + er","taller（不切）","ta + ller"], a:1, m:["tall","er"], g:["形容詞詞根","比較級（屈折）"], e:"這個 -er 是比較級，跟 singer 的 -er 發音一樣、意義不同，是另一個語素。"},
+    {w:"rewrite", opts:["rew + rite","re + write","rewr + ite","rewrite（不切）"], a:1, m:["re","write"], g:["「再一次」前綴","動詞詞根"], e:"前綴不改詞類，rewrite 仍然是動詞。"},
+    {w:"amoral", opts:["am + oral","amor + al","a + moral","amoral（不切）"], a:2, m:["a","moral"], g:["「沒有」前綴","形容詞詞根"], e:"一個語素可以只有一個音。a- 意思是 without，同 asexual（p. 42）。"},
+    {w:"cats", opts:["ca + ts","cat + s","cats（不切）","c + ats"], a:1, m:["cat","s"], g:["名詞詞根","複數（屈折）"], e:"複數 -s 是屈折語素，幾乎可以接在所有名詞上。"}
+  ]},
+  {name:"第 2 關　三個語素", mode:"mc", note:"要切到最小單位。只切出一個詞幹加一個詞綴，還不算切完。", items:[
+    {w:"boyishness", opts:["boyish + ness","boy + ishness","boy + ish + ness","bo + yish + ness"], a:2, m:["boy","ish","ness"], g:["名詞詞根","名→形","形→名"], e:"boyish + ness 沒有錯，但 boyish 還能再切。題目要的是每一個最小的音義單位。"},
+    {w:"unsystematic", opts:["un + systematic","un + system + atic","uns + yste + matic","un + sys + tematic"], a:1, m:["un","system","atic"], g:["否定前綴","名詞詞根","名→形"], e:"system + atic 先成形容詞，un- 再接上去。"},
+    {w:"unkindness", opts:["un + kindness","unkind + ness","un + kind + ness","unk + ind + ness"], a:2, m:["un","kind","ness"], g:["否定前綴","形容詞詞根","形→名"], e:"kind → unkind（形容詞）→ unkindness（名詞）。"},
+    {w:"friendships", opts:["friend + ships","friend + ship + s","friends + hip + s","fri + end + ships"], a:1, m:["friend","ship","s"], g:["名詞詞根","名→名","複數（屈折）"], e:"-ship 是不改詞類的衍生後綴（p. 49），複數 -s 在最外層。"},
+    {w:"payments", opts:["pay + ments","pays + ment","pay + ment + s","pa + yment + s"], a:2, m:["pay","ment","s"], g:["動詞詞根","動→名","複數（屈折）"], e:"衍生的 -ment 在內，屈折的 -s 在外，順序不能換。課本用 commit + ment + s 說明同一件事（p. 51）。"},
+    {w:"rewritable", opts:["re + writable","rewrit + able","re + writ + able","rew + rit + able"], a:2, m:["re","writ","able"], g:["「再一次」","動詞詞根 write","動→形"], e:"writ 是 write 去掉 e 的拼寫，原形是 re + write + able（p. 42 的 DVD 例子）。"},
+    {w:"unlockable", opts:["un + lockable","unlock + able","un + lock + able","unl + ock + able"], a:2, m:["un","lock","able"], g:["否定／反轉前綴","動詞詞根","動→形"], e:"三個語素都切出來就對了。但它們怎麼組合有兩種可能，這就是第一部分那題歧義。"}
+  ]},
+  {name:"第 3 關　四個以上", mode:"cut", note:"點字母之間的空隙切一刀，再點一次取消。切好按「檢查」。", items:[
+    {w:"unfriendliness", m:["un","friend","li","ness"], g:["否定前綴","名詞詞根","名→形（-ly）","形→名"], e:"friend → friendly → unfriendly → unfriendliness。-li 是 -ly 的拼寫變體。"},
+    {w:"gentlemanliness", m:["gentle","man","li","ness"], g:["形容詞","名詞","-ly","形→名"], e:"課本 p. 42 的例子，四個語素。gentleman 本身是複合詞。"},
+    {w:"refinalizes", m:["re","final","ize","s"], g:["「再一次」","形容詞詞根","形→動","第三人稱單數（屈折）"], e:"課本 p. 55：re- 接在 finalize 上，因為沒有 *refinal 這個詞。"},
+    {w:"moralizers", m:["moral","iz","er","s"], g:["形容詞詞根","-ize 形→動","施事者 動→名","複數（屈折）"], e:"課本本章摘要的例子（p. 67）：moral + ize + er + s，拼寫上 ize 的 e 省略。"},
+    {w:"undesirability", m:["un","desir","abil","ity"], g:["否定前綴","desire","-able","形→名"], e:"課本 p. 42：un + desire + able + ity。書面上 desire 掉 e、able 變 abil。"},
+    {w:"unsystematically", m:["un","system","atic","al","ly"], g:["否定前綴","名詞詞根","名→形","形→形","形→副"], e:"課本 pp. 53–54 的樹狀圖，五個語素，每加一層就多一次規則套用。"},
+    {w:"antidisestablishmentarianism", m:["anti","dis","establish","ment","ari","an","ism"], g:["反對","否定／除去","動詞詞根","動→名","-ary","-an","主義"], e:"課本 p. 42 給的切法，七個語素。"}
+  ]},
+  {name:"第 4 關　陷阱題", mode:"cut", note:"有些詞一刀都不該切。認為不能切，就直接按「檢查」。", items:[
+    {w:"finger", m:["finger"], g:["單語素詞"], e:"finger 不是「會 fing 的人」。-er 沒有意義就不是語素（p. 42）。"},
+    {w:"monster", m:["monster"], g:["單語素詞"], e:"-ster 在 youngster 裡是語素，在 monster 裡不是：monster 不是「mon 的人」（p. 42）。"},
+    {w:"youngster", m:["young","ster"], g:["形容詞詞根","「…的人」後綴"], e:"跟上一題對照。youngster 是 someone who is young，-ster 有意義，要切。"},
+    {w:"number", m:["number"], g:["單語素詞"], e:"number、butter、member、somber 的 -er 都沒有獨立意義（p. 65）。"},
+    {w:"crocodile", m:["crocodile"], g:["單語素詞（三個音節）"], e:"語素跟音節無關。crocodile 有三個音節，但只有一個語素（p. 42）。"},
+    {w:"morphology", m:["morph","ology"], g:["形式","「…之學」"], e:"課本 p. 41：morph + ology，the science of (word) forms。"},
+    {w:"lukewarm", m:["luke","warm"], g:["黏著語素「有點」","形容詞"], e:"luke 不能單獨出現，只在 lukewarm 裡有意義，跟 cranberry 的 cran- 同類（p. 47）。"},
+    {w:"receive", m:["re","ceive"], alt:[["receive"]], g:["前綴","黏著詞根"], e:"-ceive 是黏著詞根，跟 conceive、perceive、deceive 共用（p. 47）。這一題有爭議：對現代使用者 re- 在這裡已經不是「再一次」，所以有些分析把 receive 當單語素詞。課本的立場是切。這題切成 re + ceive 或整個不切都算對。"}
+  ]}
+];
+
+const freshState = () => ({part:"a", a:{i:0, res:[], attempt:1}, b:{lv:0, byLv:LEVELS.map(()=>({i:0,res:[],attempt:1}))}});
+let state = freshState();
+const stage = document.getElementById("stage");
+const levelsEl = document.getElementById("levels");
+
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function plain(s){return String(s).replace(/<[^>]+>/g,"")}
+const pad2 = n => String(n).padStart(2,"0");
+
+/* ---------- 學生登入與成績記錄 ---------- */
+// build_site.py 會把 __ENDPOINT__ 換成 Apps Script 網址；沒換就只存在本機。
+const ENDPOINT = "__ENDPOINT__";
+const QUIZ_ID = "ch01_morphology";
+const ONLINE = /^https:\/\//.test(ENDPOINT);
+const QKEY = "ling_queue", DLKEY = "ling_deadletter";
+const LS = {
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+let student = LS.get("ling_student", null);
+
+const progKey = () => `ling_prog_${QUIZ_ID}_${student.sid}`;
+function saveProg(){ if(student) LS.set(progKey(), state); }
+function loadProg(){ state = LS.get(progKey(), null) || freshState(); }
+
+// 每次作答一筆，event_id 唯一；後端看到重複的 event_id 就跳過，所以重送不會多出列。
+let seq = 0;
+function record(part, level, qid, prompt, response, correct, attempt){
+  const t = Date.now();
+  const p = {event_id:`${student.sid}|${QUIZ_ID}|${qid}|${attempt}|${t}-${seq++}`,
+    client_time:new Date(t).toISOString(), quiz:QUIZ_ID, student_id:student.sid, name:student.name,
+    part, level, qid, prompt, response, correct:correct?1:0, attempt};
+  if(!ONLINE) return;
+  const q = LS.get(QKEY, []); q.push(p); LS.set(QKEY, q);
+  flush();
+}
+function jsonp(p){
+  return new Promise((res,rej)=>{
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    const t = setTimeout(()=>{cleanup();rej({server:false,error:"timeout"})}, 15000);
+    function cleanup(){clearTimeout(t);delete window[cb];s.remove()}
+    window[cb] = r => {cleanup(); if(r&&r.ok) res(r); else rej({server:!(r&&r.retry), error:(r&&r.error)||"rejected"}); };  // retry=暫時性錯誤，留著重送
+    s.onerror = () => {cleanup();rej({server:false,error:"network"})};
+    s.src = ENDPOINT + "?callback=" + cb + "&data=" + encodeURIComponent(JSON.stringify(p));
+    document.body.appendChild(s);
+  });
+}
+let flushing = false;
+async function flush(){
+  if(!ONLINE || flushing) return;
+  flushing = true; renderSync();
+  let q = LS.get(QKEY, []);
+  while(q.length){
+    const sent = q[0];
+    try{ await jsonp(sent); }
+    catch(e){
+      if(e && e.server){ const dl = LS.get(DLKEY, []); dl.push({payload:sent, error:e.error}); LS.set(DLKEY, dl); }
+      else break;   // 斷網或逾時：留在佇列，下次再送
+    }
+    q = LS.get(QKEY, []).filter(x => x.event_id !== sent.event_id); LS.set(QKEY, q);
+  }
+  flushing = false; renderSync();
+}
+function renderSync(){
+  const el = document.getElementById("sync"); if(!el) return;
+  if(!ONLINE){ el.innerHTML = '<span class="pend">成績只存在這台電腦</span>'; return; }
+  const n = LS.get(QKEY, []).length, dl = LS.get(DLKEY, []).length;
+  let s = n ? `<span class="pend">上傳中，還有 ${n} 筆</span>` : '<span class="ok">成績已記錄</span>';
+  if(dl) s += ` <span class="pend">有 ${dl} 筆沒被收下，請告訴助教</span>`;
+  el.innerHTML = s;
+}
+function renderWho(){
+  const el = document.getElementById("who");
+  if(!student){ el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<span>作答者：<b>${esc(student.sid)}</b> ${esc(student.name)}　<button class="linkbtn" id="logout">換人作答</button></span><span class="sync" id="sync"></span>`;
+  document.getElementById("logout").onclick = () => { student = null; LS.set("ling_student", null); state = freshState(); renderWho(); route(); };
+  renderSync();
+}
+function renderLogin(){
+  levelsEl.hidden = true; document.querySelector(".tabs").hidden = true;
+  stage.innerHTML = `<section class="card"><form class="login" id="login" novalidate>
+    <p class="q">開始前請填學號和姓名。</p>
+    <div class="field"><label for="sid">學號</label><input id="sid" autocomplete="off" placeholder="例如 B13012345" maxlength="9"></div>
+    <div class="field"><label for="sname">姓名</label><input id="sname" autocomplete="name" maxlength="30"></div>
+    <p class="err" id="lerr"></p>
+    <div><button class="btn primary" type="submit">開始作答</button></div></form></section>`;
+  document.getElementById("login").onsubmit = e => {
+    e.preventDefault();
+    const sid = document.getElementById("sid").value.trim().toUpperCase();
+    const nm = document.getElementById("sname").value.trim();
+    const err = document.getElementById("lerr");
+    if(!/^[A-Z][0-9]{8}$/.test(sid)){ err.textContent = "學號是一個英文字母加 8 位數字，例如 B13012345。"; return; }
+    if(!nm){ err.textContent = "請填姓名。"; return; }
+    student = {sid, name:nm}; LS.set("ling_student", student);
+    loadProg(); renderWho(); route();
+  };
+}
+function route(){
+  if(!student){ renderLogin(); return; }
+  document.querySelector(".tabs").hidden = false;
+  updateScores(); switchPart(state.part || "a");
+}
+function dots(total,res,cur){
+  let h='<div class="dots" aria-hidden="true">';
+  for(let k=0;k<total;k++){const r=res[k];h+=`<span class="dot ${r===true?"ok":r===false?"no":""} ${k===cur?"cur":""}"></span>`}
+  return h+"</div>";
+}
+function tally(res){return res.filter(x=>x===true).length}
+function updateScores(){
+  document.getElementById("score-a").textContent=`${tally(state.a.res)}/${PART_A.length}`;
+  const got=state.b.byLv.reduce((s,l)=>s+tally(l.res),0), tot=LEVELS.reduce((s,l)=>s+l.items.length,0);
+  document.getElementById("score-b").textContent=`${got}/${tot}`;
+}
+function glossHTML(m,g){
+  return '<div class="gloss">'+m.map((x,k)=>(k?'<span class="gplus">+</span>':'')+`<div class="gm"><b>${esc(x)}</b><span>${g[k]}</span></div>`).join("")+"</div>";
+}
+function navRow(onPrev,onNext,canPrev,canNext,nextLabel){
+  const row=document.createElement("div");row.className="row";
+  row.innerHTML=`<div class="btns"><button class="btn" id="nav-prev" ${canPrev?"":"disabled"}>上一題</button></div><div class="btns"><button class="btn primary" id="nav-next" ${canNext?"":"disabled"}>${nextLabel}</button></div>`;
+  row.querySelector("#nav-prev").onclick=onPrev;row.querySelector("#nav-next").onclick=onNext;
+  return row;
+}
+function doneCard(score,total,msg,onRestart,extraBtn){
+  stage.innerHTML=`<section class="card done"><div class="eyebrow">完成</div><div class="big">${score} / ${total}</div><p class="hint">${msg}</p><div class="btns"><button class="btn" id="restart">重新作答</button>${extraBtn||""}</div></section>`;
+  document.getElementById("restart").onclick=onRestart;
+}
+
+/* ---------- Part A ---------- */
+function renderA(){
+  levelsEl.hidden=true;
+  const S=state.a;
+  saveProg();
+  if(S.i>=PART_A.length){
+    doneCard(tally(S.res),PART_A.length,"答錯的題目可以回去看課本標註的頁碼。接著試試第二部分的切詞練習。",
+      ()=>{S.i=0;S.res=[];S.pick={};S.attempt=(S.attempt||1)+1;renderA();updateScores()},'<button class="btn primary" id="go-b">前往第二部分</button>');
+    document.getElementById("go-b").onclick=()=>switchPart("b");return;
+  }
+  const it=PART_A[S.i], answered=S.res[S.i]!==undefined;
+  const card=document.createElement("section");card.className="card";
+  card.innerHTML=`<div class="meta"><span>第 ${S.i+1} / ${PART_A.length} 題 · 課本 ${it.p}</span>${dots(PART_A.length,S.res,S.i)}</div>
+    <p class="q">${it.q}</p>${it.d?`<div class="data">${esc(it.d)}</div>`:""}${it.q2?`<p class="q">${it.q2}</p>`:""}
+    <div class="opts">${it.o.map((o,k)=>`<button class="opt" data-k="${k}"><span class="k">${"ABCD"[k]}</span><span>${o}</span></button>`).join("")}</div>
+    <div id="fb"></div>`;
+  const show=(pick)=>{
+    card.querySelectorAll(".opt").forEach(b=>{const k=+b.dataset.k;b.disabled=true;if(k===it.a)b.classList.add("right");else if(k===pick)b.classList.add("wrong")});
+    const ok=pick===it.a;
+    card.querySelector("#fb").innerHTML=`<div class="expl ${ok?"":"bad"}"><span class="verdict">${ok?"答對了":"正確答案是 "+"ABCD"[it.a]}</span><span>${it.e}</span><span class="src">課本 ${it.p}</span></div>`;
+  };
+  card.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;S.res[S.i]=k===it.a;S.pick=S.pick||{};S.pick[S.i]=k;
+    record("A","",`A${pad2(S.i+1)}`,plain(it.q2||it.q),plain(it.o[k]),k===it.a,S.attempt||1);saveProg();
+    show(k);updateScores();refreshNav()});
+  if(answered)show(S.pick[S.i]);
+  stage.innerHTML="";stage.appendChild(card);
+  let nav;
+  function refreshNav(){
+    if(nav)nav.remove();
+    nav=navRow(()=>{S.i--;renderA()},()=>{S.i++;renderA()},S.i>0,S.res[S.i]!==undefined,S.i===PART_A.length-1?"看成績":"下一題");
+    card.appendChild(nav);
+  }
+  refreshNav();
+}
+
+/* ---------- Part B ---------- */
+function renderLevels(){
+  levelsEl.hidden=false;
+  levelsEl.innerHTML=LEVELS.map((l,k)=>{const L=state.b.byLv[k];return `<button class="lv" data-lv="${k}" aria-pressed="${k===state.b.lv}">${l.name}<span style="font-family:var(--mono);font-size:12px;margin-left:6px;opacity:.8">${tally(L.res)}/${l.items.length}</span></button>`}).join("");
+  levelsEl.querySelectorAll(".lv").forEach(b=>b.onclick=()=>{state.b.lv=+b.dataset.lv;renderB()});
+}
+function cutsOf(m){const s=new Set();let p=0;for(let k=0;k<m.length-1;k++){p+=m[k].length;s.add(p)}return s}
+function renderB(){
+  renderLevels();
+  const lvI=state.b.lv, LV=LEVELS[lvI], S=state.b.byLv[lvI];
+  saveProg();
+  if(S.i>=LV.items.length){
+    const nextLv=lvI+1<LEVELS.length;
+    doneCard(tally(S.res),LV.items.length,nextLv?"這一關做完了，下一關更難。":"四關都做完了。第 4 關的陷阱題值得回頭再看一次解說。",
+      ()=>{S.i=0;S.res=[];S.pick={};S.cuts={};S.attempt=(S.attempt||1)+1;renderB();updateScores()},nextLv?'<button class="btn primary" id="next-lv">下一關</button>':"");
+    if(nextLv)document.getElementById("next-lv").onclick=()=>{state.b.lv++;renderB()};
+    return;
+  }
+  const it=LV.items[S.i];
+  S.pick=S.pick||{};S.cuts=S.cuts||{};
+  const card=document.createElement("section");card.className="card";
+  const head=`<div class="meta"><span>${LV.name} · 第 ${S.i+1} / ${LV.items.length} 題</span>${dots(LV.items.length,S.res,S.i)}</div><p class="hint">${LV.note}</p>`;
+  let nav;
+  const refreshNav=()=>{
+    if(nav)nav.remove();
+    nav=navRow(()=>{S.i--;renderB()},()=>{S.i++;renderB()},S.i>0,S.res[S.i]!==undefined,S.i===LV.items.length-1?"看這關成績":"下一題");
+    card.appendChild(nav);
+  };
+  const feedback=(ok,extra)=>`<div class="expl ${ok?"":"bad"}"><span class="verdict">${ok?"切對了":"還差一點"}</span>${extra||""}${glossHTML(it.m,it.g)}<span>${it.e}</span></div>`;
+
+  if(LV.mode==="mc"){
+    card.innerHTML=head+`<p class="q">怎麼切 <em>${it.w}</em>？</p>
+      <div class="opts">${it.opts.map((o,k)=>`<button class="opt seg" data-k="${k}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="fb"></div>`;
+    const show=(pick)=>{
+      card.querySelectorAll(".opt").forEach(b=>{const k=+b.dataset.k;b.disabled=true;if(k===it.a)b.classList.add("right");else if(k===pick)b.classList.add("wrong")});
+      card.querySelector("#fb").innerHTML=feedback(pick===it.a);
+    };
+    card.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;S.pick[S.i]=k;S.res[S.i]=k===it.a;
+      record("B",lvI+1,`B${lvI+1}-${pad2(S.i+1)}`,it.w,it.opts[k],k===it.a,S.attempt||1);saveProg();
+      show(k);updateScores();renderLevels();refreshNav()});
+    if(S.res[S.i]!==undefined)show(S.pick[S.i]);
+  }else{
+    const w=it.w, answer=cutsOf(it.m), alts=[answer,...(it.alt||[]).map(cutsOf)];
+    const same=(A,B)=>A.size===B.size&&[...A].every(p=>B.has(p));
+    const cuts=new Set(S.cuts[S.i]||[]);
+    let checked=S.res[S.i]!==undefined, checkedOk=S.res[S.i]===true;
+    card.innerHTML=head+`<div class="cutter"><div class="word" id="word"></div></div>
+      <div class="readout" id="readout"></div>
+      <div class="row"><div class="legend"><span><i></i>你切的位置</span>${checked?'<span><i class="m"></i>漏切的位置</span>':""}</div>
+      <div class="btns"><button class="btn" id="clear">全部清除</button><button class="btn primary" id="check">檢查</button></div></div><div id="fb"></div>`;
+    const wordEl=card.querySelector("#word");
+    const draw=()=>{
+      let h="";
+      for(let k=0;k<w.length;k++){
+        if(k>0){
+          let cls=cuts.has(k)?"on":"";
+          if(checked&&!checkedOk){if(cuts.has(k)&&!answer.has(k))cls="on extra";else if(!cuts.has(k)&&answer.has(k))cls="miss"}
+          h+=`<button class="gap ${cls}" data-p="${k}" aria-label="在 ${w[k-1]} 和 ${w[k]} 之間切" ${checked?"disabled":""}></button>`;
+        }
+        h+=`<span class="ch">${w[k]}</span>`;
+      }
+      wordEl.innerHTML=h;
+      const parts=[];let last=0;[...cuts].sort((a,b)=>a-b).forEach(p=>{parts.push(w.slice(last,p));last=p});parts.push(w.slice(last));
+      card.querySelector("#readout").textContent=cuts.size?parts.join(" + "):"（還沒切，一刀不切就代表單語素詞）";
+      wordEl.querySelectorAll(".gap").forEach(g=>g.onclick=()=>{const p=+g.dataset.p;cuts.has(p)?cuts.delete(p):cuts.add(p);S.cuts[S.i]=[...cuts];draw()});
+      card.querySelector("#check").disabled=checked;card.querySelector("#clear").disabled=checked;
+    };
+    const grade=()=>{
+      checked=true;
+      const ok=alts.some(A=>same(cuts,A));
+      const extra=[...cuts].filter(p=>!answer.has(p)).length, miss=[...answer].filter(p=>!cuts.has(p)).length;
+      let msg="";
+      if(!ok){const a=[];if(extra)a.push(`多切了 ${extra} 刀（淡紅色）`);if(miss)a.push(`漏了 ${miss} 刀（綠色虛線）`);msg=`<span>${a.join("，")}。</span>`}
+      S.res[S.i]=ok;
+      const parts=[];let last=0;[...cuts].sort((a,b)=>a-b).forEach(p=>{parts.push(w.slice(last,p));last=p});parts.push(w.slice(last));
+      record("B",lvI+1,`B${lvI+1}-${pad2(S.i+1)}`,w,cuts.size?parts.join(" + "):"（不切）",ok,S.attempt||1);saveProg();
+      card.querySelector(".legend").innerHTML='<span><i></i>你切的位置</span><span><i class="m"></i>漏切的位置</span>';
+      if(ok)checkedOk=true;draw();card.querySelector("#fb").innerHTML=feedback(ok,msg);updateScores();renderLevels();refreshNav();
+    };
+    card.querySelector("#clear").onclick=()=>{cuts.clear();S.cuts[S.i]=[];draw()};
+    card.querySelector("#check").onclick=grade;
+    draw();
+    if(checked){const ok=S.res[S.i];const extra=[...cuts].filter(p=>!answer.has(p)).length, miss=[...answer].filter(p=>!cuts.has(p)).length;
+      const a=[];if(extra)a.push(`多切了 ${extra} 刀（淡紅色）`);if(miss)a.push(`漏了 ${miss} 刀（綠色虛線）`);
+      card.querySelector("#fb").innerHTML=feedback(ok,ok?"":`<span>${a.join("，")}。</span>`)}
+  }
+  stage.innerHTML="";stage.appendChild(card);refreshNav();
+}
+
+function switchPart(p){
+  state.part=p;saveProg();
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.part===p)));
+  p==="a"?renderA():renderB();
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchPart(t.dataset.part));
+if(student) loadProg();
+renderWho(); route();
+flush(); setInterval(flush, 20000);
+window.addEventListener("online", flush);
+</script>
+
+</body>
+</html>
