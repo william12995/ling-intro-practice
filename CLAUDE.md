@@ -25,7 +25,7 @@
 
 | 章 | 原始檔 | 上線版 |
 |---|---|---|
-| Morphology（開源課本 Ch.5 習題 1–7，39 題） | `ch01_morphology/morphology_lab.src.html` | `docs/ch01_morphology/index.html`（GitHub Pages，尚未推上去） |
+| Morphology（開源課本 Ch.5 習題 1–7，39 題） | `ch01_morphology/morphology_lab.src.html` | `docs/ch01_morphology/index.html`（已上線：https://william12995.github.io/ling-intro-practice/ch01_morphology/ ） |
 
 2026-09-26 整頁換掉：原本的 Fromkin 內文範例版（20 題選擇＋四關切詞）在學生作答前就撤下了，舊版在 git 紀錄 `be842ae`。資料夾名稱和 quiz id 還是 `ch01_morphology`。
 

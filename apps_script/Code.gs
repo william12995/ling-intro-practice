@@ -157,11 +157,12 @@ function feedback_(d) {
 }
 
 // 依序試免費金鑰的每個模型，遇到額度用完（429）或暫時故障（5xx）就換下一個；全部失敗才用付費金鑰。
-function callGemini_(prompt) {
+function callGemini_(prompt, only) {  // only：測試時指定單一模型
   var p = PropertiesService.getScriptProperties();
   var models = (p.getProperty('FEEDBACK_MODELS') || DEFAULT_MODELS).split(',').map(function (s) { return s.trim(); }).filter(String);
+  if (only) models = [only];
   var tries = models.map(function (m) { return {model: m, key: p.getProperty('GEMINI_FREE_KEY')}; });
-  if (p.getProperty('GEMINI_PAID_KEY')) tries.push({model: models[0], key: p.getProperty('GEMINI_PAID_KEY'), paid: true});
+  if (!only && p.getProperty('GEMINI_PAID_KEY')) tries.push({model: models[0], key: p.getProperty('GEMINI_PAID_KEY'), paid: true});
   var lastErr = 'no model';
   for (var i = 0; i < tries.length; i++) {
     var t = tries[i], gemma = /^gemma/.test(t.model);
@@ -178,12 +179,12 @@ function callGemini_(prompt) {
         headers: {'x-goog-api-key': t.key}, payload: JSON.stringify(body)
       });
       var code = res.getResponseCode();
-      if (code !== 200) { lastErr = t.model + ' HTTP ' + code; continue; }
+      if (code !== 200) { lastErr = t.model + ' HTTP ' + code + ' ' + res.getContentText().slice(0, 300); continue; }
       var j = JSON.parse(res.getContentText());
       var parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
       var text = parts.filter(function (x) { return x.text && !x.thought; }).map(function (x) { return x.text; }).join('').trim();
       if (text) return {text: text.slice(0, 1500), model: t.model + (t.paid ? ' (paid)' : '')};
-      lastErr = t.model + ' empty';
+      lastErr = t.model + ' empty, finishReason ' + (j.candidates && j.candidates[0] && j.candidates[0].finishReason);
     } catch (err) { lastErr = t.model + ' ' + err; }
   }
   return {error: lastErr};
@@ -219,9 +220,13 @@ function testFeedback() {
             options: 'A Monomorphemic | B Polymorphemic', key: '(none)', scored: false, expl: 'Both positions can be defended...'},
      response: 'Polymorphemic', correct: '', reasoning: 'They all end in -ceive and the nouns all have -cept, so -ceive is a bound root.'}
   ];
-  cases.forEach(function (c, k) {
-    var r = callGemini_(buildPrompt_(c));
-    Logger.log('#' + (k + 1) + ' ' + (r.model || r.error) + '\n' + (r.text || ''));
+  // 每個模型各跑一輪，不走自動換模型，才看得出是哪個模型壞掉
+  var models = (PropertiesService.getScriptProperties().getProperty('FEEDBACK_MODELS') || DEFAULT_MODELS).split(',');
+  models.forEach(function (m) {
+    cases.forEach(function (c, k) {
+      var r = callGemini_(buildPrompt_(c), m.trim());
+      Logger.log('[' + m.trim() + '] #' + (k + 1) + ' ' + (r.text ? 'OK' : 'FAIL ' + r.error) + '\n' + (r.text || ''));
+    });
   });
 }
 
