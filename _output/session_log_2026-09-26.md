@@ -36,3 +36,28 @@ Apps Script 沒實際跑過，JSONP 寫進 Sheet 沒測過，登入畫面沒在�
 ```
 C:\Python313\python.exe build_site.py --endpoint "https://script.google.com/macros/s/XXXX/exec"
 ```
+
+## 補記二（同日，在 ENG_Pragmatic 的 session 裡代做）
+
+老師來信改規則：Fromkin 習題太難又有版權問題，題目改從開源課本 *Essentials of Linguistics* 2nd ed.（CC BY-NC-SA 4.0，`textbook/Essentials-of-Linguistics-2nd-edition.pdf`）的 Morphology 習題出，先放固定答案的觀念題，再加難到陌生語言解題。每題要兩欄：固定答案（系統判）和推理過程（只存，抽查用）。
+
+- 當時還沒有學生作答，`ch01_morphology/morphology_lab.src.html` 整頁換掉。舊的 Fromkin 版在 commit `be842ae`。
+- 新版 39 題，7 部分：習題 3 詞綴類型(8)、習題 4 詞類(10+切詞 3)、習題 6 複合詞複選(4)、習題 7 希伯來文(2)、習題 1 土耳其文(6+填空 1)、習題 2 海地克里奧爾語(4)、習題 5 申論(1，不計分)。
+- 流程：先作答、寫推理（5–300 字），按送出才判分和顯示解說，送出後鎖住。推理存到 Sheet 的 `reasoning` 欄。
+- `Code.gs` 的 HEADER 最後加了 `reasoning`、`truncated`，summary 的分區改成 S1–S6。`DEPLOY.md` 的上線測試多一步：貼 300 個中文字的推理，確認 Google 收得到。
+- 自我測試：39 題的標準答案丟進判分函式全部判對；土耳其文填空接受 c/j/dj 代替 dʒ、i 代替 ı。無頭 Edge 截圖確認作答與送出後的畫面。
+- 沒做：標準答案沒有人核過（課本沒附解答）；claude.ai artifact 預覽還是舊版；沒 commit；`docs/` 還沒推上 GitHub。
+
+下次：請使用者或老師核對答案 → Apps Script 用「管理部署 → 新版本」更新（如果已有舊的 answers 分頁要先刪）→ 跑 DEPLOY.md 的上線測試 → commit、推 GitHub Pages。
+
+## 補記三：Apps Script 首次部署（clasp）
+
+- clasp 3.4.1 裝在全域，登入帳號 rino881209@gmail.com（個人 Gmail）。
+- Sheet：https://drive.google.com/open?id=1doD3tRlHDfJ8zRIMcppIHKwF6rXbx9swWlcf79sYnGw （標題「語言學概論練習成績」，不要開公開連結）
+- 綁定的 script：https://script.google.com/d/1gN8mqyFxAeyF8Xsa1yZLOa1MRELmghHQFK9QMXoQJw711C5VhtsI_3kE/edit ，本機設定在 `.clasp.json`（rootDir = apps_script）。
+- `apps_script/appsscript.json`：時區 Asia/Taipei，webapp 執行身分 = 部署者、存取 = 任何人（匿名）。注意 `clasp create` 會把這檔蓋回預設值，重建專案時要再改回來。
+- 部署 @1：AKfycbzlAf829w4jB1icEHwgIWH65hKQA3NKtYW0TiS40NTBqcW3eZnuFW1kSfHOk5czmtuzsw，網址 https://script.google.com/macros/s/AKfycbzlAf829w4jB1icEHwgIWH65hKQA3NKtYW0TiS40NTBqcW3eZnuFW1kSfHOk5czmtuzsw/exec
+- 之後改 Code.gs：`clasp push` 後 `clasp create-deployment --deploymentId <上面那串> --description ...` 更新同一個部署，網址不變。
+- 部署當下打網址回傳的是 Google 授權頁，還沒授權。docs/ 還沒用這個網址重建（自動權限擋下，交給使用者自己跑）。
+- 更新：使用者已授權（ping 回 ok）。用 curl 送了兩筆 Z00000000 測試資料（S1-01 短推理、S1-02 推理 300 個中文字，網址 3380 字元），都回 ok。docs/ 已用 @1 網址重建，無頭 Edge 從網頁送一筆 S1-03，佇列清空、畫面顯示「成績已記錄」。Sheet 的 answers 分頁有三列 Z00000000 測試資料，上線前要刪。
+- 還沒做：commit、推 GitHub Pages（gh 未登入）、標準答案人工核對。

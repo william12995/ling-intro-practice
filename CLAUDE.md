@@ -2,7 +2,18 @@
 
 使用者 2026-09 起擔任老師的語言學概論助教。這個資料夾放課程教材與互動網頁，跟碩論研究無關，研究的東西不要寫進來。
 
-## 課本
+## 出題用的教材
+
+2026-09-26 老師來信改規則：因為 Fromkin 的習題太難又有版權問題，互動頁的題目改從開源課本出。
+
+`textbook/Essentials-of-Linguistics-2nd-edition.pdf`：Anderson, Bjorkman, Denis, Doner, Grant, Sanders & Taniguchi, *Essentials of Linguistics*, 2nd ed.（eCampusOntario Pressbooks），CC BY-NC-SA 4.0。
+
+- PDF 頁碼 = 印刷頁碼 + 20（PDF 272 = p. 252）。
+- Ch.5 Morphology 在 PDF 229–276，章末習題 5.12 在 PDF 272–274（Exercise 1–7）。PDF 版把章內的「Check your understanding」互動題拿掉了，只有線上版有。
+- 這本沒附解答，頁面上的標準答案是 AI 寫的，要人核過。
+- 授權要求標出處，而且改寫版要用同一授權，所以頁尾一定要留一行出處和授權（見下面慣例的例外）。
+
+### 講課用的課本（不再拿來出題）
 
 `textbook/An_Introduction_to_Language.pdf`：Fromkin, Rodman & Hyams, *An Introduction to Language*, 9th ed., 2011。
 
@@ -14,20 +25,23 @@
 
 | 章 | 原始檔 | 上線版 |
 |---|---|---|
-| Ch.1 Morphology | `ch01_morphology/morphology_lab.src.html` | `docs/ch01_morphology/index.html`（GitHub Pages，尚未推上去） |
+| Morphology（開源課本 Ch.5 習題 1–7，39 題） | `ch01_morphology/morphology_lab.src.html` | `docs/ch01_morphology/index.html`（GitHub Pages，尚未推上去） |
+
+2026-09-26 整頁換掉：原本的 Fromkin 內文範例版（20 題選擇＋四關切詞）在學生作答前就撤下了，舊版在 git 紀錄 `be842ae`。資料夾名稱和 quiz id 還是 `ch01_morphology`。
 
 只改 `*.src.html`，改完跑 `python build_site.py --endpoint "<Apps Script 網址>"` 重建 `docs/`，`docs/` 不要手改。src 沒有 doctype/head，是因為它同時可以直接發布成 claude.ai artifact 當預覽（https://claude.ai/artifact/NxGDg4swf7XuwU4kNLLs93 ，私人；更新時帶這個 URL 當 `url`）。artifact 裡連不到 Google，成績只會存在瀏覽器。
 
 成績記錄：學生先填學號姓名，每答一題送一筆到 Google Sheet（`apps_script/Code.gs`）。部署步驟和成績算法在 `DEPLOY.md`。新增章節時要做三件事：`build_site.py` 的 `PAGES` 加一列、Code.gs 的 `QUIZZES` 加 quiz id、新頁面的 `QUIZ_ID` 要跟它一致。
 
-題號是照陣列位置編的（`A01`、`B2-05`），學生開始作答後不能調換或替換既有題目，只能在最後加。
+題號是照陣列位置編的（`S1-01`、`S5-07`），學生開始作答後不能調換或替換既有題目，只能在最後加。
 
 `.gitignore` 排除 `textbook/`，課本有版權，不能推上 public repo。
 
 ## 慣例
 
-- 老師的要求：先用課本章節內文範例做互動答題，再由簡入深出題。
-- 章末習題不放進互動頁，留給作業用。
+- 老師的要求（2026-09-26 更新）：題目從開源課本的章末習題出。先放答案固定的觀念題，再逐步加難到陌生語言的解題。原本「章末習題不放、留給作業」那條作廢。
+- 每題兩欄：固定答案（系統自動判）和推理過程（只存，給老師抽查答案對但推理錯的情況）。推理要在看到解說之前寫完，送出後才顯示解說，不然學生會照抄解說。推理最後怎麼處理，老師說之後再討論。
+- 沒有固定答案的題目（例如習題 5 申論）設成不計分，`correct` 送空白。
 - 答案有爭議的題目（例如 receive 要不要切出 -ceive）兩種都算對，在解說裡講清楚，不要硬判。
 - 同一份頁面裡的判準要一致：前面教過的概念（例如黏著詞根），後面的題目不能反過來扣分。
-- 頁面上不放給老師或助教看的說明（出處註記、出題設計理由、「本頁包含什麼」這類導言）。學生只需要題目、操作提示和解說。使用者 2026-09-26 明確要求拿掉。
+- 頁面上不放給老師或助教看的說明（出處註記、出題設計理由、「本頁包含什麼」這類導言）。學生只需要題目、操作提示和解說。使用者 2026-09-26 明確要求拿掉。唯一例外是頁尾那一行開源課本的出處和授權，這是 CC BY-NC-SA 的要求，不能拿掉。

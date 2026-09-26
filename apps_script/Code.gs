@@ -6,13 +6,16 @@
  * summary 分頁：從 answers 算出來的成績總表，按選單「成績 → 重算總表」更新。
  *   首次分數 = 每題「最早那次作答」（依伺服器收到的時間）答對的題數；最佳分數 = 每題「任何一次答對過」的題數。
  *   學生可以重做，但重做不會蓋掉首次作答。
+ *   correct 欄空白的是不計分的題目（只收推理），算進「已作答題數」，不算進答對題數。
+ * reasoning 欄是學生寫的推理過程，只存不判分，給老師抽查「答案對、推理錯」的情況。
  *
  * 前端用 JSONP GET 呼叫，避開 CORS，也能確認寫入成功。
  */
 var ANSWERS = 'answers';
 var SUMMARY = 'summary';
 var HEADER = ['event_id', 'server_time', 'client_time', 'quiz', 'student_id', 'name',
-              'part', 'level', 'qid', 'prompt', 'response', 'correct', 'attempt'];
+              'part', 'level', 'qid', 'prompt', 'response', 'correct', 'attempt',
+              'reasoning', 'truncated'];   // 新欄位只能加在最後，不然舊資料會錯位
 var QUIZZES = {'ch01_morphology': true};   // 新增章節時把 quiz id 加進來
 
 function doGet(e) {
@@ -59,17 +62,18 @@ function rebuildSummary() {
     seen[eid] = true;
     var sid = r[col.student_id], quiz = r[col.quiz], qid = String(r[col.qid]);
     var t = new Date(r[col.server_time] || r[col.client_time]).getTime();  // 用伺服器時間，學生電腦時鐘不準也不影響
-    var ok = Number(r[col.correct]) === 1;
+    var scored = r[col.correct] !== '' && r[col.correct] !== null;
+    var ok = scored && Number(r[col.correct]) === 1;
     var k = sid + '|' + quiz;
     var s = per[k] || (per[k] = {sid: sid, quiz: quiz, name: r[col.name], lastTime: 0, q: {}});
     if (t > s.lastTime) { s.lastTime = t; s.name = r[col.name]; }
-    var sec = r[col.part] === 'A' ? 'A' : 'B' + r[col.level];
+    var sec = 'S' + r[col.level];
     var q = s.q[qid];
-    if (!q) s.q[qid] = {t: t, first: ok, ever: ok, sec: sec};
+    if (!q) s.q[qid] = {t: t, first: ok, ever: ok, sec: sec, scored: scored};
     else { if (t < q.t) { q.t = t; q.first = ok; } q.ever = q.ever || ok; }
   });
 
-  var SECS = ['A', 'B1', 'B2', 'B3', 'B4'];
+  var SECS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];   // S7 是不計分的申論題，不列欄位
   var head = ['student_id', 'name', 'quiz', '已作答題數', '首次答對', '最佳答對']
     .concat(SECS.map(function (x) { return x + ' 首次答對'; }))
     .concat(['最後作答時間']);
