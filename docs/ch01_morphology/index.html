@@ -123,6 +123,12 @@ h1 .plus{color:var(--cut);font-family:var(--mono);font-weight:500;padding:0 .12e
 .dot.sub{background:var(--muted)}
 .credit{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
 .credit a{color:var(--muted)}
+.ai{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--ground);display:flex;flex-direction:column;gap:8px}
+.ai-h{font-size:14px;font-weight:600}
+.ai-t{margin:0;white-space:pre-wrap}
+.ai-t.wait{color:var(--muted)}
+.ai-note{margin:0;font-size:13px;color:var(--muted)}
+.ai textarea{font:inherit;font-size:14px;min-height:64px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 </style>
 
 </head>
@@ -253,7 +259,7 @@ const KR = "panie  'basket'   paniea  'the basket'\ntrou   'hole'     troua   't
 SECTIONS.forEach(s=>s.items.forEach(it=>{if(it.d==="__TR__")it.d=TR;else if(it.d==="__KR__")it.d=KR}));
 
 const WHY_MAX = 600, WHY_MIN = 20;
-const freshState = () => ({v:2, lv:0, bySec:SECTIONS.map(()=>({i:0,res:[],ans:{},why:{},attempt:1}))});
+const freshState = () => ({v:2, lv:0, bySec:SECTIONS.map(()=>({i:0,res:[],ans:{},why:{},fb:{},attempt:1}))});
 let state = freshState();
 const stage = document.getElementById("stage");
 const levelsEl = document.getElementById("levels");
@@ -312,7 +318,7 @@ function loadProg(){
 // 每次作答一筆，event_id 唯一；後端看到重複的 event_id 就跳過，所以重送不會多出列。
 let seq = 0;
 function urlLen(p){ return ENDPOINT.length + 40 + encodeURIComponent(JSON.stringify(p)).length; }
-function record(level, qid, prompt, response, correct, attempt, reasoning){
+function record(level, qid, prompt, response, correct, attempt, reasoning){  // 回傳 event_id，AI 回饋用它對應回這一筆
   const t = Date.now();
   const p = {event_id:`${student.sid}|${QUIZ_ID}|${qid}|${attempt}|${t}-${seq++}`,
     client_time:new Date(t).toISOString(), quiz:QUIZ_ID, student_id:student.sid, name:student.name,
@@ -320,15 +326,16 @@ function record(level, qid, prompt, response, correct, attempt, reasoning){
     correct: correct===null ? "" : (correct?1:0), attempt, reasoning};
   // 網址太長會被 Google 擋下，而且會卡住後面所有紀錄，所以送出前先截短推理欄
   while(urlLen(p) > URL_MAX && p.reasoning.length > 0){ p.reasoning = p.reasoning.slice(0, Math.floor(p.reasoning.length*0.8)); p.truncated = 1; }
-  if(!ONLINE) return;
+  if(!ONLINE) return null;
   const q = LS.get(QKEY, []); q.push(p); LS.set(QKEY, q);
   flush();
+  return p.event_id;
 }
-function jsonp(p){
+function jsonp(p, ms=15000){
   return new Promise((res,rej)=>{
     const cb = "cb_" + Math.random().toString(36).slice(2);
     const s = document.createElement("script");
-    const t = setTimeout(()=>{cleanup();rej({server:false,error:"timeout"})}, 15000);
+    const t = setTimeout(()=>{cleanup();rej({server:false,error:"timeout"})}, ms);
     function cleanup(){clearTimeout(t);delete window[cb];s.remove()}
     window[cb] = r => {cleanup(); if(r&&r.ok) res(r); else rej({server:!(r&&r.retry), error:(r&&r.error)||"rejected"}); };  // retry=暫時性錯誤，留著重送
     s.onerror = () => {cleanup();rej({server:false,error:"network"})};
@@ -417,6 +424,35 @@ function renderLevels(){
   levelsEl.querySelectorAll(".lv").forEach(b=>b.onclick=()=>{state.lv=+b.dataset.lv;renderSec()});
 }
 
+/* ---------- AI 回饋 ----------
+   後端 FEEDBACK_ON 打開才會出現。跟作答紀錄分開送，回饋失敗不影響成績。 */
+let FB_ON = false, aiHook = null;
+function keyText(it){
+  if(it.grade===false) return "(none; not scored)";
+  if(it.type==="mc") return "ABCD"[it.a]+" "+plain(it.o[it.a]);
+  if(it.type==="multi"){const y=it.o.filter(o=>o.s==="y").map(o=>o.t), e=it.o.filter(o=>o.s==="e").map(o=>o.t);
+    return y.join(" / ")+(e.length?` (either way is accepted for: ${e.join(" / ")})`:"");}
+  if(it.type==="cut") return it.m.join(" + ")+(it.alt?" (also accepted: "+it.alt.map(m=>m.join(" + ")).join("; ")+")":"");
+  if(it.type==="fill") return "eldʒıklerimizde (c, j or dj for dʒ and i for ı are accepted)";
+}
+function askAI(lv,i,it,SEC){
+  const S=state.bySec[lv], f=S.fb[i]||{};
+  if(!f.eid) return;
+  S.fb[i]={...f, state:"loading"}; saveProg(); if(aiHook&&aiHook.lv===lv&&aiHook.i===i) aiHook.draw();
+  const item={note:plain(SEC.note), q:it.type==="cut"?`Split ${it.w} into its smallest morphemes.`:plain(it.q), data:it.d||"",
+    options:it.o&&it.type!=="multi"?it.o.map((o,k)=>"ABCD"[k]+" "+plain(o)).join(" | "):it.type==="multi"?it.o.map(o=>o.t).join(" | "):"",
+    key:keyText(it), expl:plain(it.e), scored:it.grade!==false};
+  const req={action:"feedback", quiz:QUIZ_ID, student_id:student.sid, event_id:f.eid, qid:f.qid, attempt:f.attempt,
+         response:f.response, correct:f.ok, reasoning:S.why[i]||"", item};
+  // Google 收 9000 字元左右的網址，12000 會 400。超過就先砍解說，再砍推理
+  while(urlLen(req)>8500 && item.expl.length>200) item.expl=item.expl.slice(0,Math.floor(item.expl.length*0.8));
+  while(urlLen(req)>8500 && req.reasoning.length>0) req.reasoning=req.reasoning.slice(0,Math.floor(req.reasoning.length*0.8));
+  jsonp(req, 45000)
+    .then(r=>{S.fb[i]={...S.fb[i], state:"ok", text:String(r.text||"")}})
+    .catch(e=>{S.fb[i]={...S.fb[i], state: e&&e.error==="rejected"?"off":"err"}})
+    .finally(()=>{saveProg(); if(aiHook&&aiHook.lv===lv&&aiHook.i===i) aiHook.draw();});
+}
+
 /* ---------- 作答卡：先選答案、寫推理，按送出後才判分和顯示解說 ---------- */
 function renderSec(){
   renderLevels();
@@ -425,10 +461,11 @@ function renderSec(){
   if(S.i>=SEC.items.length){
     const nextLv=lvI+1<SECTIONS.length;
     doneCard(tally(S.res),graded(SEC),nextLv?"You've finished this section. The next one is harder.":"You've finished all the sections.",
-      ()=>{S.i=0;S.res=[];S.ans={};S.why={};S.attempt=(S.attempt||1)+1;renderSec()},nextLv?'<button class="btn primary" id="next-lv">Next section</button>':"");
+      ()=>{S.i=0;S.res=[];S.ans={};S.why={};S.fb={};S.attempt=(S.attempt||1)+1;renderSec()},nextLv?'<button class="btn primary" id="next-lv">Next section</button>':"");
     if(nextLv)document.getElementById("next-lv").onclick=()=>{state.lv++;renderSec()};
     return;
   }
+  S.fb=S.fb||{};   // 加 AI 回饋之前存的進度沒有這欄
   const it=SEC.items[S.i];
   const done=S.res[S.i]!==undefined;
   let ans = S.ans[S.i];
@@ -441,7 +478,8 @@ function renderSec(){
     <div id="widget"></div>
     <div class="why"><label for="why">Your reasoning: how did you get this answer?</label>
       <textarea id="why" maxlength="${WHY_MAX}" placeholder="Write at least one sentence, e.g. which words you compared or what evidence you used"></textarea>
-      <span class="cnt" id="cnt"></span></div>
+      <span class="cnt" id="cnt"></span>
+      <span class="hint aidisc" ${FB_ON&&!done?"":"hidden"}>After you submit, an AI model will comment on your reasoning. Your answer and reasoning are sent to Google Gemini without your name or student ID.</span></div>
     <div class="row"><span class="hint" id="need"></span><div class="btns"><button class="btn primary" id="submit">Submit</button></div></div>
     <div id="fb"></div>`;
   const W=card.querySelector("#widget"), why=card.querySelector("#why"), btn=card.querySelector("#submit");
@@ -509,8 +547,40 @@ function renderSec(){
     if(it.type==="mc"&&ok===false) verdict+=`. The answer is ${"ABCD"[it.a]}.`;
     if(it.type==="multi"&&ok===false) extra='<span>Dashed green marks the ones you missed. Red marks the ones you should not have selected.</span>';
     if(it.type==="cut") extra=glossHTML(it.m,it.g);
-    card.querySelector("#fb").innerHTML=`<div class="expl ${ok===false?"bad":""}"><span class="verdict">${verdict}</span>${extra}<span>${it.e}</span></div>`;
+    card.querySelector("#fb").innerHTML=`<div class="expl ${ok===false?"bad":""}"><span class="verdict">${verdict}</span>${extra}<span>${it.e}</span></div><div id="ai"></div>`;
+    drawAI();
   };
+
+  // AI 回饋框。回饋文字一律用 textContent 放，因為內容來自學生輸入和模型輸出
+  const I=S.i;
+  const drawAI=()=>{
+    const box=card.querySelector("#ai"); if(!box) return;
+    const f=S.fb[I];
+    // 沒有 event_id（沒連上後端）、後端沒開、或後端回說關閉，都不顯示
+    if(!f||!f.eid||f.state==="off"||(!FB_ON&&!f.state)){ box.innerHTML=""; return; }
+    box.innerHTML=`<div class="ai"><div class="ai-h">AI feedback on your reasoning</div><p class="ai-t"></p>
+      <p class="ai-note">This feedback was written by an AI model and is for reference only. It can be wrong, and the answer key on this page was also drafted with AI help. If something looks wrong, ask your TA.</p>
+      <div class="btns"></div><div class="dis"></div></div>`;
+    const t=box.querySelector(".ai-t"), bs=box.querySelector(".btns"), dis=box.querySelector(".dis");
+    const button=(label,fn)=>{const b=document.createElement("button");b.className="btn";b.textContent=label;b.onclick=fn;bs.appendChild(b);return b};
+    if(!f.state){ t.textContent="No AI feedback for this answer yet."; t.classList.add("wait"); button("Get AI feedback",()=>askAI(lvI,I,it,SEC)); }
+    else if(f.state==="loading"){ t.textContent="Writing feedback…"; t.classList.add("wait"); }
+    else if(f.state==="err"){ t.textContent="AI feedback isn't available right now."; t.classList.add("wait"); button("Try again",()=>askAI(lvI,I,it,SEC)); }
+    else if(f.state==="ok"){
+      t.textContent=f.text;
+      if(f.disagreed){ dis.innerHTML='<p class="ai-note">Thanks. Your TA will look at this feedback.</p>'; }
+      else button("I disagree with this feedback",()=>{
+        bs.hidden=true;
+        dis.innerHTML='<div class="why"><label for="dnote">What is wrong with it? (optional)</label><textarea id="dnote" maxlength="500"></textarea><div class="btns"><button class="btn primary" id="dsend">Send to TA</button></div></div>';
+        dis.querySelector("#dsend").onclick=async e=>{
+          e.target.disabled=true;
+          try{ await jsonp({action:"disagree",quiz:QUIZ_ID,student_id:student.sid,event_id:f.eid,note:dis.querySelector("#dnote").value.trim()}); f.disagreed=true; saveProg(); drawAI(); }
+          catch(err){ e.target.disabled=false; e.target.textContent="Couldn't send. Try again"; }
+        };
+      });
+    }
+  };
+  aiHook={lv:lvI,i:I,draw:drawAI};
 
   btn.onclick=()=>{
     if(btn.disabled)return;
@@ -519,8 +589,10 @@ function renderSec(){
     S.ans[S.i]=ans;S.why[S.i]=reasoning;S.res[S.i]=g.ok;
     const qid=`S${lvI+1}-${pad2(S.i+1)}`;
     const prompt=it.type==="cut"?it.w:plain(it.q);
-    record(lvI+1,qid,prompt,g.response,g.ok,S.attempt||1,reasoning);
+    const eid=record(lvI+1,qid,prompt,g.response,g.ok,S.attempt||1,reasoning);
+    if(eid) S.fb[S.i]={eid, qid, response:g.response, ok:g.ok, attempt:S.attempt||1};
     saveProg();renderSec();
+    if(eid&&FB_ON) askAI(lvI,S.i,it,SEC);
   };
 
   drawWidget();
@@ -534,6 +606,9 @@ function renderSec(){
 if(student) loadProg();
 renderWho(); route();
 flush(); setInterval(flush, 20000);
+if(ONLINE) jsonp({action:"config"}).then(r=>{FB_ON=!!r.feedback; if(!FB_ON) return;
+  if(document.getElementById("why")?.disabled===false) document.querySelectorAll(".aidisc").forEach(el=>el.hidden=false);
+  if(aiHook) aiHook.draw();}).catch(()=>{});
 window.addEventListener("online", flush);
 </script>
 

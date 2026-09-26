@@ -31,6 +31,8 @@
 
 只改 `*.src.html`，改完跑 `python build_site.py --endpoint "<Apps Script 網址>"` 重建 `docs/`，`docs/` 不要手改。src 沒有 doctype/head，是因為它同時可以直接發布成 claude.ai artifact 當預覽（https://claude.ai/artifact/NxGDg4swf7XuwU4kNLLs93 ，私人；更新時帶這個 URL 當 `url`）。artifact 裡連不到 Google，成績只會存在瀏覽器。
 
+2026-09-26 老師要求頁面全英文（外文系），學生看得到的文字都是英文，程式註解和 Sheet 欄名維持中文。AI 回饋（Gemini，後端 `action=feedback`）已做好但預設關閉，開啟條件和步驟在 `DEPLOY.md` 第 5 節；每則回饋都固定附一句「AI 寫的，僅供參考」。
+
 成績記錄：學生先填學號姓名，每答一題送一筆到 Google Sheet（`apps_script/Code.gs`）。部署步驟和成績算法在 `DEPLOY.md`。新增章節時要做三件事：`build_site.py` 的 `PAGES` 加一列、Code.gs 的 `QUIZZES` 加 quiz id、新頁面的 `QUIZ_ID` 要跟它一致。
 
 題號是照陣列位置編的（`S1-01`、`S5-07`），學生開始作答後不能調換或替換既有題目，只能在最後加。
