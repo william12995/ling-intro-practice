@@ -116,7 +116,8 @@ function rebuildSummary() {
 var FEEDBACK = 'feedback';
 var FB_HEADER = ['event_id', 'server_time', 'quiz', 'student_id', 'qid', 'attempt', 'model',
                  'feedback', 'disagree', 'disagree_note', 'ta_check', 'ta_note'];
-var DEFAULT_MODELS = 'gemini-3.8-flash,gemma-4-31b-it';
+// 2026-09-26 實測：3.8-flash 回饋最好（抓得到「答案對、推理錯」）；3.5-flash-lite 快但土耳其文那題講錯語素；3.1-flash-lite 要 6–16 秒
+var DEFAULT_MODELS = 'gemini-3.8-flash,gemini-3.5-flash-lite';
 var FB_PER_MINUTE = 8;   // 每個學號每分鐘最多幾次，擋住有人拿這個網址當免費聊天機器人
 
 var FB_SYSTEM = [
@@ -164,28 +165,35 @@ function callGemini_(prompt, only) {  // only：測試時指定單一模型
   var tries = models.map(function (m) { return {model: m, key: p.getProperty('GEMINI_FREE_KEY')}; });
   if (!only && p.getProperty('GEMINI_PAID_KEY')) tries.push({model: models[0], key: p.getProperty('GEMINI_PAID_KEY'), paid: true});
   var lastErr = 'no model';
+  // 只支援 Gemini 系列。Gemma 試過：不吃 systemInstruction，而且預設會思考，32 秒後把 token 用光還沒產出文字
+  var body = {systemInstruction: {parts: [{text: FB_SYSTEM}]},
+              contents: [{role: 'user', parts: [{text: prompt}]}],
+              generationConfig: {temperature: 0.3, maxOutputTokens: 1500, thinkingConfig: {thinkingLevel: 'low'}}};
   for (var i = 0; i < tries.length; i++) {
-    var t = tries[i], gemma = /^gemma/.test(t.model);
-    // Gemma 不吃 systemInstruction 和 thinkingConfig，把系統指示併進使用者訊息
-    var body = gemma
-      ? {contents: [{role: 'user', parts: [{text: FB_SYSTEM + '\n\n' + prompt}]}],
-         generationConfig: {temperature: 0.3, maxOutputTokens: 400}}
-      : {systemInstruction: {parts: [{text: FB_SYSTEM}]},
-         contents: [{role: 'user', parts: [{text: prompt}]}],
-         generationConfig: {temperature: 0.3, maxOutputTokens: 1500, thinkingConfig: {thinkingLevel: 'low'}}};
-    try {
-      var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + t.model + ':generateContent', {
-        method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-        headers: {'x-goog-api-key': t.key}, payload: JSON.stringify(body)
-      });
-      var code = res.getResponseCode();
-      if (code !== 200) { lastErr = t.model + ' HTTP ' + code + ' ' + res.getContentText().slice(0, 300); continue; }
-      var j = JSON.parse(res.getContentText());
-      var parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
-      var text = parts.filter(function (x) { return x.text && !x.thought; }).map(function (x) { return x.text; }).join('').trim();
-      if (text) return {text: text.slice(0, 1500), model: t.model + (t.paid ? ' (paid)' : '')};
-      lastErr = t.model + ' empty, finishReason ' + (j.candidates && j.candidates[0] && j.candidates[0].finishReason);
-    } catch (err) { lastErr = t.model + ' ' + err; }
+    var t = tries[i];
+    // 免費版常回 503「需求過高」，通常過一下就好，同一個模型先等 1.5 秒重試一次再換下一個。429 是額度用完，直接換。
+    for (var retry = 0; retry < 2; retry++) {
+      try {
+        var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + t.model + ':generateContent', {
+          method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+          headers: {'x-goog-api-key': t.key}, payload: JSON.stringify(body)
+        });
+        var code = res.getResponseCode();
+        if (code !== 200) {
+          lastErr = t.model + ' HTTP ' + code + ' ' + res.getContentText().slice(0, 300);
+          if (code >= 500 && retry === 0) { Utilities.sleep(1500); continue; }
+          break;
+        }
+        var j = JSON.parse(res.getContentText());
+        var parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+        var text = parts.filter(function (x) { return x.text && !x.thought; }).map(function (x) { return x.text; }).join('').trim();
+        // 叫它不要用 markdown 它還是會加 *斜體*，頁面是純文字，星號會原樣露出來
+        text = text.replace(/\*\*?([^*\n]+)\*\*?/g, '$1');
+        if (text) return {text: text.slice(0, 1500), model: t.model + (t.paid ? ' (paid)' : '')};
+        lastErr = t.model + ' empty, finishReason ' + (j.candidates && j.candidates[0] && j.candidates[0].finishReason);
+        break;
+      } catch (err) { lastErr = t.model + ' ' + err; break; }
+    }
   }
   return {error: lastErr};
 }

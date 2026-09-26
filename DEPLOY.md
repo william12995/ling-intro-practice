@@ -64,7 +64,7 @@ C:\Python313\python.exe build_site.py --endpoint "https://script.google.com/macr
 2. 到 https://aistudio.google.com/rate-limit 看這把金鑰每個模型的每分鐘和每日上限，挑全班同時作答撐得住的。
 3. 打開 Apps Script 編輯器 → 專案設定 → 指令碼屬性，加：
    - `GEMINI_FREE_KEY`：上面那把金鑰
-   - `FEEDBACK_MODELS`（選填）：依序嘗試的模型，逗號分隔，預設 `gemini-3.8-flash,gemma-4-31b-it`。第一個被限流（429）就換下一個。
+   - `FEEDBACK_MODELS`（選填）：依序嘗試的模型，逗號分隔，預設 `gemini-3.8-flash,gemini-3.5-flash-lite`。遇到 503（免費版常見的「需求過高」）先重試一次，還不行或 429（額度用完）就換下一個。只支援 Gemini 系列，Gemma 試過不能用。
    - `GEMINI_PAID_KEY`（選填）：免費的全部失敗才用，會收費。
 4. 在編輯器裡選 `testFeedback` 執行一次。它會把 `FEEDBACK_MODELS` 裡每個模型各跑四個案例，每行開頭標模型名稱和 OK/FAIL；FAIL 後面是 Google 回的錯誤訊息。第一次會要求「連線到外部服務」的授權，這是新加的權限，要按同意，不然網頁版也呼叫不了 Gemini。執行紀錄會印出四個測試案例的回饋，重點看第 2 個：答案對但推理錯，模型要能指出推理的問題，不能只附和標準答案。
 5. 都沒問題再加 `FEEDBACK_ON` = `true`。改屬性不用重新部署，頁面重新整理就會生效。要關掉就把它改成別的值。
