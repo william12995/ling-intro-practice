@@ -14,11 +14,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "docs"
 PAGES = [  # (src, 輸出路徑, 首頁上顯示的名稱)
-    ("ch01_morphology/morphology_lab.src.html", "ch01_morphology/index.html", "第 1 章　Morphology：語素切割練習"),
+    ("ch01_morphology/morphology_lab.src.html", "ch01_morphology/index.html", "Morphology"),
 ]
 
 HEAD = """<!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -55,16 +55,16 @@ def main():
         links.append(f'<li><a href="{out.rsplit("/", 1)[0]}/">{label}</a></li>')
         print(f"wrote {dst.relative_to(ROOT)}")
 
-    index = HEAD + """<title>語言學概論練習</title>
+    index = HEAD + """<title>Introduction to Linguistics: Practice</title>
 <style>
-body{margin:0;padding:0 16px;font-family:"Noto Sans TC",system-ui,sans-serif;background:#F2F4F7;color:#1B2230;line-height:1.7}
+body{margin:0;padding:0 16px;font-family:system-ui,sans-serif;background:#F2F4F7;color:#1B2230;line-height:1.7}
 main{max-width:640px;margin:0 auto;padding-block:48px}
 h1{font-size:28px;margin:0 0 16px}
 a{color:#2F5BD3}
 @media (prefers-color-scheme: dark){body{background:#12151C;color:#E6E9EF}a{color:#8FA8F7}}
 </style>
 </head>
-<body><main><h1>語言學概論練習</h1><ul>
+<body><main><h1>Introduction to Linguistics: Practice</h1><ul>
 """ + "\n".join(links) + "\n</ul></main></body></html>\n"
     (SITE / "index.html").write_text(index, encoding="utf-8")
     print(f"wrote docs/index.html；後端：{ep or '未設定（只存本機）'}")

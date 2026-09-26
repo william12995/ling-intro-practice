@@ -1,14 +1,14 @@
-<title>構詞練習</title>
+<title>Morphology Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap">
 <style>
 :root{
   --ground:#F2F4F7; --surface:#FFFFFF; --ink:#1B2230; --muted:#5B6475; --line:#D9DEE7;
   --accent:#2F5BD3; --accent-soft:#E4EBFB; --cut:#D2463A; --cut-soft:#FBE7E4;
   --ok:#2E7D4F; --ok-soft:#E2F2E8; --warn:#9A6A12; --warn-soft:#F7EED9;
-  --sans:"IBM Plex Sans","Noto Sans TC",system-ui,sans-serif;
-  --serif:"IBM Plex Serif","Noto Sans TC",Georgia,serif;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --serif:"IBM Plex Serif",Georgia,serif;
   --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
@@ -122,15 +122,15 @@ h1 .plus{color:var(--cut);font-family:var(--mono);font-weight:500;padding:0 .12e
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">語言學概論 · Morphology</div>
-    <h1>re<span class="plus">+</span>place<span class="plus">+</span>s：構詞練習</h1>
+    <div class="eyebrow">Introduction to Linguistics · Morphology</div>
+    <h1>re<span class="plus">+</span>place<span class="plus">+</span>s: Morphology Practice</h1>
   </header>
 
   <div class="who" id="who" hidden></div>
   <div class="levels" id="levels" hidden></div>
   <main id="stage"></main>
 
-  <footer class="credit">題目改寫自 Catherine Anderson, Bronwyn Bjorkman, Derek Denis, Julianne Doner, Margaret Grant, Nathan Sanders, Ai Taniguchi, <a href="https://ecampusontario.pressbooks.pub/essentialsoflinguistics2/" target="_blank" rel="noopener"><i>Essentials of Linguistics</i>, 2nd edition</a>, §5.12，授權為 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>。本頁改成選擇、填空與切詞形式，以相同授權釋出。</footer>
+  <footer class="credit">Exercises adapted from Catherine Anderson, Bronwyn Bjorkman, Derek Denis, Julianne Doner, Margaret Grant, Nathan Sanders, Ai Taniguchi, <a href="https://ecampusontario.pressbooks.pub/essentialsoflinguistics2/" target="_blank" rel="noopener"><i>Essentials of Linguistics</i>, 2nd edition</a>, §5.12, licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>. This page recasts them as multiple-choice, fill-in and segmentation items and is released under the same license.</footer>
 </div>
 
 <script>
@@ -139,113 +139,113 @@ h1 .plus{color:var(--cut);font-family:var(--mono);font-weight:500;padding:0 .12e
          cut 切詞（m 是正確切法，alt 是也算對的切法）／fill 填空（accept 是正規化後的答案）
    grade:false 表示不計分，只收答案和推理。 */
 const SECTIONS = [
-  {name:"1　詞綴與類型", ex:"習題 3", note:"找出詞裡的詞綴，判斷是衍生還是屈折。", items:[
-    {type:"mc", q:"<em>purity</em>", o:["-ity，衍生","-ity，屈折","-y，屈折","沒有詞綴"], a:0,
-     e:"pure（形容詞）加 -ity 變成名詞。會改詞類的是衍生詞綴。拼寫上 pure 的 e 掉了。"},
-    {type:"mc", q:"<em>newest</em>", o:["-est，衍生","-est，屈折，表最高級","-st，屈折，表複數","new 和 est 都是詞根"], a:1,
-     e:"-est 是最高級，newest 還是形容詞，詞類沒變，只多了文法資訊，所以是屈折。"},
-    {type:"mc", q:"<em>misunderstand</em>", o:["mis-，衍生","mis-，屈折","mis- 和 under- 都是屈折","沒有詞綴"], a:0,
-     e:"mis- 是「錯誤地」，加了以後仍是動詞，但多了詞彙意義，是衍生。英文的前綴都是衍生詞綴。understand 歷史上是 under + stand，但今天的意思沒辦法從兩個部分推出來，這題不要求切它。"},
-    {type:"mc", q:"<em>Canadian</em>", o:["-ian，衍生","-ian，屈折","-an，屈折","沒有詞綴"], a:0,
-     e:"Canada（名詞）加 -ian，變成「加拿大的」或「加拿大人」。拼寫上兩個 a 合成一個。"},
-    {type:"mc", q:"<em>unlikely</em>", o:["un- 和 -ly，都是衍生","un- 衍生，-ly 屈折","只有 un-，衍生","un- 屈折，-ly 衍生"], a:0,
-     e:"like 加 -ly 先變成形容詞 likely，再加 un-。-ly 改了詞類，是衍生。這裡的 likely 是形容詞，不是副詞。"},
-    {type:"mc", q:"<em>weaken</em>", o:["-en，屈折，表過去分詞","-en，衍生，形容詞變動詞","-n，屈折，表複數","沒有詞綴"], a:1,
-     e:"weak（形容詞）變成 weaken（動詞）。跟 eaten 的 -en 發音一樣，但意義和功能不同，是兩個語素。"},
-    {type:"mc", q:"<em>nieces</em>", o:["-s，衍生","-s，屈折，表複數","-s，屈折，表第三人稱單數","沒有詞綴"], a:1,
-     e:"niece 是名詞，-s 標複數，是屈折。第三人稱單數的 -s 只接在動詞上。"},
-    {type:"mc", q:"<em>expectantly</em>", o:["-ant 和 -ly，都是衍生","只有 -ly，衍生","-ant 衍生，-ly 屈折","-ant 屈折，-ly 衍生"], a:0,
-     e:"expect（動詞）加 -ant 變成形容詞 expectant，再加 -ly 變成副詞。兩次都改了詞類。"}
+  {name:"1 Affixes", ex:"Exercise 3", note:"Identify the affix(es) in each word and decide whether each one is derivational or inflectional.", items:[
+    {type:"mc", q:"<em>purity</em>", o:["-ity, derivational","-ity, inflectional","-y, inflectional","No affix"], a:0,
+     e:"pure (adjective) + -ity gives a noun. An affix that changes the category is derivational. Note the spelling: the e of pure drops."},
+    {type:"mc", q:"<em>newest</em>", o:["-est, derivational","-est, inflectional (superlative)","-st, inflectional (plural)","new and est are both roots"], a:1,
+     e:"-est marks the superlative. newest is still an adjective, so the category does not change; only grammatical information is added. That makes -est inflectional."},
+    {type:"mc", q:"<em>misunderstand</em>", o:["mis-, derivational","mis-, inflectional","mis- and under- are both inflectional","No affix"], a:0,
+     e:"mis- means ‘wrongly’. The word is still a verb, but mis- adds lexical meaning, so it is derivational. All English prefixes are derivational. Historically understand comes from under + stand, but its meaning today cannot be worked out from the two parts, so you are not asked to split it here."},
+    {type:"mc", q:"<em>Canadian</em>", o:["-ian, derivational","-ian, inflectional","-an, inflectional","No affix"], a:0,
+     e:"Canada (noun) + -ian gives a word meaning ‘from Canada’ or ‘a person from Canada’. In spelling, the two a’s merge into one."},
+    {type:"mc", q:"<em>unlikely</em>", o:["un- and -ly, both derivational","un- derivational, -ly inflectional","Only un-, derivational","un- inflectional, -ly derivational"], a:0,
+     e:"like + -ly first makes the adjective likely, and then un- is added. -ly changes the category, so it is derivational. Here likely is an adjective, not an adverb."},
+    {type:"mc", q:"<em>weaken</em>", o:["-en, inflectional (past participle)","-en, derivational (adjective → verb)","-n, inflectional (plural)","No affix"], a:1,
+     e:"weak (adjective) becomes weaken (verb). It sounds like the -en in eaten, but the meaning and function are different, so these are two different morphemes."},
+    {type:"mc", q:"<em>nieces</em>", o:["-s, derivational","-s, inflectional (plural)","-s, inflectional (third person singular)","No affix"], a:1,
+     e:"niece is a noun, and -s marks plural, which is inflectional. The third person singular -s attaches only to verbs."},
+    {type:"mc", q:"<em>expectantly</em>", o:["-ant and -ly, both derivational","Only -ly, derivational","-ant derivational, -ly inflectional","-ant inflectional, -ly derivational"], a:0,
+     e:"expect (verb) + -ant gives the adjective expectant, and adding -ly gives an adverb. Both steps change the category."}
   ]},
-  {name:"2　詞類判斷", ex:"習題 4", note:"判斷斜體字在句子裡的詞類。推理欄請寫你用了什麼判準：詞的形態、它在句子裡的位置，還是意義。", items:[
-    {type:"mc", q:"The car goes very <em>fast</em>.", o:["名詞","動詞","形容詞","副詞"], a:3,
-     e:"fast 修飾動詞 goes，前面還能加 very。它沒有 -ly，但位置和功能都是副詞。"},
-    {type:"mc", q:"Amy likes hot <em>weather</em>.", o:["名詞","動詞","形容詞","副詞"], a:0,
-     e:"weather 前面有形容詞 hot 修飾，整個 hot weather 是 likes 的受詞。"},
-    {type:"mc", q:"Some <em>babies</em> never sleep.", o:["名詞","動詞","形容詞","副詞"], a:0,
-     e:"babies 帶複數 -s，前面有 some，當句子的主詞。"},
-    {type:"mc", q:"I <em>dream</em> about the future.", o:["名詞","動詞","形容詞","副詞"], a:1,
-     e:"dream 接在主詞 I 後面，可以換成過去式 dreamed。"},
-    {type:"mc", q:"I had a <em>dream</em> last night.", o:["名詞","動詞","形容詞","副詞"], a:0,
-     e:"dream 在冠詞 a 後面，當 had 的受詞。跟上一題同一個形式，詞類不同，要看它在句子裡的位置。"},
-    {type:"mc", q:"Our <em>discussion</em> was very interesting.", o:["名詞","動詞","形容詞","副詞"], a:0,
-     e:"discussion 前面有 our，當主詞。-ion 接在動詞 discuss 後面，做出名詞。"},
-    {type:"mc", q:"They started to run <em>quickly</em>.", o:["名詞","動詞","形容詞","副詞"], a:3,
-     e:"quick（形容詞）加 -ly 變副詞，修飾 run。"},
-    {type:"mc", q:"I appreciate your <em>politeness</em>.", o:["名詞","動詞","形容詞","副詞"], a:0,
-     e:"polite（形容詞）加 -ness 變名詞，前面有 your，當受詞。"},
-    {type:"mc", q:"The store <em>misclassified</em> that book.", o:["名詞","動詞","形容詞","副詞"], a:1,
-     e:"misclassified 在主詞後面、受詞前面，帶過去式 -ed。"},
-    {type:"mc", q:"She founded a <em>nongovernmental</em> organization.", o:["名詞","動詞","形容詞","副詞"], a:2,
-     e:"nongovernmental 在冠詞 a 和名詞 organization 中間，修飾名詞。"},
-    {type:"cut", w:"discussion", m:["discuss","ion"], g:["動詞詞根","動→名"],
-     e:"-ion 只接動詞，接上以後變名詞。"},
-    {type:"cut", w:"misclassified", m:["mis","class","ifi","ed"], g:["「錯誤地」","名詞詞根","-ify 名→動","過去式（屈折）"],
-     e:"class 加 -ify 變動詞 classify，再加 mis-，最後加屈折的 -ed。-ify 在 -ed 前面拼成 ifi。"},
-    {type:"cut", w:"nongovernmental", m:["non","govern","ment","al"], g:["否定前綴","動詞詞根","動→名","名→形"],
-     e:"govern → government（名詞）→ governmental（形容詞）→ nongovernmental。-al 接名詞，所以要先有 government。"}
+  {name:"2 Lexical categories", ex:"Exercise 4", note:"Identify the lexical category of the italicized word in each sentence. In your reasoning, say what evidence you used: the form of the word, its position in the sentence, or its meaning.", items:[
+    {type:"mc", q:"The car goes very <em>fast</em>.", o:["Noun","Verb","Adjective","Adverb"], a:3,
+     e:"fast modifies the verb goes, and very can come before it. It has no -ly, but its position and function are those of an adverb."},
+    {type:"mc", q:"Amy likes hot <em>weather</em>.", o:["Noun","Verb","Adjective","Adverb"], a:0,
+     e:"weather is modified by the adjective hot, and the whole phrase hot weather is the object of likes."},
+    {type:"mc", q:"Some <em>babies</em> never sleep.", o:["Noun","Verb","Adjective","Adverb"], a:0,
+     e:"babies carries plural -s, comes after some, and is the subject of the sentence."},
+    {type:"mc", q:"I <em>dream</em> about the future.", o:["Noun","Verb","Adjective","Adverb"], a:1,
+     e:"dream comes right after the subject I, and it can be put in the past tense: dreamed."},
+    {type:"mc", q:"I had a <em>dream</em> last night.", o:["Noun","Verb","Adjective","Adverb"], a:0,
+     e:"dream comes after the determiner a and is the object of had. It has the same form as in the previous item but a different category, so you have to look at where it sits in the sentence."},
+    {type:"mc", q:"Our <em>discussion</em> was very interesting.", o:["Noun","Verb","Adjective","Adverb"], a:0,
+     e:"discussion comes after our and is the subject. -ion attaches to the verb discuss to make a noun."},
+    {type:"mc", q:"They started to run <em>quickly</em>.", o:["Noun","Verb","Adjective","Adverb"], a:3,
+     e:"quick (adjective) + -ly makes an adverb, which modifies run."},
+    {type:"mc", q:"I appreciate your <em>politeness</em>.", o:["Noun","Verb","Adjective","Adverb"], a:0,
+     e:"polite (adjective) + -ness makes a noun. It comes after your and is the object."},
+    {type:"mc", q:"The store <em>misclassified</em> that book.", o:["Noun","Verb","Adjective","Adverb"], a:1,
+     e:"misclassified comes after the subject and before the object, and it carries past tense -ed."},
+    {type:"mc", q:"She founded a <em>nongovernmental</em> organization.", o:["Noun","Verb","Adjective","Adverb"], a:2,
+     e:"nongovernmental sits between the determiner a and the noun organization, and it modifies the noun."},
+    {type:"cut", w:"discussion", m:["discuss","ion"], g:["verb root","V → N"],
+     e:"-ion attaches only to verbs and turns them into nouns."},
+    {type:"cut", w:"misclassified", m:["mis","class","ifi","ed"], g:["‘wrongly’","noun root","-ify: N → V","past tense (inflectional)"],
+     e:"class + -ify makes the verb classify. Then mis- is added, and finally inflectional -ed. Before -ed, -ify is spelled ifi."},
+    {type:"cut", w:"nongovernmental", m:["non","govern","ment","al"], g:["negative prefix","verb root","V → N","N → Adj"],
+     e:"govern → government (noun) → governmental (adjective) → nongovernmental. -al attaches to nouns, so government has to be formed first."}
   ]},
-  {name:"3　複合詞", ex:"習題 6", note:"選出句子裡所有的複合詞。英文複合詞可以連寫、分開寫或加連字號，拼法不是判斷依據。", items:[
+  {name:"3 Compounds", ex:"Exercise 6", note:"Select all the compounds in the sentence. English compounds can be written as one word, as two words, or with a hyphen, so spelling does not tell you whether something is a compound.", items:[
     {type:"multi", q:"Amélie Tourain leaned forward a little and switched on her desk light.",
      o:[{t:"desk light",s:"y"},{t:"leaned forward",s:"n"},{t:"switched on",s:"n"},{t:"a little",s:"n"}],
-     e:"desk light 是兩個名詞詞根合成一個名詞，意思是「桌燈」。leaned forward、switched on 是動詞加一個副詞或小品詞，兩個詞各自獨立，是片語。"},
+     e:"desk light is two noun roots combined into one noun, meaning a lamp on a desk. leaned forward and switched on are each a verb plus an adverb or particle. The two words stay independent, so these are phrases."},
     {type:"multi", q:"The third occasion on which she said something funny the headmistress had glanced at her over Doris Anderson’s note-book, then at Mlle Devaux, and after that things went much easier with the grammar teacher.",
      o:[{t:"headmistress",s:"y"},{t:"note-book",s:"y"},{t:"grammar teacher",s:"y"},{t:"something",s:"e"},{t:"occasion",s:"n"},{t:"much easier",s:"n"}],
-     e:"headmistress、note-book、grammar teacher 各有連寫、連字號、分開寫三種拼法，都是複合詞。something 是 some + thing，現在大多當成一個詞在用，選或不選都算對。"},
+     e:"headmistress, note-book and grammar teacher are written as one word, with a hyphen, and as two words, but all three are compounds. something is some + thing, but today it is mostly treated as a single word, so it counts as correct whether you select it or not."},
     {type:"multi", q:"Mlle Tourain was sitting back in her chair now, and had begun to tap the rubber end of her pencil against the brass ink-pot.",
      o:[{t:"ink-pot",s:"y"},{t:"rubber end",s:"e"},{t:"sitting back",s:"n"},{t:"pencil",s:"n"}],
-     e:"ink-pot 是 ink + pot。rubber end 可以看成複合詞（鉛筆有橡皮擦的那一頭），也可以看成形容詞性的名詞修飾名詞的片語，兩種分析都說得通，選不選都算對。"},
+     e:"ink-pot is ink + pot. rubber end can be analyzed as a compound (the end of the pencil with the eraser) or as a phrase in which one noun modifies another. Both analyses work, so it counts as correct whether you select it or not."},
     {type:"multi", q:"She had spoken with an undercurrent of passion running through her words, as she was speaking now.",
      o:[{t:"undercurrent",s:"y"},{t:"running through",s:"n"},{t:"passion",s:"n"},{t:"spoken",s:"n"}],
-     e:"undercurrent 是介系詞 under 加名詞 current，整個詞是名詞，中心語在右邊。"}
+     e:"undercurrent is the preposition under plus the noun current. The whole word is a noun, and its head is on the right."}
   ]},
-  {name:"4　希伯來文複合詞", ex:"習題 7", note:"看資料回答。每組第一行是希伯來文，第二行是逐詞意思，第三行是整個複合詞的意思。", items:[
-    {type:"mc", q:"哪些詞類的詞根可以組成複合詞？",
+  {name:"4 Hebrew compounds", ex:"Exercise 7", note:"Answer using the data. In each group, the first line is Hebrew, the second line glosses each word, and the third line gives the meaning of the whole compound.", items:[
+    {type:"mc", q:"Which lexical categories do the roots in these compounds belong to?",
      d:"beyt xolim     batey sefer    'orex din\nhouse patient  houses book    editor law\nhospital       schools        lawyer\n\nyom huledet    gan xayot      gan yeladim\nday birth      garden animals garden children\nbirthday       zoo            kindergarten",
-     o:["名詞＋名詞","名詞＋形容詞","動詞＋名詞","形容詞＋形容詞"], a:0,
-     e:"六組的兩個成分都是名詞：house、patient、book、editor、law、day、birth、garden、animals、children。"},
-    {type:"mc", q:"希伯來文複合詞的中心語在左邊還是右邊？",
+     o:["Noun + noun","Noun + adjective","Verb + noun","Adjective + adjective"], a:0,
+     e:"In all six compounds, both parts are nouns: house, patient, houses, book, editor, law, day, birth, garden, animals, children."},
+    {type:"mc", q:"Is the head of a Hebrew compound on the left or on the right?",
      d:"beyt xolim     batey sefer    'orex din\nhouse patient  houses book    editor law\nhospital       schools        lawyer\n\nyom huledet    gan xayot      gan yeladim\nday birth      garden animals garden children\nbirthday       zoo            kindergarten",
-     o:["左邊","右邊","兩邊都是","資料看不出來"], a:0,
-     e:"醫院是一種 house，動物園是一種 garden，所以決定整個詞是什麼東西的是左邊的詞。batey sefer「學校（複數）」把複數標在左邊的 batey（houses）上，也說明左邊是中心語。英文剛好相反，greenhouse 是一種 house，中心語在右邊。"}
+     o:["On the left","On the right","Both","The data do not show it"], a:0,
+     e:"A hospital is a kind of house and a zoo is a kind of garden, so the word on the left determines what kind of thing the compound refers to. In batey sefer ‘schools’, plural is marked on the left word, batey ‘houses’, which also shows that the left word is the head. English is the opposite: a greenhouse is a kind of house, so the head is on the right."}
   ]},
-  {name:"5　土耳其文", ex:"習題 1", note:"資料用國際音標轉寫。先找出每個語素的意思，最後自己造一個詞。", items:[
-    {type:"mc", q:"<em>-ler</em> 的意思是什麼？", d:"__TR__", o:["複數","我們的","在…裡","小"], a:0,
-     e:"eller「hands」、diʃler「teeth」都帶 -ler，比較 el「hand」就看得出來。"},
-    {type:"mc", q:"<em>-imiz</em> 的意思是什麼？", d:"__TR__", o:["我的","我們的","…的（屬格）","從…"], a:1,
-     e:"diʃimizin「of our tooth」減去 diʃ 和 -in「of」，剩下 -imiz「our」。elim「my hand」的 -im 才是「我的」。"},
-    {type:"mc", q:"<em>-dʒık</em> 的意思是什麼？", d:"__TR__", o:["複數","到…","小","房子"], a:2,
-     e:"evdʒıkden「from a little house」對比 evden「from a house」，多出來的 -dʒık 就是 little。"},
-    {type:"mc", q:"下面哪一組格位後綴的意思全對？", d:"__TR__", o:["-e 到、-den 從、-de 在…裡、-in 的","-e 在…裡、-den 到、-de 從、-in 的","-e 的、-den 從、-de 到、-in 在…裡","-e 到、-den 在…裡、-de 從、-in 的"], a:0,
-     e:"denize「to an ocean」、evden「from a house」、elde「in a hand」、denizin「of an ocean」。"},
-    {type:"mc", q:"這份資料裡有幾個前綴？", d:"__TR__", o:["0 個","1 個","2 個","3 個"], a:0,
-     e:"deniz、el、diʃ、ev 四個詞根都在最前面，所有文法語素都接在後面，全部是後綴。"},
-    {type:"mc", q:"後綴的排列順序是？", d:"__TR__", o:["詞根－小－複數－所有者－格位","詞根－複數－小－所有者－格位","詞根－格位－複數－所有者－小","詞根－所有者－複數－小－格位"], a:0,
-     e:"evdʒıklerimizde「in our little houses」：ev + dʒık + ler + imiz + de。"},
-    {type:"fill", q:"「in our little hands」用土耳其文怎麼說？", d:"__TR__", keys:["dʒ","ı","ʃ"], ph:"例如 evdʒıklerimizde 的格式",
+  {name:"5 Turkish", ex:"Exercise 1", note:"The data are transcribed in the IPA. First work out what each morpheme means, then build a new word yourself.", items:[
+    {type:"mc", q:"What does <em>-ler</em> mean?", d:"__TR__", o:["Plural","our","in","little"], a:0,
+     e:"eller ‘hands’ and diʃler ‘teeth’ both contain -ler. Compare them with el ‘hand’."},
+    {type:"mc", q:"What does <em>-imiz</em> mean?", d:"__TR__", o:["my","our","of (genitive)","from"], a:1,
+     e:"Take diʃimizin ‘of our tooth’ and remove diʃ and -in ‘of’. What is left, -imiz, means ‘our’. The -im in elim ‘my hand’ is the one that means ‘my’."},
+    {type:"mc", q:"What does <em>-dʒık</em> mean?", d:"__TR__", o:["Plural","to","little","house"], a:2,
+     e:"Compare evdʒıkden ‘from a little house’ with evden ‘from a house’. The extra -dʒık means ‘little’."},
+    {type:"mc", q:"Which set of meanings for the case suffixes is entirely correct?", d:"__TR__", o:["-e to, -den from, -de in, -in of","-e in, -den to, -de from, -in of","-e of, -den from, -de to, -in in","-e to, -den in, -de from, -in of"], a:0,
+     e:"denize ‘to an ocean’, evden ‘from a house’, elde ‘in a hand’, denizin ‘of an ocean’."},
+    {type:"mc", q:"How many prefixes are there in these data?", d:"__TR__", o:["0","1","2","3"], a:0,
+     e:"The four roots deniz, el, diʃ and ev always come first, and every grammatical morpheme follows them. They are all suffixes."},
+    {type:"mc", q:"In what order do the suffixes appear?", d:"__TR__", o:["root – diminutive – plural – possessor – case","root – plural – diminutive – possessor – case","root – case – plural – possessor – diminutive","root – possessor – plural – diminutive – case"], a:0,
+     e:"evdʒıklerimizde ‘in our little houses’: ev + dʒık + ler + imiz + de."},
+    {type:"fill", q:"How would you say ‘in our little hands’ in Turkish?", d:"__TR__", keys:["dʒ","ı","ʃ"], ph:"Same format as evdʒıklerimizde",
      accept:["elDiklerimizde"],
-     e:"el + dʒık + ler + imiz + de = eldʒıklerimizde。輸入時 dʒ 打成 c、j 或 dj，ı 打成 i 都算對，這題看的是語素順序。"}
+     e:"el + dʒık + ler + imiz + de = eldʒıklerimizde. You may type dʒ as c, j or dj, and ı as i. This item tests the order of the morphemes."}
   ]},
-  {name:"6　海地克里奧爾語", ex:"習題 2", note:"波浪號（~）表示母音鼻化。比較每一組「名詞」和「the 名詞」。", items:[
-    {type:"mc", q:"「the」在這份資料裡有幾種形式（同位異形）？", d:"__KR__", o:["1 種","2 種","3 種","6 種"], a:2,
-     e:"-a（paniea、troua）、-ã（chẽã）、-la（pititla、ãjla、madãmla），一共三種。"},
-    {type:"mc", q:"<em>-la</em> 出現在什麼環境？", d:"__KR__", o:["名詞以子音結尾","名詞以母音結尾","名詞指人","名詞只有一個音節"], a:0,
-     e:"pitit、ãj、madãm 的最後一個音都是子音。"},
-    {type:"mc", q:"<em>-ã</em> 出現在什麼環境？", d:"__KR__", o:["名詞以鼻化母音結尾","名詞以子音結尾","名詞指動物","沒有規律"], a:0,
-     e:"chẽ 以鼻化母音結尾。ãj 和 madãm 裡也有鼻化母音，但最後一個音是子音，所以用 -la。決定形式的是名詞的最後一個音。"},
-    {type:"mc", q:"這種同位異形屬於哪一種條件？", d:"__KR__", o:["語音條件","詞彙條件","語法條件（依名詞的性）","自由變異"], a:0,
-     e:"只要看名詞最後一個音，就能預測用哪個形式，不必一個詞一個詞記，所以是語音條件。英文 ox → oxen 那種只能逐詞記的才是詞彙條件。"}
+  {name:"6 Haitian Creole", ex:"Exercise 2", note:"A tilde (~) marks a nasalized vowel. Compare each noun with its ‘the’ form.", items:[
+    {type:"mc", q:"How many forms (allomorphs) does ‘the’ have in these data?", d:"__KR__", o:["1","2","3","6"], a:2,
+     e:"-a (paniea, troua), -ã (chẽã) and -la (pititla, ãjla, madãmla): three in total."},
+    {type:"mc", q:"Where does <em>-la</em> appear?", d:"__KR__", o:["After nouns ending in a consonant","After nouns ending in a vowel","After nouns that refer to people","After one-syllable nouns"], a:0,
+     e:"pitit, ãj and madãm all end in a consonant."},
+    {type:"mc", q:"Where does <em>-ã</em> appear?", d:"__KR__", o:["After nouns ending in a nasalized vowel","After nouns ending in a consonant","After nouns that refer to animals","There is no pattern"], a:0,
+     e:"chẽ ends in a nasalized vowel. ãj and madãm also contain nasalized vowels, but their last sound is a consonant, so they take -la. The form depends on the last sound of the noun."},
+    {type:"mc", q:"What kind of conditioning is this allomorphy?", d:"__KR__", o:["Phonological","Lexical","Grammatical (depends on the noun’s gender)","Free variation"], a:0,
+     e:"You can predict the form from the last sound of the noun alone, without memorizing it word by word, so it is phonologically conditioned. Lexical conditioning is the ox → oxen kind, which has to be memorized for each word."}
   ]},
-  {name:"7　申論", ex:"習題 5", note:"這題沒有標準答案，不計分，重點是推理欄。", items:[
-    {type:"mc", grade:false, q:"<em>conceive, receive, perceive, deceive</em> 是單語素詞還是多語素詞？", o:["單語素詞","多語素詞"],
-     e:"兩種立場都有依據。主張多語素的理由：con-、re-、per-、de- 和 -ceive 反覆搭配，而且四個詞的名詞形式都把 -ceive 換成 -cept-（conception、reception、perception、deception），說明 -ceive 是一個會一起變化的單位，也就是黏著詞根。主張單語素的理由：-ceive 說不出獨立的意義，receive 的 re- 也不是「再一次」，一般使用者不會把它們拆開理解。"}
+  {name:"7 Short essay", ex:"Exercise 5", note:"This item has no single correct answer and is not scored. What matters is your reasoning.", items:[
+    {type:"mc", grade:false, q:"Are <em>conceive, receive, perceive, deceive</em> monomorphemic or polymorphemic?", o:["Monomorphemic","Polymorphemic"],
+     e:"Both positions can be defended. For polymorphemic: con-, re-, per- and de- keep combining with -ceive, and all four nouns replace -ceive with -cept- (conception, reception, perception, deception). That suggests -ceive is a unit that changes as a whole, that is, a bound root. For monomorphemic: you cannot state a meaning for -ceive on its own, the re- in receive does not mean ‘again’, and ordinary speakers do not take these words apart."}
   ]}
 ];
 const TR = "deniz        'an ocean'             elim             'my hand'\ndenize       'to an ocean'          eller            'hands'\ndenizin      'of an ocean'          diʃler           'teeth'\neve          'to a house'           diʃimizin        'of our tooth'\nevden        'from a house'         diʃlerimizin     'of our teeth'\nevdʒıkden    'from a little house'  eldʒıke          'to a little hand'\ndenizdʒıkde  'in a little ocean'    denizlerimizde   'in our oceans'\nelde         'in a hand'            evdʒıklerimizde  'in our little houses'";
 const KR = "panie  'basket'   paniea  'the basket'\ntrou   'hole'     troua   'the hole'\nchẽ    'dog'      chẽã    'the dog'\npitit  'child'    pititla 'the child'\nãj     'angel'    ãjla    'the angel'\nmadãm  'lady'     madãmla 'the lady'";
 SECTIONS.forEach(s=>s.items.forEach(it=>{if(it.d==="__TR__")it.d=TR;else if(it.d==="__KR__")it.d=KR}));
 
-const WHY_MAX = 300, WHY_MIN = 5;
+const WHY_MAX = 600, WHY_MIN = 20;
 const freshState = () => ({v:2, lv:0, bySec:SECTIONS.map(()=>({i:0,res:[],ans:{},why:{},attempt:1}))});
 let state = freshState();
 const stage = document.getElementById("stage");
@@ -269,13 +269,13 @@ function grade(it, ans){
   if(it.type==="multi"){
     const picked=new Set(ans||[]);
     const ok=it.o.every((o,k)=>o.s==="y"?picked.has(k):o.s==="n"?!picked.has(k):true);
-    return {ok, response: [...picked].sort((a,b)=>a-b).map(k=>it.o[k].t).join(" / ") || "（都不選）"};
+    return {ok, response: [...picked].sort((a,b)=>a-b).map(k=>it.o[k].t).join(" / ") || "(none)"};
   }
   if(it.type==="cut"){
     const cuts=new Set(ans||[]);
     const same=(A,B)=>A.size===B.size&&[...A].every(p=>B.has(p));
     const ok=[it.m,...(it.alt||[])].some(m=>same(cuts,cutsOf(m)));
-    return {ok, response: cuts.size?splitAt(it.w,cuts).join(" + "):"（不切）"};
+    return {ok, response: cuts.size?splitAt(it.w,cuts).join(" + "):"(no cuts)"};
   }
   if(it.type==="fill"){
     return {ok: it.accept.includes(normFill(ans||"")), response: String(ans||"")};
@@ -347,35 +347,35 @@ async function flush(){
 }
 function renderSync(){
   const el = document.getElementById("sync"); if(!el) return;
-  if(!ONLINE){ el.innerHTML = '<span class="pend">成績只存在這台電腦</span>'; return; }
+  if(!ONLINE){ el.innerHTML = '<span class="pend">Saved on this device only</span>'; return; }
   const n = LS.get(QKEY, []).length, dl = LS.get(DLKEY, []).length;
-  let s = n ? `<span class="pend">上傳中，還有 ${n} 筆</span>` : '<span class="ok">成績已記錄</span>';
-  if(dl) s += ` <span class="pend">有 ${dl} 筆沒被收下，請告訴助教</span>`;
+  let s = n ? `<span class="pend">Uploading, ${n} left</span>` : '<span class="ok">Answers recorded</span>';
+  if(dl) s += ` <span class="pend">${dl} answer(s) were not accepted. Please tell your TA.</span>`;
   el.innerHTML = s;
 }
 function renderWho(){
   const el = document.getElementById("who");
   if(!student){ el.hidden = true; return; }
   el.hidden = false;
-  el.innerHTML = `<span>作答者：<b>${esc(student.sid)}</b> ${esc(student.name)}　<button class="linkbtn" id="logout">換人作答</button></span><span class="sync" id="sync"></span>`;
+  el.innerHTML = `<span>Signed in as <b>${esc(student.sid)}</b> ${esc(student.name)} · <button class="linkbtn" id="logout">Switch student</button></span><span class="sync" id="sync"></span>`;
   document.getElementById("logout").onclick = () => { student = null; LS.set("ling_student", null); state = freshState(); renderWho(); route(); };
   renderSync();
 }
 function renderLogin(){
   levelsEl.hidden = true;
   stage.innerHTML = `<section class="card"><form class="login" id="login" novalidate>
-    <p class="q">開始前請填學號和姓名。</p>
-    <div class="field"><label for="sid">學號</label><input id="sid" autocomplete="off" placeholder="例如 B13012345" maxlength="9"></div>
-    <div class="field"><label for="sname">姓名</label><input id="sname" autocomplete="name" maxlength="30"></div>
+    <p class="q">Enter your student ID and name to begin.</p>
+    <div class="field"><label for="sid">Student ID</label><input id="sid" autocomplete="off" placeholder="e.g. B13012345" maxlength="9"></div>
+    <div class="field"><label for="sname">Name</label><input id="sname" autocomplete="name" maxlength="30"></div>
     <p class="err" id="lerr"></p>
-    <div><button class="btn primary" type="submit">開始作答</button></div></form></section>`;
+    <div><button class="btn primary" type="submit">Start</button></div></form></section>`;
   document.getElementById("login").onsubmit = e => {
     e.preventDefault();
     const sid = document.getElementById("sid").value.trim().toUpperCase();
     const nm = document.getElementById("sname").value.trim();
     const err = document.getElementById("lerr");
-    if(!/^[A-Z][0-9]{8}$/.test(sid)){ err.textContent = "學號是一個英文字母加 8 位數字，例如 B13012345。"; return; }
-    if(!nm){ err.textContent = "請填姓名。"; return; }
+    if(!/^[A-Z][0-9]{8}$/.test(sid)){ err.textContent = "A student ID is one letter followed by 8 digits, e.g. B13012345."; return; }
+    if(!nm){ err.textContent = "Please enter your name."; return; }
     student = {sid, name:nm}; LS.set("ling_student", student);
     loadProg(); renderWho(); route();
   };
@@ -396,12 +396,12 @@ function glossHTML(m,g){
 }
 function navRow(onPrev,onNext,canPrev,canNext,nextLabel){
   const row=document.createElement("div");row.className="row";
-  row.innerHTML=`<div class="btns"><button class="btn" id="nav-prev" ${canPrev?"":"disabled"}>上一題</button></div><div class="btns"><button class="btn primary" id="nav-next" ${canNext?"":"disabled"}>${nextLabel}</button></div>`;
+  row.innerHTML=`<div class="btns"><button class="btn" id="nav-prev" ${canPrev?"":"disabled"}>Previous</button></div><div class="btns"><button class="btn primary" id="nav-next" ${canNext?"":"disabled"}>${nextLabel}</button></div>`;
   row.querySelector("#nav-prev").onclick=onPrev;row.querySelector("#nav-next").onclick=onNext;
   return row;
 }
 function doneCard(score,total,msg,onRestart,extraBtn){
-  stage.innerHTML=`<section class="card done"><div class="eyebrow">完成</div><div class="big">${total?`${score} / ${total}`:"已送出"}</div><p class="hint">${msg}</p><div class="btns"><button class="btn" id="restart">重新作答</button>${extraBtn||""}</div></section>`;
+  stage.innerHTML=`<section class="card done"><div class="eyebrow">Done</div><div class="big">${total?`${score} / ${total}`:"Submitted"}</div><p class="hint">${msg}</p><div class="btns"><button class="btn" id="restart">Try again</button>${extraBtn||""}</div></section>`;
   document.getElementById("restart").onclick=onRestart;
 }
 function renderLevels(){
@@ -417,8 +417,8 @@ function renderSec(){
   saveProg();
   if(S.i>=SEC.items.length){
     const nextLv=lvI+1<SECTIONS.length;
-    doneCard(tally(S.res),graded(SEC),nextLv?"這一部分做完了，下一部分更難。":"全部做完了。",
-      ()=>{S.i=0;S.res=[];S.ans={};S.why={};S.attempt=(S.attempt||1)+1;renderSec()},nextLv?'<button class="btn primary" id="next-lv">下一部分</button>':"");
+    doneCard(tally(S.res),graded(SEC),nextLv?"You've finished this section. The next one is harder.":"You've finished all the sections.",
+      ()=>{S.i=0;S.res=[];S.ans={};S.why={};S.attempt=(S.attempt||1)+1;renderSec()},nextLv?'<button class="btn primary" id="next-lv">Next section</button>':"");
     if(nextLv)document.getElementById("next-lv").onclick=()=>{state.lv++;renderSec()};
     return;
   }
@@ -427,15 +427,15 @@ function renderSec(){
   let ans = S.ans[S.i];
   if(ans===undefined) ans = it.type==="multi"||it.type==="cut" ? [] : it.type==="fill" ? "" : null;
   const card=document.createElement("section");card.className="card";
-  card.innerHTML=`<div class="meta"><span>${esc(SEC.ex)} · 第 ${S.i+1} / ${SEC.items.length} 題</span>${dots(SEC.items.length,S.res,S.i)}</div>
+  card.innerHTML=`<div class="meta"><span>${esc(SEC.ex)} · Question ${S.i+1} of ${SEC.items.length}</span>${dots(SEC.items.length,S.res,S.i)}</div>
     <p class="hint">${SEC.note}</p>
-    ${it.type==="cut"?`<p class="q">把 <em>${esc(it.w)}</em> 切到最小的語素。</p>`:`<p class="q">${it.q}</p>`}
+    ${it.type==="cut"?`<p class="q">Split <em>${esc(it.w)}</em> into its smallest morphemes.</p>`:`<p class="q">${it.q}</p>`}
     ${it.d?`<div class="data">${esc(it.d)}</div>`:""}
     <div id="widget"></div>
-    <div class="why"><label for="why">推理過程：你怎麼得到這個答案？</label>
-      <textarea id="why" maxlength="${WHY_MAX}" placeholder="至少寫一句，例如你比較了哪些詞、用了什麼判準"></textarea>
+    <div class="why"><label for="why">Your reasoning: how did you get this answer?</label>
+      <textarea id="why" maxlength="${WHY_MAX}" placeholder="Write at least one sentence, e.g. which words you compared or what evidence you used"></textarea>
       <span class="cnt" id="cnt"></span></div>
-    <div class="row"><span class="hint" id="need"></span><div class="btns"><button class="btn primary" id="submit">送出</button></div></div>
+    <div class="row"><span class="hint" id="need"></span><div class="btns"><button class="btn primary" id="submit">Submit</button></div></div>
     <div id="fb"></div>`;
   const W=card.querySelector("#widget"), why=card.querySelector("#why"), btn=card.querySelector("#submit");
   why.value=S.why[S.i]||"";
@@ -444,8 +444,8 @@ function renderSec(){
   const refresh=()=>{
     const n=why.value.trim().length;
     card.querySelector("#cnt").textContent=`${why.value.length} / ${WHY_MAX}`;
-    const miss=[];if(!hasAns())miss.push("先作答");if(n<WHY_MIN)miss.push(`推理至少寫 ${WHY_MIN} 個字`);
-    card.querySelector("#need").textContent=done?"":miss.join("，");
+    const miss=[];if(!hasAns())miss.push("Choose an answer");if(n<WHY_MIN)miss.push(`Write at least ${WHY_MIN} characters of reasoning`);
+    card.querySelector("#need").textContent=done?"":miss.join(" · ");
     btn.disabled=done||miss.length>0;
   };
   why.oninput=()=>{S.why[S.i]=why.value;saveProg();refresh()};
@@ -459,7 +459,7 @@ function renderSec(){
         else{if(k===ans)b.classList.add("sel");b.onclick=()=>{ans=k;S.ans[S.i]=k;saveProg();drawWidget();refresh()}}});
     }else if(it.type==="multi"){
       const picked=new Set(ans);
-      W.innerHTML=`<p class="hint">可以選好幾個，也可以都不選。</p><div class="opts">${it.o.map((o,k)=>`<button class="opt" data-k="${k}" aria-pressed="${picked.has(k)}"><span class="box">${picked.has(k)?"☑":"☐"}</span><span>${esc(o.t)}</span></button>`).join("")}</div>`;
+      W.innerHTML=`<p class="hint">Select all that apply, or none.</p><div class="opts">${it.o.map((o,k)=>`<button class="opt" data-k="${k}" aria-pressed="${picked.has(k)}"><span class="box">${picked.has(k)?"☑":"☐"}</span><span>${esc(o.t)}</span></button>`).join("")}</div>`;
       W.querySelectorAll(".opt").forEach(b=>{const k=+b.dataset.k,o=it.o[k];
         if(done){b.disabled=true;
           if(picked.has(k))b.classList.add(o.s==="n"?"wrong":"right");
@@ -473,20 +473,20 @@ function renderSec(){
         if(k>0){
           let cls=cuts.has(k)?"on":"";
           if(done&&!okNow){if(cuts.has(k)&&!answer.has(k))cls="on extra";else if(!cuts.has(k)&&answer.has(k))cls="miss"}
-          h+=`<button class="gap ${cls}" data-p="${k}" aria-label="在 ${w[k-1]} 和 ${w[k]} 之間切" ${done?"disabled":""}></button>`;
+          h+=`<button class="gap ${cls}" data-p="${k}" aria-label="Cut between ${w[k-1]} and ${w[k]}" ${done?"disabled":""}></button>`;
         }
         h+=`<span class="ch">${esc(w[k])}</span>`;
       }
-      W.innerHTML=`<p class="hint">點字母之間的空隙切一刀，再點一次取消。</p><div class="cutter"><div class="word">${h}</div></div>
-        <div class="readout">${cuts.size?esc(splitAt(w,cuts).join(" + ")):"（還沒切，一刀不切就代表單語素詞）"}</div>
-        ${done?'<div class="legend"><span><i></i>你切的位置</span><span><i class="m"></i>漏切的位置</span></div>':'<div class="btns"><button class="btn" id="clear">全部清除</button></div>'}`;
+      W.innerHTML=`<p class="hint">Click a gap between two letters to cut there. Click it again to undo.</p><div class="cutter"><div class="word">${h}</div></div>
+        <div class="readout">${cuts.size?esc(splitAt(w,cuts).join(" + ")):"(no cuts yet; leaving the word uncut means it is a single morpheme)"}</div>
+        ${done?'<div class="legend"><span><i></i>Your cuts</span><span><i class="m"></i>Missed cuts</span></div>':'<div class="btns"><button class="btn" id="clear">Clear all</button></div>'}`;
       if(!done){
         W.querySelectorAll(".gap").forEach(g=>g.onclick=()=>{const p=+g.dataset.p;cuts.has(p)?cuts.delete(p):cuts.add(p);ans=[...cuts];S.ans[S.i]=ans;saveProg();drawWidget()});
         W.querySelector("#clear").onclick=()=>{ans=[];S.ans[S.i]=[];saveProg();drawWidget()};
       }
     }else if(it.type==="fill"){
       W.innerHTML=`<div class="fill"><input id="fillin" autocomplete="off" spellcheck="false" placeholder="${esc(it.ph||"")}" ${done?"disabled":""}>
-        ${done?"":`<div class="keys">${it.keys.map(c=>`<button class="key" data-c="${esc(c)}">${esc(c)}</button>`).join("")}<span class="hint">點符號插入</span></div>`}</div>`;
+        ${done?"":`<div class="keys">${it.keys.map(c=>`<button class="key" data-c="${esc(c)}">${esc(c)}</button>`).join("")}<span class="hint">Click a symbol to insert it</span></div>`}</div>`;
       const inp=W.querySelector("#fillin");inp.value=ans;
       inp.oninput=()=>{ans=inp.value;S.ans[S.i]=ans;saveProg();refresh()};
       W.querySelectorAll(".key").forEach(b=>b.onclick=()=>{
@@ -497,10 +497,10 @@ function renderSec(){
 
   const feedback=()=>{
     const ok=S.res[S.i];
-    let verdict = ok===null ? "已送出（這題不計分）" : ok ? "答對了" : "答錯了";
+    let verdict = ok===null ? "Submitted (this item is not scored)" : ok ? "Correct" : "Incorrect";
     let extra="";
-    if(it.type==="mc"&&ok===false) verdict+=`，正確答案是 ${"ABCD"[it.a]}`;
-    if(it.type==="multi"&&ok===false) extra='<span>綠色虛線是漏選的，紅色是不該選的。</span>';
+    if(it.type==="mc"&&ok===false) verdict+=`. The answer is ${"ABCD"[it.a]}.`;
+    if(it.type==="multi"&&ok===false) extra='<span>Dashed green marks the ones you missed. Red marks the ones you should not have selected.</span>';
     if(it.type==="cut") extra=glossHTML(it.m,it.g);
     card.querySelector("#fb").innerHTML=`<div class="expl ${ok===false?"bad":""}"><span class="verdict">${verdict}</span>${extra}<span>${it.e}</span></div>`;
   };
@@ -520,7 +520,7 @@ function renderSec(){
   if(done){why.disabled=true;feedback()}
   refresh();
   stage.innerHTML="";stage.appendChild(card);
-  const nav=navRow(()=>{S.i--;renderSec()},()=>{S.i++;renderSec()},S.i>0,done,S.i===SEC.items.length-1?"看這部分成績":"下一題");
+  const nav=navRow(()=>{S.i--;renderSec()},()=>{S.i++;renderSec()},S.i>0,done,S.i===SEC.items.length-1?"See section score":"Next");
   card.appendChild(nav);
 }
 
