@@ -61,3 +61,5 @@ C:\Python313\python.exe build_site.py --endpoint "https://script.google.com/macr
 - 部署當下打網址回傳的是 Google 授權頁，還沒授權。docs/ 還沒用這個網址重建（自動權限擋下，交給使用者自己跑）。
 - 更新：使用者已授權（ping 回 ok）。用 curl 送了兩筆 Z00000000 測試資料（S1-01 短推理、S1-02 推理 300 個中文字，網址 3380 字元），都回 ok。docs/ 已用 @1 網址重建，無頭 Edge 從網頁送一筆 S1-03，佇列清空、畫面顯示「成績已記錄」。Sheet 的 answers 分頁有三列 Z00000000 測試資料，上線前要刪。
 - 還沒做：commit、推 GitHub Pages（gh 未登入）、標準答案人工核對。
+- 已上線：repo https://github.com/william12995/ling-intro-practice （public，gh 帳號 william12995），Pages 從 main /docs 發布。學生網址 https://william12995.github.io/ling-intro-practice/ch01_morphology/ ，線上版確認有後端網址與授權頁尾。
+- 上線前待辦：刪掉 Sheet answers 裡 3 列 Z00000000 測試資料；標準答案人工核對。改題目後要 build_site.py（帶網址）→ commit → push，Pages 會自動更新。
