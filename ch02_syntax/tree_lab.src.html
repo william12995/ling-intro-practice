@@ -126,19 +126,30 @@ h1 .plus{color:var(--cut);font-family:var(--mono);font-weight:500;padding:0 .12e
 .ai textarea{font:inherit;font-size:14px;min-height:64px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 
 .treewrap{overflow-x:auto;padding:6px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-height:80px;text-align:center}
-svg.tree{display:inline-block;font-family:var(--serif);font-size:16px;color:var(--ink)}
+.treewrap.empty{text-align:left;padding:14px}
+.treewrap.empty p{margin:0}
+svg.tree{display:inline-block;font-family:var(--serif);font-size:16px}
 svg.tree text{fill:var(--ink);pointer-events:none}
 svg.tree .wd{font-style:italic}
+svg.tree .lab.q{fill:var(--muted)}
+svg.tree .lab.bad{fill:var(--cut);font-weight:600}
 svg.tree .ln{stroke:var(--muted);stroke-width:1.3;fill:none}
-svg.tree polygon.ln{fill:none}
-svg.tree .hit{fill:transparent;stroke:transparent;stroke-width:1.5;cursor:pointer;pointer-events:all}
-svg.tree .hit:hover{stroke:var(--line)}
-svg.tree .hit.sel{stroke:var(--accent);fill:var(--accent-soft);fill-opacity:.6}
-svg.tree .nd.bad text{fill:var(--cut);font-weight:600}
+svg.tree .slot{fill:transparent;stroke:transparent;stroke-width:1.5;cursor:pointer;pointer-events:all}
+svg.tree .slot.empty{stroke:var(--muted);stroke-dasharray:4 3}
+svg.tree .slot.armed,svg.tree .slot:hover{stroke:var(--accent)}
+svg.tree .slot.over{stroke:var(--accent);fill:var(--accent-soft)}
 .palette{display:flex;flex-direction:column;gap:8px}
 .pgrp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .pname{font-size:12px;font-family:var(--mono);color:var(--muted);min-width:120px}
-.key:disabled{opacity:.4;cursor:default}
+.chip{appearance:none;font-family:var(--serif);font-size:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:3px 12px;cursor:grab;touch-action:manipulation}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+#br{font-family:var(--mono);font-size:15px;line-height:1.6;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical;width:100%}
+#br:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#br:disabled{background:var(--ground)}
+.steps{display:flex;flex-direction:column;gap:8px}
+.qmark{font-family:var(--serif);border:1px dashed var(--muted);border-radius:4px;padding:0 6px}
+code,.mono{font-family:var(--mono);font-size:.92em}
+pre.data{margin:8px 0 0}
 details summary{cursor:pointer;font-weight:500;margin-bottom:8px}
 </style>
 
@@ -146,7 +157,7 @@ details summary{cursor:pointer;font-weight:500;margin-bottom:8px}
   <header>
     <div class="eyebrow">Syntax · prototype</div>
     <h1>Build the tree</h1>
-    <p class="lede">Turn a sentence into a tree the way the textbook does: label each word, then join pieces from the bottom up.</p>
+    <p class="lede">Step 1: bracket the sentence to show its structure. Step 2: drag a label onto every node.</p>
   </header>
   <div id="stage"></div>
   <p class="credit">Prototype. Trees follow the X-bar / TP notation of Anderson et al., <em>Essentials of Linguistics</em>, 2nd ed. (CC BY-NC-SA 4.0).</p>
@@ -154,8 +165,8 @@ details summary{cursor:pointer;font-weight:500;margin-bottom:8px}
 
 <script>
 /* ---------- 題目 ----------
-   key 用括號寫法：[標籤 子…]，最底下的詞直接寫在標籤後面。$ 代表句中沒有發音的時態（[–PAST]）。
-   alts 是也算對的其他分析。判分比對「標籤+涵蓋的詞範圍」的集合，不比對字串。 */
+   key 是帶標籤的括號寫法：[標籤 子…]，詞直接接在它的詞類標籤後面。$ 代表句中沒有發音的時態。
+   判分：整棵帶標籤的樹（含子節點順序）要跟標準答案一樣。回饋另外比對「標籤+涵蓋的詞範圍」。 */
 const ITEMS = [
   { ex:"Ex. 14a", words:["the","children","$","read","the","book"],
     key:"[TP [NP [DP the] [N' [N children]]] [T' [T $] [VP [V' [V read] [NP [DP the] [N' [N book]]]]]]]",
@@ -170,151 +181,178 @@ const ITEMS = [
     key:"[TP [NP [N' [N I]]] [T' [T have] [VP [V' [V finished] [NP [DP my] [N' [N homework]]]]]]]",
     e:"<em>Have</em> is a non-modal auxiliary, so it is a T and <em>finished</em> is the main verb inside VP. <em>My</em> is a determiner in the specifier of the NP <em>my homework</em>." },
 ];
-const HEADS=["N","V","T","A","P","DP"], BARS=["N'","V'","T'","A'","P'"], PHR=["NP","VP","TP","AP","PP"];
+const LABELS = ["N","V","T","A","P","DP","N'","V'","T'","A'","P'","NP","VP","TP","AP","PP"];
+const GROUPS = [["Word categories",["N","V","T","A","P","DP"]],["Bar levels",["N'","V'","T'","A'","P'"]],["Phrases",["NP","VP","TP","AP","PP"]]];
 
-/* ---------- 樹的資料結構與括號解析 ---------- */
-function parseKey(str, words){
-  const tk = str.match(/\[|\]|[^\s\[\]]+/g); let p = 0, leaf = 0;
+/* ---------- 括號解析（學生輸入和標準答案共用）。標籤可寫可不寫，沒寫的節點之後用拖曳補。 ---------- */
+function parseBr(str){
+  const tk = str.replace(/[’′]/g,"'").replace(/[［【]/g,"[").replace(/[］】]/g,"]").match(/\[|\]|[^\s\[\]]+/g) || [];
+  let p = 0, leaf = 0; const leaves = [];
   function node(){
-    p++;                                   // [
-    const l = tk[p++], n = {l, k:[]};
+    p++;                                                     // [
+    const n = {l:null, k:[]};
+    if(LABELS.includes(tk[p])) n.l = tk[p++];
     while(tk[p] !== "]"){
+      if(tk[p] === undefined) throw new Error("A [ is never closed. Every [ needs a matching ].");
       if(tk[p] === "[") n.k.push(node());
-      else { n.k.push({w:tk[p++], i:leaf++}); }
+      else { leaves.push(tk[p]); n.k.push({w:tk[p++], i:leaf++}); }
     }
-    p++; return n;                         // ]
+    if(!n.k.length) throw new Error("There is an empty pair of brackets.");
+    const w = n.k.find(c => c.w !== undefined);
+    if(w && n.k.length > 1) throw new Error(`Every word needs its own pair of brackets, like [${w.w}]. That pair is the node that will get the word's category.`);
+    p++; return n;                                           // ]
   }
+  if(!tk.length) throw new Error("Type your bracketing above. Example for “the cat”: [ [the] [ [cat] ] ]");
+  if(tk[0] !== "[") throw new Error("The whole tree must start with [ and end with ].");
   const t = node();
-  if(leaf !== words.length) console.warn("key/word count mismatch", str);
-  return t;
+  if(p < tk.length) throw new Error(tk[p] === "]" ? "There is an extra ] with no matching [." : "Something is outside the outermost brackets. The whole tree must be inside one pair of [ ].");
+  return {tree:t, leaves};
+}
+const wordEq = (tok, w) => w === "$" ? /^[+\-–−]?PAST$/i.test(tok) : tok.toLowerCase() === w.toLowerCase();
+function checkWords(leaves, words){
+  if(leaves.length === words.length && leaves.every((t,i)=>wordEq(t, words[i]))) return "";
+  return `The words in your brackets, in order, are: ${leaves.join(" ") || "(none)"}. They should be: ${words.map(w=>w==="$"?"–PAST":w).join(" ")}. Write the tense slot as –PAST or +PAST, in its own brackets.`;
 }
 function span(n){ if(n.w !== undefined){ n.s = n.e = n.i; } else { n.k.forEach(span); n.s = Math.min(...n.k.map(c=>c.s)); n.e = Math.max(...n.k.map(c=>c.e)); } }
-function sigs(n, out=new Set()){ if(n.l){ n.sig = n.l+"|"+n.s+"|"+n.e; out.add(n.sig); n.k.forEach(c=>sigs(c,out)); } return out; }
+function sigs(n, out=new Set()){ if(n.w !== undefined) return out; if(n.l){ n.sig = n.l+"|"+n.s+"|"+n.e; out.add(n.sig); } n.k.forEach(c=>sigs(c,out)); return out; }
+const canon = (n, words) => n.w !== undefined ? words[n.i].toLowerCase() : `[${n.l} ${n.k.map(c=>canon(c,words)).join(" ")}]`;
+const shape = n => n.w !== undefined ? "w" : "(" + n.k.map(shape).join("") + ")";
 const shown = w => w === "$" ? "[–PAST]" : w;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clone = x => JSON.parse(JSON.stringify(x));
-ITEMS.forEach(it => { it.tree = parseKey(it.key, it.words); span(it.tree); it.sigs = sigs(it.tree); });
+ITEMS.forEach(it => { const r = parseBr(it.key); if(checkWords(r.leaves, it.words)) console.warn("key/word mismatch", it.ex);
+  it.tree = r.tree; span(it.tree); it.sigs = sigs(it.tree); it.canon = canon(it.tree, it.words); });
 
-/* ---------- 畫樹（SVG）。roots 是一排樹；點根節點可選取 ---------- */
-function drawForest(roots, words, o={}){
+/* 把學生的詞換成句子的詞（統一大小寫和時態符號），並套上拖曳補的標籤。path 是節點在樹裡的位置。 */
+function finish(tree, words, lab){
+  (function walk(n, path){
+    if(n.w !== undefined){ n.w = words[n.i]; return; }
+    n.p = path; if(lab[path] !== undefined) n.l = lab[path];
+    n.k.forEach((c,j) => walk(c, path + "." + j));
+  })(tree, "r");
+  span(tree); sigs(tree);
+}
+const nodesOf = n => n.w !== undefined ? [] : [n, ...n.k.flatMap(nodesOf)];
+
+/* ---------- 畫樹（SVG）。interactive 時每個節點是可放標籤的格子 ---------- */
+function drawTree(root, words, o={}){
   const colW = words.map(w => Math.max(64, shown(w).length*10 + 24));
   const cx = []; let acc = 0; colW.forEach(w => { cx.push(acc + w/2); acc += w; });
   const DY = 46, TOP = 22; let maxD = 0;
-  function lay(n, d){ n.y = TOP + d*DY; maxD = Math.max(maxD, d);
+  (function lay(n, d){ n.y = TOP + d*DY; maxD = Math.max(maxD, d);
     if(n.w !== undefined){ n.x = cx[n.i]; return; }
-    n.k.forEach(c => lay(c, d+1)); n.x = n.k.reduce((a,c)=>a+c.x, 0)/n.k.length; }
-  roots.forEach(r => { span(r); sigs(r); lay(r, 0); });
+    n.k.forEach(c => lay(c, d+1)); n.x = n.k.reduce((a,c)=>a+c.x, 0)/n.k.length; })(root, 0);
   let g = "";
-  function walk(n, ri, isRoot){
-    if(n.w !== undefined){
-      const bare = isRoot;
-      g += `<text class="wd ${bare?"pick":""}" x="${n.x}" y="${n.y+5}" text-anchor="middle" ${bare?`data-r="${ri}"`:""}>${esc(shown(n.w))}</text>`;
-      if(bare) g += `<rect class="hit ${o.sel&&o.sel.includes(ri)?"sel":""}" x="${n.x-colW[n.i]/2+4}" y="${n.y-15}" width="${colW[n.i]-8}" height="28" rx="6" data-r="${ri}"/>`;
-      return;
-    }
+  (function walk(n){
+    if(n.w !== undefined){ g += `<text class="wd" x="${n.x}" y="${n.y+5}" text-anchor="middle">${esc(shown(n.w))}</text>`; return; }
     const tri = n.l === "DP" && n.k.length === 1 && n.k[0].w !== undefined;
     n.k.forEach(c => {
       if(tri) g += `<polygon class="ln" points="${n.x},${n.y+10} ${c.x-14},${c.y-14} ${c.x+14},${c.y-14}"/>`;
       else g += `<line class="ln" x1="${n.x}" y1="${n.y+11}" x2="${c.x}" y2="${c.y-13}"/>`;
     });
-    n.k.forEach(c => walk(c, ri, false));
-    const bad = o.bad && o.bad.has(n.sig), w = n.l.length*9.5 + 16;
-    g += `<g class="nd ${bad?"bad":""}">` +
-      (isRoot ? `<rect class="hit ${o.sel&&o.sel.includes(ri)?"sel":""}" x="${n.x-w/2}" y="${n.y-13}" width="${w}" height="26" rx="6" data-r="${ri}"/>` : "") +
-      `<text x="${n.x}" y="${n.y+5}" text-anchor="middle">${esc(n.l)}</text></g>`;
-  }
-  roots.forEach((r,i) => walk(r, i, true));
+    n.k.forEach(walk);
+    const w = n.l ? n.l.length*9.5 + 16 : 30, bad = o.bad && o.bad.has(n.sig);
+    if(o.interactive) g += `<rect class="slot ${n.l?"":"empty"} ${o.chip?"armed":""}" data-p="${n.p}" x="${n.x-w/2}" y="${n.y-13}" width="${w}" height="26" rx="6"/>`;
+    g += `<text class="lab ${n.l?"":"q"} ${bad?"bad":""}" x="${n.x}" y="${n.y+5}" text-anchor="middle">${n.l ? esc(n.l) : "?"}</text>`;
+  })(root);
   const W = acc + 8, H = TOP + maxD*DY + 26;
   return `<svg class="tree" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Syntax tree">${g}</svg>`;
 }
 
-/* ---------- 狀態 ---------- */
+/* ---------- 狀態與畫面 ---------- */
 const stage = document.getElementById("stage");
 let cur = 0;
-const S = ITEMS.map(it => ({ forest: it.words.map((w,i)=>({w, i})), hist: [], sel: [], done: false, ok: null, msg: "" }));
+const S = ITEMS.map(() => ({text:"", lab:{}, shape:"", chip:null, done:false, ok:null}));
 const okCount = () => S.filter(s => s.ok === true).length;
-
-function validSel(st){
-  const s = st.sel; if(!s.length) return "Select a word or a piece of the tree to begin.";
-  if(s.length === 2 && s[1] !== s[0]+1) return "Pick two pieces that sit next to each other.";
-  return "";
-}
-function apply(st, label){
-  const s = st.sel, F = st.forest, bare = i => F[i].w !== undefined;
-  if(!s.length) return "Select something first.";
-  if(s.length === 1){
-    if(bare(s[0])){
-      if(!HEADS.includes(label)) return "A word gets a category label first (N, V, T, A, P or DP). Build up from there.";
-    }
-    st.hist.push(clone(F));
-    F[s[0]] = {l:label, k:[F[s[0]]]};
-  } else {
-    if(bare(s[0]) || bare(s[1])) return "Label each word with its category before joining it to anything.";
-    st.hist.push(clone(F));
-    F.splice(s[0], 2, {l:label, k:[F[s[0]], F[s[1]]]});
-  }
-  st.sel = []; return "";
-}
-
-function submit(it, st){
-  const F = st.forest[0]; span(F); const mine = sigs(F);
-  const missing = [...it.sigs].filter(x => !mine.has(x)), extra = [...mine].filter(x => !it.sigs.has(x));
-  st.done = true; st.ok = !missing.length && !extra.length; st.missing = missing; st.extra = new Set(extra);
-}
 const describe = (sig, words) => { const [l,s,e] = sig.split("|"); return `<b>${esc(l)}</b> over <em>${words.slice(+s,+e+1).map(shown).join(" ")}</em>`; };
 
-/* ---------- 畫面 ---------- */
+/* 讀學生的括號：回傳 {tree} 或 {err}。結構一改，拖過的標籤就作廢 */
+function read(it, st){
+  let r; try{ r = parseBr(st.text); }catch(e){ return {err:e.message}; }
+  const bad = checkWords(r.leaves, it.words); if(bad) return {err:bad};
+  const sh = shape(r.tree); if(sh !== st.shape){ st.lab = {}; st.shape = sh; }
+  finish(r.tree, it.words, st.lab); return {tree:r.tree};
+}
+
 function render(){
   const it = ITEMS[cur], st = S[cur];
   const dots = ITEMS.map((_,k)=>`<span class="dot ${S[k].ok===true?"ok":S[k].ok===false?"no":""} ${k===cur?"cur":""}"></span>`).join("");
-  const F = st.forest, ready = F.length === 1 && !st.done;
-  const treeHTML = drawForest(F, it.words, {sel:st.sel, bad:st.extra});
-  let palette = "";
-  if(!st.done){
-    const grp = (name, arr) => `<div class="pgrp"><span class="pname">${name}</span>${arr.map(l=>`<button class="key" data-l="${esc(l)}">${esc(l)}</button>`).join("")}</div>`;
-    palette = `<div class="palette">${grp("Word categories", HEADS)}${grp("Add a bar level", BARS)}${grp("Add a phrase", PHR)}</div>`;
-  }
-  let result = "";
-  if(st.done){
-    const miss = st.missing.length ? `<span>Missing: ${st.missing.map(m=>describe(m,it.words)).join("; ")}.</span>` : "";
-    const ext = st.extra.size ? `<span>Not in the standard tree (marked red above): ${[...st.extra].map(m=>describe(m,it.words)).join("; ")}.</span>` : "";
-    result = `<div class="expl ${st.ok?"":"bad"}"><span class="verdict">${st.ok?"Correct":"Not quite"}</span>${miss}${ext}<span>${it.e}</span></div>
-      <details ${st.ok?"":"open"}><summary>Standard tree</summary><div class="treewrap">${drawForest([clone(it.tree)], it.words)}</div></details>`;
-  }
   stage.innerHTML = `<section class="card">
     <div class="meta"><span>${it.ex} · Sentence ${cur+1} of ${ITEMS.length}</span><div class="dots">${dots}</div></div>
     <p class="q">Draw the tree for <em>${it.words.filter(w=>w!=="$").join(" ")}.</em></p>
-    <p class="hint">1. Select a word, then choose its category. 2. Select one piece to add a bar level or phrase above it, or two neighbouring pieces to join them. 3. Keep going until one tree is left. <span class="hint-t">The tense slot [–PAST] is a word too: it is the T when there is no auxiliary.</span></p>
-    <div class="treewrap" id="tw">${treeHTML}</div>
-    ${palette}
-    <p class="${st.msg?"err":"hint"}" id="msg">${esc(st.msg||validSelMsg(st))}</p>
-    <div class="row"><div class="btns">${st.done?"":`<button class="btn" id="undo" ${st.hist.length?"":"disabled"}>Undo</button><button class="btn" id="reset" ${st.hist.length?"":"disabled"}>Start over</button>`}</div>
-      <div class="btns">${st.done?"":`<button class="btn primary" id="submit" ${ready?"":"disabled"}>Submit</button>`}</div></div>
-    ${result}
+    <div class="steps">
+      <p class="hint"><b>Step 1.</b> Type the bracketing. Every constituent gets a pair of brackets, and every word gets its own pair too, because that pair is the word's category node. Example for <em>the cat</em>: <code>[ [the] [ [cat] ] ]</code>. If the sentence has no auxiliary, the tense slot is a word too: <code>[–PAST]</code>. Your words, in order: <b class="mono">${esc(it.words.map(shown).join("  "))}</b></p>
+      <p class="hint"><b>Step 2.</b> Drag a label from the box onto each <span class="qmark">?</span> in the tree. On a phone, tap a label, then tap the node. (You can also type labels inside the brackets, like <code>[NP ...]</code>.)</p>
+    </div>
+    <div class="field"><label for="br">Bracketing</label>
+      <textarea id="br" spellcheck="false" autocomplete="off" autocapitalize="off" rows="4" ${st.done?"disabled":""}></textarea>
+      ${st.done?"":`<div class="keys"><button class="key" data-i="[">[</button><button class="key" data-i="]">]</button><button class="key" data-i="–">–</button><button class="key" id="fmt">Tidy up</button></div>`}</div>
+    <div class="treewrap" id="tw"></div>
+    ${st.done?"":`<div class="palette" id="pal">${GROUPS.map(([nm,arr])=>`<div class="pgrp"><span class="pname">${nm}</span>${arr.map(l=>`<button class="chip" draggable="true" data-l="${esc(l)}">${esc(l)}</button>`).join("")}</div>`).join("")}</div>`}
+    <div class="row"><span class="hint" id="need"></span><div class="btns">${st.done?"":`<button class="btn primary" id="submit">Submit</button>`}</div></div>
+    <div id="result"></div>
     <div class="row"><div class="btns"><button class="btn" id="prev" ${cur?"":"disabled"}>Previous</button></div>
       <div class="btns"><button class="btn primary" id="next" ${st.done&&cur<ITEMS.length-1?"":"disabled"}>Next</button></div></div>
     ${S.every(s=>s.done)?`<p class="hint">All done: ${okCount()} / ${ITEMS.length} correct.</p>`:""}
   </section>`;
-  const $ = q => stage.querySelector(q);
-  stage.querySelectorAll("#tw [data-r]").forEach(el => el.onclick = () => {
-    if(st.done) return;
-    const r = +el.dataset.r, i = st.sel.indexOf(r);
-    st.msg = "";
-    if(i >= 0) st.sel.splice(i,1);
-    else if(st.sel.length === 1 && Math.abs(st.sel[0]-r) === 1) st.sel = [Math.min(r,st.sel[0]), Math.max(r,st.sel[0])];
-    else st.sel = [r];
-    render();
+  const $ = q => stage.querySelector(q), ta = $("#br"), tw = $("#tw");
+  ta.value = st.text;
+
+  function place(path, label){                 // label 為 null 就是清掉
+    if(label === null) delete st.lab[path]; else st.lab[path] = label;
+    update();
+  }
+  function update(){
+    const r = read(it, st); let ready = false, need = "";
+    if(r.err){ tw.innerHTML = `<p class="hint">${esc(r.err)}</p>`; tw.classList.add("empty"); need = ""; }
+    else {
+      tw.classList.remove("empty");
+      tw.innerHTML = drawTree(r.tree, it.words, {interactive:!st.done, chip:st.chip, bad:st.extra});
+      const open = nodesOf(r.tree).filter(n => !n.l).length;
+      ready = open === 0; need = st.done ? "" : open ? `${open} node${open>1?"s":""} still need a label` : "";
+      st.cur = r.tree;
+      tw.querySelectorAll("rect.slot").forEach(el => {
+        const path = el.dataset.p;
+        el.onclick = () => { if(st.chip) place(path, st.chip); else if(st.lab[path] !== undefined) place(path, null); };
+        el.ondragover = e => { e.preventDefault(); el.classList.add("over"); };
+        el.ondragleave = () => el.classList.remove("over");
+        el.ondrop = e => { e.preventDefault(); const l = e.dataTransfer.getData("text/plain"); if(LABELS.includes(l)) place(path, l); };
+      });
+    }
+    $("#need").textContent = need;
+    if($("#submit")) $("#submit").disabled = !ready;
+    stage.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", st.chip === c.dataset.l));
+  }
+  ta.oninput = () => { st.text = ta.value; update(); };
+  stage.querySelectorAll("[data-i]").forEach(b => b.onclick = () => {
+    const s0 = ta.selectionStart, e0 = ta.selectionEnd, c = b.dataset.i;
+    ta.value = ta.value.slice(0,s0) + c + ta.value.slice(e0); ta.focus(); ta.setSelectionRange(s0+c.length, s0+c.length); ta.oninput();
   });
-  stage.querySelectorAll(".key").forEach(b => {
-    const v = validSel(st); b.disabled = !!v;
-    b.onclick = () => { st.msg = apply(st, b.dataset.l); render(); };
+  if($("#fmt")) $("#fmt").onclick = () => {          // 每個包含子括號的節點換行縮排，方便看層次
+    let r; try{ r = parseBr(st.text); }catch(e){ return; }
+    const out = (n, d) => n.w !== undefined ? n.w : (n.k.every(c=>c.w!==undefined) ? `[${n.l?n.l+" ":""}${n.k.map(c=>c.w).join(" ")}]` : `[${n.l?n.l:""}\n${n.k.map(c=>"  ".repeat(d+1)+out(c,d+1)).join("\n")}]`);
+    ta.value = out(r.tree, 0); ta.oninput();
+  };
+  stage.querySelectorAll(".chip").forEach(c => {
+    c.ondragstart = e => { e.dataTransfer.setData("text/plain", c.dataset.l); e.dataTransfer.effectAllowed = "copy"; };
+    c.onclick = () => { st.chip = st.chip === c.dataset.l ? null : c.dataset.l; update(); };
   });
-  if($("#undo")) $("#undo").onclick = () => { F.splice(0, F.length, ...st.hist.pop()); st.sel = []; st.msg = ""; render(); };
-  if($("#reset")) $("#reset").onclick = () => { st.forest = it.words.map((w,i)=>({w,i})); st.hist = []; st.sel = []; st.msg = ""; render(); };
-  if($("#submit")) $("#submit").onclick = () => { submit(it, st); render(); };
+  if($("#submit")) $("#submit").onclick = () => {
+    const r = read(it, st); if(r.err) return;
+    const mine = sigs(r.tree);
+    st.missing = [...it.sigs].filter(x => !mine.has(x)); st.extra = new Set([...mine].filter(x => !it.sigs.has(x)));
+    st.ok = canon(r.tree, it.words) === it.canon; st.done = true; st.chip = null; render();
+  };
+  if(st.done){
+    const miss = st.missing.length ? `<span>Missing: ${st.missing.map(m=>describe(m,it.words)).join("; ")}.</span>` : "";
+    const ext = st.extra.size ? `<span>Not in the standard tree (marked red in your tree): ${[...st.extra].map(m=>describe(m,it.words)).join("; ")}.</span>` : "";
+    const same = !st.ok && !st.missing.length && !st.extra.size ? "<span>You have the same nodes as the standard tree, but they are stacked in a different order.</span>" : "";
+    $("#result").innerHTML = `<div class="expl ${st.ok?"":"bad"}"><span class="verdict">${st.ok?"Correct":"Not quite"}</span>${miss}${ext}${same}<span>${it.e}</span></div>
+      <details ${st.ok?"":"open"}><summary>Standard tree</summary><div class="treewrap">${drawTree(clone(it.tree), it.words)}</div><pre class="data">${esc(it.key.replace(/\$/g,"–PAST"))}</pre></details>`;
+  }
   $("#prev").onclick = () => { cur--; render(); };
   $("#next").onclick = () => { cur++; render(); };
+  update();
 }
-function validSelMsg(st){ return st.done ? "" : validSel(st); }
 render();
 </script>
