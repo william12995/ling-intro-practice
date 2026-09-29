@@ -10,6 +10,7 @@
 
 - PDF 頁碼 = 印刷頁碼 + 20（PDF 272 = p. 252）。
 - Ch.5 Morphology 在 PDF 229–276，章末習題 5.12 在 PDF 272–274（Exercise 1–7）。PDF 版把章內的「Check your understanding」互動題拿掉了，只有線上版有。
+- Ch.6 Syntax 在 PDF 277–406，畫樹的說明在 6.13–6.21（PDF 340–400），章末習題 6.22 在 PDF 401–406（Exercise 1–20，14–20 要畫樹）。
 - 這本沒附解答，頁面上的標準答案是 AI 寫的，要人核過。
 - 授權要求標出處，而且改寫版要用同一授權，所以頁尾一定要留一行出處和授權（見下面慣例的例外）。
 
@@ -26,6 +27,7 @@
 | 章 | 原始檔 | 上線版 |
 |---|---|---|
 | Morphology（開源課本 Ch.5 習題 1–7，39 題） | `ch01_morphology/morphology_lab.src.html` | `docs/ch01_morphology/index.html`（已上線：https://william12995.github.io/ling-intro-practice/ch01_morphology/ ） |
+| Syntax 畫樹原型（Ex 14 四句＋教學句，2026-09-29） | `ch02_syntax/tree_lab.src.html` | 未上線、沒接後端，還在等使用者和老師決定（見 `_output/session_log_2026-09-29.md`） |
 
 2026-09-26 整頁換掉：原本的 Fromkin 內文範例版（20 題選擇＋四關切詞）在學生作答前就撤下了，舊版在 git 紀錄 `be842ae`。資料夾名稱和 quiz id 還是 `ch01_morphology`。
 
