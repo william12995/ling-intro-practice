@@ -169,6 +169,17 @@ svg.tree .plus.over text{fill:var(--accent)}
 .std{display:block;margin-top:8px}
 #need{align-self:center}
 @media (max-width:480px){.pname{display:none}.palette{padding:8px}.pgrp{gap:5px}.chip{min-width:40px;padding:4px 6px;font-size:15px}.step{gap:8px}}
+.glossary summary{font-size:14px}
+.glossary dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:6px 0 0;font-size:14px}
+.glossary dt{font:600 15px var(--serif)}
+.glossary dd{margin:0;color:var(--muted)}
+.coach{border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-size:15px}
+.coach .gl{display:block;font-size:14px;color:var(--muted);margin-top:4px}
+.coach code{font-size:14px}
+.chip.eraser{font:500 14px var(--sans);color:var(--cut)}
+.chip.eraser[aria-pressed="true"]{background:var(--cut);border-color:var(--cut);color:var(--surface)}
+svg.tree.erasing .slot:not(.empty){stroke:var(--cut);stroke-dasharray:3 2}
+svg.tree.erasing .slot.over{stroke:var(--cut);fill:var(--cut-soft)}
 details summary{cursor:pointer;font-weight:500;margin-bottom:8px}
 </style>
 
@@ -187,6 +198,10 @@ details summary{cursor:pointer;font-weight:500;margin-bottom:8px}
    key 是帶標籤的括號：[標籤 子…]，詞直接接在它的詞類標籤後面。$ 是沒有發音的時態，學生寫 –PAST 或 +PAST 都收。
    判分：學生的樹展開後要跟 key 完全一樣（含順序）；回饋另外比對「標籤+涵蓋的詞」找出缺的和多的。 */
 const ITEMS = [
+  { ex:"Practice", tut:true, words:["a","dog","$","barked"],
+    key:"[TP [NP [DP a] [N' [N dog]]] [T' [T $] [VP [V' [V barked]]]]]",
+    brHelp:"The subject <em>a dog</em> is one group. The rest of the sentence, the tense and the verb, is the other group. Type: <code>[[a dog] [+PAST barked]]</code>",
+    e:"This is the basic shape of every English sentence in this book. The subject NP is on the left of TP, and T' holds the tense and the verb phrase. Each word projects up to a phrase: N, then N', then NP; V, then V', then VP." },
   { ex:"Ex. 14a", words:["the","children","$","read","the","book"],
     key:"[TP [NP [DP the] [N' [N children]]] [T' [T $] [VP [V' [V read] [NP [DP the] [N' [N book]]]]]]]",
     e:"The subject <em>the children</em> is an NP: the determiner is a DP in the specifier position (drawn with a triangle), and the noun sits inside N'. There is no auxiliary, so T holds only a tense feature. <em>Read</em> can be present or past here, so –PAST and +PAST are both accepted. The VP always has a V' inside it, and <em>the book</em> is the verb's complement." },
@@ -201,8 +216,23 @@ const ITEMS = [
     e:"<em>Have</em> is a non-modal auxiliary, so it is a T, and <em>finished</em> is the main verb inside VP. <em>My</em> is a DP in the specifier of <em>my homework</em>." },
 ];
 // 標籤表集中放這裡，之後要換成 Fromkin 的記法只改這一段
-const GROUPS = [["Word",["N","V","T","A","P","DP"]],["Bar",["N'","V'","T'","A'","P'"]],["Phrase",["NP","VP","TP","AP","PP"]]];
+const GROUPS = [["Word",["N","V","T","A","P","DP"]],["Bar",["N'","V'","T'","A'","P'"]],["Phrase",["TP","S","NP","VP","AP","PP"]]];
 const LABELS = GROUPS.flatMap(g => g[1]);
+const ERASE = "✕";
+const ALIAS = {S:"TP"};            // 老師上課的 Fromkin 用 S，開源課本用 TP，兩個都收
+const al = l => ALIAS[l] || l;
+const GLOSS = {
+  N:"noun: dog, children, Emily, I", V:"verb: barked, read, win", A:"adjective: cold, happy", P:"preposition: in, of, to",
+  T:"tense: an auxiliary or modal (is, have, may, will), or the tense slot +PAST / –PAST when there is no auxiliary",
+  DP:"determiner: the, a, my. This book draws it as a DP with a triangle",
+  "N'":"N-bar, the middle level between N and NP. Every NP has one, even when it has only one word",
+  "V'":"V-bar, the middle level between V and VP. The verb and its object sit here",
+  "T'":"T-bar, the middle level between T and TP. It holds T and the VP",
+  "A'":"A-bar, the middle level between A and AP", "P'":"P-bar, the middle level between P and PP",
+  TP:"tense phrase, the whole sentence. Its head is T, and its subject is the NP on its left",
+  S:"sentence. This book calls the sentence TP; S is accepted as another name for it",
+  NP:"noun phrase: a dog, the book, Emily", VP:"verb phrase: the verb with its object", AP:"adjective phrase", PP:"prepositional phrase: in the kitchen",
+};
 const TENSE = /^[+\-–−]?PAST$/i;
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -213,8 +243,8 @@ const toks = s => norm(s).match(/\[|\]|[^\s\[\]]+/g) || [];
 
 /* ---------- 共用的樹工具 ---------- */
 function span(n){ if(n.w !== undefined){ n.s = n.e = n.i; return; } n.k.forEach(span); n.s = n.k[0].s; n.e = n.k[n.k.length-1].e; }
-function sigs(n, out=new Set()){ if(n.w !== undefined) return out; if(n.l){ n.sig = `${n.l}|${n.s}|${n.e}`; out.add(n.sig); } n.k.forEach(c => sigs(c, out)); return out; }
-const canon = (n, it) => n.w !== undefined ? it.words[n.i].toLowerCase() : `[${n.l||"?"} ${n.k.map(c => canon(c, it)).join(" ")}]`;
+function sigs(n, out=new Set()){ if(n.w !== undefined) return out; if(n.l){ n.sig = `${al(n.l)}|${n.s}|${n.e}`; out.add(n.sig); } n.k.forEach(c => sigs(c, out)); return out; }
+const canon = (n, it) => n.w !== undefined ? it.words[n.i].toLowerCase() : `[${n.l?al(n.l):"?"} ${n.k.map(c => canon(c, it)).join(" ")}]`;
 const nodes = n => n.w !== undefined ? [] : [n, ...n.k.flatMap(nodes)];
 
 /* 標準答案：帶標籤的括號 */
@@ -272,6 +302,39 @@ function build(it, st){
   return {raw, t};
 }
 
+/* ---------- 教學題的逐步提示 ----------
+   標準答案拆成「每個成分由下往上的標籤」，照由下往上的順序找第一個還沒放對的，告訴學生下一步。 */
+function keySteps(t){
+  const steps = [];
+  (function walk(n){                       // 回傳這個節點屬於哪個 key（詞或括號）、第幾層
+    let r;
+    if(isPre(n)) r = {key:"w"+n.k[0].i, lvl:0};
+    else if(n.k.length === 1){ const c = walk(n.k[0]); r = {key:c.key, lvl:c.lvl+1}; }
+    else { n.k.forEach(walk); r = {key:`b${n.s}-${n.e}#0`, lvl:0}; }
+    steps.push({...r, l:n.l, s:n.s, e:n.e}); return r;
+  })(t);
+  return steps;
+}
+const skelKey = n => isPre(n) ? "w" : n.k.length === 1 ? skelKey(n.k[0]) : "(" + n.k.map(skelKey).join("") + ")";
+const skelRaw = n => n.w !== undefined ? "w" : "(" + n.k.map(skelRaw).join("") + ")";
+function coach(it, st, r){
+  const over = (s0, e0) => `<em>${it.words.slice(s0, e0+1).map(w => w === "$" ? "+PAST" : w).join(" ")}</em>`;
+  if(r.err || skelRaw(r.raw) !== skelKey(it.tree))
+    return `<b>Step 1: brackets.</b> ${r.err ? esc(r.err) + " " : "Not quite yet. "}${it.brHelp}`;
+  const steps = keySteps(it.tree);
+  for(const p of steps){
+    const arr = st.lab[p.key] || [], have = arr[p.lvl];
+    if(have && al(have) === p.l) continue;
+    const why = `<span class="gl"><b>${esc(p.l)}</b> = ${esc(GLOSS[p.l])}.</span>`;
+    if(have) return `The <b>${esc(have)}</b> over ${over(p.s, p.e)} is not right here. Drag <b>${esc(p.l)}</b> onto it to replace it. ${why}`;
+    if(p.lvl === 0) return `Drag <b>${esc(p.l)}</b> onto the <span class="qm">?</span> over ${over(p.s, p.e)}. ${why}`;
+    return `Now add a level: drag <b>${esc(p.l)}</b> onto the <span class="pl">+</span> just above <b>${esc(arr[p.lvl-1])}</b> over ${over(p.s, p.e)}. ${why}`;
+  }
+  const extra = Object.entries(st.lab).find(([k, arr]) => arr.length > steps.filter(p => p.key === k).length);
+  if(extra) return `There is one level too many: <b>${esc(extra[1][extra[1].length-1])}</b> at the top. Drag <b>${ERASE} Remove</b> onto it.`;
+  return "Everything is in place. Press <b>Submit</b>.";
+}
+
 /* ---------- 畫樹（SVG，照課本的樣子：詞直接在詞類下面，單詞 DP 畫三角形） ---------- */
 const ctx = document.createElement("canvas").getContext("2d");
 const LF = '600 16px "IBM Plex Serif", Georgia, serif', WF = 'italic 500 16px "IBM Plex Serif", Georgia, serif';
@@ -299,10 +362,10 @@ function draw(root, it, o={}){
     const w = lw(n.l), id = `${n.key}:${n.lvl}`, bad = o.bad && o.bad.has(n.sig);
     if(o.edit) g += `<rect class="slot ${n.l?"":"empty"}" data-drop="${id}" tabindex="0" role="button" aria-label="${n.l?`${n.l}, tap to remove`:"empty node"}" x="${n.x-w/2}" y="${n.y-18}" width="${w}" height="25" rx="6"/>`;
     g += `<text class="lab ${n.l?"":"q"} ${bad?"bad":""}" x="${n.x}" y="${n.y}" text-anchor="middle">${esc(n.l||"?")}</text>`;
-    if(o.edit && n.top && n.l) g += `<g class="plus" data-drop="${n.key}:+" role="button" aria-label="add a level above ${esc(n.l)}"><circle cx="${n.x}" cy="${n.y-32}" r="10"/><text x="${n.x}" y="${n.y-26.5}" text-anchor="middle">+</text></g>`;
+    if(o.edit && n.top && n.l && !o.erasing) g += `<g class="plus" data-drop="${n.key}:+" role="button" aria-label="add a level above ${esc(n.l)}"><circle cx="${n.x}" cy="${n.y-32}" r="10"/><text x="${n.x}" y="${n.y-26.5}" text-anchor="middle">+</text></g>`;
   })(root);
   const W = x + 8, H = maxY + 14;
-  return `<svg class="tree ${o.arm?"arming":""}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Syntax tree">${g}</svg>`;
+  return `<svg class="tree ${o.arm?"arming":""} ${o.erasing?"erasing":""}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Syntax tree">${g}</svg>`;
 }
 const bracketOf = (n, it) => n.w !== undefined ? wordText(n, it) : `[${n.l||"?"} ${n.k.map(c => bracketOf(c, it)).join(" ")}]`;
 
@@ -316,6 +379,8 @@ function place(id, label){
   const st = S[cur], cut = id.lastIndexOf(":"), key = id.slice(0, cut), lv = id.slice(cut+1);
   st.hist.push(clone(st.lab));
   const arr = (st.lab[key] || []).slice();
+  if(label === ERASE) label = null;
+  if(label === null && lv === "+") return;
   if(label === null){ if(lv === "0") arr[0] = null; else arr.splice(+lv, 1); }
   else if(lv === "+") arr.push(label); else arr[+lv] = label;
   if(arr.every(x => !x)) delete st.lab[key]; else st.lab[key] = arr;
@@ -328,19 +393,21 @@ function render(){
   const dots = ITEMS.map((_,k) => `<span class="dot ${S[k].ok===true?"ok":S[k].ok===false?"no":""} ${k===cur?"cur":""}"></span>`).join("");
   const hasT = it.words.includes("$");
   stage.innerHTML = `<section class="card">
-    <div class="meta"><span>${it.ex} · Sentence ${cur+1} of ${ITEMS.length}</span><div class="dots">${dots}</div></div>
+    <div class="meta"><span>${it.tut ? "Practice sentence, not scored" : `${it.ex} · Sentence ${cur} of ${ITEMS.length-1}`}</span><div class="dots">${dots}</div></div>
     <p class="q">Draw the tree for <em>${it.words.filter(w => w !== "$").join(" ")}.</em></p>
     <div class="step"><span class="num">1</span><div>
       <label for="br">Group the words with square brackets. Don't write labels here.</label>
-      <p class="hint">Example: <code>[[a dog] [barked]]</code>${hasT ? `. This sentence has no auxiliary, so put <code>–PAST</code> where one would go.` : "."}</p>
+      <p class="hint">Example: <code>[[my cat] [slept]]</code>${hasT ? `. This sentence has no auxiliary, so put <code>–PAST</code> where one would go.` : "."}</p>
       <textarea id="br" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off" ${st.done?"disabled":""}></textarea>
       ${st.done ? "" : `<div class="keys"><button class="key" data-i="[">[</button><button class="key" data-i="]">]</button>${hasT?`<button class="key" data-i="–PAST">–PAST</button>`:""}<button class="key" id="fmt">Tidy up</button></div>`}
     </div></div>
     <div class="step"><span class="num">2</span><div>
       <p class="lbl">Drag a label onto each <span class="qm">?</span>, or tap a label and then tap nodes.</p>
-      <p class="hint">To add a level above a node (N' above N, then NP), drop the label on the <span class="pl">+</span> just above it. Tap a placed label to remove it.</p>
+      <p class="hint">To add a level above a node (N' above N, then NP), drop the label on the <span class="pl">+</span> just above it. Dropping a label on a filled node replaces it. To take a label off, drag <b>${ERASE} Remove</b> onto it.</p>
     </div></div>
-    ${st.done ? "" : `<div class="palette" id="pal">${GROUPS.map(([nm, arr]) => `<div class="pgrp"><span class="pname">${nm}</span>${arr.map(l => `<button class="chip" data-l="${esc(l)}">${esc(l)}</button>`).join("")}</div>`).join("")}<p class="hint" id="armhint"></p></div>`}
+    <details class="glossary"><summary>What do the labels mean?</summary><dl>${LABELS.map(l => `<dt>${esc(l)}</dt><dd>${esc(GLOSS[l])}</dd>`).join("")}</dl></details>
+    ${it.tut && !st.done ? `<div class="coach" id="coach" aria-live="polite"></div>` : ""}
+    ${st.done ? "" : `<div class="palette" id="pal">${GROUPS.map(([nm, arr]) => `<div class="pgrp"><span class="pname">${nm}</span>${arr.map(l => `<button class="chip" data-l="${esc(l)}" title="${esc(GLOSS[l])}">${esc(l)}</button>`).join("")}</div>`).join("")}<div class="pgrp"><span class="pname">Fix</span><button class="chip eraser" data-l="${ERASE}" title="Remove a label">${ERASE} Remove</button></div><p class="hint" id="armhint"></p></div>`}
     <div class="treewrap" id="tw"></div>
     <div class="readout"><span class="hint">Labeled bracketing</span><code id="ro"></code></div>
     <div class="row"><div class="btns">${st.done ? `<button class="btn" id="again">Try again</button>` : `<button class="btn" id="undo">Undo</button><button class="btn" id="clear">Clear labels</button>`}</div>
@@ -365,7 +432,7 @@ function render(){
 
   // 樹上的點擊：有選標籤就放上去，沒選就移除
   const act = el => { if(st.done || !el) return; const id = el.dataset.drop;
-    if(armed) place(id, armed); else if(!id.endsWith(":+")) place(id, null); };
+    if(armed) place(id, armed); };
   treeEl.onclick = e => act(e.target.closest("[data-drop]"));
   treeEl.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); act(e.target.closest("[data-drop]")); } };
 
@@ -377,10 +444,10 @@ function render(){
       drag = {l:c.dataset.l, x:e.clientX, y:e.clientY, moved:false, ghost:null, over:null}; };
     pal.onpointermove = e => { if(!drag) return;
       if(!drag.moved){ if(Math.hypot(e.clientX-drag.x, e.clientY-drag.y) < 6) return;
-        drag.moved = true; drag.ghost = document.createElement("div"); drag.ghost.className = "ghost"; drag.ghost.textContent = drag.l;
-        document.body.appendChild(drag.ghost); treeEl.querySelector("svg")?.classList.add("arming"); }
+        drag.moved = true; drag.ghost = document.createElement("div"); drag.ghost.className = "ghost"; drag.ghost.textContent = drag.l === ERASE ? ERASE + " Remove" : drag.l;
+        document.body.appendChild(drag.ghost); treeEl.querySelector("svg")?.classList.add(drag.l === ERASE ? "erasing" : "arming"); }
       drag.ghost.style.transform = `translate(${e.clientX}px,${e.clientY}px) translate(-50%,-130%)`;
-      if(e.clientY > innerHeight - 48) scrollBy(0, 14); else if(e.clientY < 48) scrollBy(0, -14);   // 拖到視窗邊緣時捲動
+      if(e.clientY > innerHeight - 48) scrollBy(0, 14);   // 拖到視窗底部時往下捲
       const t = document.elementFromPoint(e.clientX, e.clientY)?.closest("#tw [data-drop]") || null;
       if(t !== drag.over){ drag.over?.classList.remove("over"); t?.classList.add("over"); drag.over = t; } };
     const end = e => { if(!drag) return; const d = drag; drag = null;
@@ -419,7 +486,7 @@ function update(){
     treeEl.classList.add("empty"); treeEl.innerHTML = `<p class="hint">${esc(r.err)}</p>`; $("#ro").textContent = "";
   } else {
     treeEl.classList.remove("empty");
-    treeEl.innerHTML = draw(r.t, it, {edit:!st.done, arm:!!armed, bad:st.extra});
+    treeEl.innerHTML = draw(r.t, it, {edit:!st.done, arm:!!armed && armed !== ERASE, erasing:armed === ERASE, bad:st.extra});
     $("#ro").textContent = bracketOf(r.t, it);
     const open = nodes(r.t).filter(n => !n.l).length;
     ready = !open; need = st.done || !open ? "" : `${open} node${open>1?"s":""} left`;
@@ -428,7 +495,9 @@ function update(){
   if($("#submit")) $("#submit").disabled = !ready;
   if($("#undo")) $("#undo").disabled = !st.hist.length;
   stage.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(armed === c.dataset.l)));
-  if($("#armhint")) $("#armhint").textContent = armed ? `Placing ${armed}: tap nodes or a +. Tap ${armed} again to stop.` : "";
+  if($("#armhint")) $("#armhint").textContent = armed === ERASE ? `Removing: tap the labels to take off. Tap ${ERASE} Remove again to stop.`
+    : armed ? `${armed} = ${GLOSS[armed]}. Tap nodes (or a +) to place it. Tap ${armed} again to stop.` : "";
+  if($("#coach")) $("#coach").innerHTML = coach(it, st, r);
 }
 render();
 document.fonts?.ready.then(() => update());   // 字型載入後重量字寬
