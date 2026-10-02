@@ -41,6 +41,27 @@ def wrap(src: str) -> str:
     return HEAD + head + "</head>\n<body>\n" + body + "\n</body>\n</html>\n"
 
 
+def check_backend(key, url):
+    """問後端 action=config，確認這份 Sheet 的指令碼屬性 QUIZZES 有這一章。連不上只警告，不擋。"""
+    import urllib.parse
+    import urllib.request
+    q = urllib.parse.urlencode({"callback": "cb", "data": json.dumps({"action": "config"})})
+    try:
+        with urllib.request.urlopen(f"{url}?{q}", timeout=20) as r:
+            body = r.read().decode("utf-8", "replace")
+        info = json.loads(body[body.index("(") + 1: body.rindex(")")])
+    except Exception as e:  # noqa: BLE001
+        print(f"警告：連不到 {key} 的後端，沒辦法確認設定（{e}）")
+        return
+    qs = info.get("quizzes")
+    if qs is None:
+        print(f"警告：{key} 的後端是舊版 Code.gs，請貼上 repo 裡的新版再部署新版本")
+    elif key not in qs:
+        raise SystemExit(f"{key} 的後端只收 {qs}。到那份 Sheet 的 Apps Script → 專案設定 → 指令碼屬性，把 QUIZZES 設成 {key}")
+    else:
+        print(f"{key} 的後端確認收這一章")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--endpoint", action="append", default=[],
@@ -58,6 +79,9 @@ def main():
         if not re.match(URL_RE, url):
             raise SystemExit(f"網址格式不對，應該長得像 https://script.google.com/macros/s/XXXX/exec ：{url}")
         eps[k] = url
+    for item in a.endpoint:
+        k, url = [x.strip() for x in item.split("=", 1)]
+        check_backend(k, url)
     if a.endpoint:
         EP_FILE.write_text(json.dumps(eps, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(f"已更新 {EP_FILE.name}")
@@ -69,6 +93,8 @@ def main():
         ep = eps.get(key, "")
         if not ep:
             print(f"略過 {key}：還沒有後端網址（建好 Sheet 後用 --endpoint {key}=網址）")
+            if (SITE / out).exists():
+                print(f"  注意：docs/{out} 是之前產生的舊檔，還在線上；要撤下就手動刪掉")
             continue
         html = (ROOT / src).read_text(encoding="utf-8")
         if "__ENDPOINT__" not in html:

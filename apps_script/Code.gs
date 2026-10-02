@@ -84,7 +84,12 @@ function rebuildSummary() {
     else { if (t < q.t) { q.t = t; q.first = ok; } q.ever = q.ever || ok; }
   });
 
-  var SECS = Object.keys(scoredSecs).sort(function (a, b) { return Number(a.slice(1)) - Number(b.slice(1)); });
+  // 每章固定的欄位：計分的部分（ch01 是 S1–S6，S7 申論不計分；ch02 只有 S1）。沒列的章就用目前出現過的部分
+  var FIXED = {'ch01_morphology': ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'], 'ch02_syntax': ['S1']};
+  var SECS = [];
+  Object.keys(quizzes_()).forEach(function (q) { (FIXED[q] || []).forEach(function (x) { if (SECS.indexOf(x) < 0) SECS.push(x); }); });
+  Object.keys(scoredSecs).forEach(function (x) { if (SECS.indexOf(x) < 0) SECS.push(x); });
+  SECS.sort(function (a, b) { return Number(a.slice(1)) - Number(b.slice(1)); });
   var head = ['student_id', 'name', 'quiz', '已作答題數', '首次答對', '最佳答對']
     .concat(SECS.map(function (x) { return x + ' 首次答對'; }))
     .concat(['最後作答時間']);

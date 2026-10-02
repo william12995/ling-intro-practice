@@ -500,7 +500,11 @@ function loadProg(){
   S = ITEMS.map(fresh); cur = 0;
   const p = LS.get(progKey(), null);
   if(!p || p.v !== 1 || !Array.isArray(p.items)) return;
-  p.items.forEach((x, k) => { if(k < S.length && x) Object.assign(S[k], x, {hist:[], sel:null}); });   // 之後在最後加題，舊進度照樣讀得回來
+  p.items.forEach((x, k) => {   // 之後在最後加題，舊進度照樣讀得回來
+    if(k >= S.length || !x || typeof x.nodes !== "object" || typeof x.par !== "object") return;
+    Object.assign(S[k], x, {hist:[], sel:null});
+    if(S[k].done && !(Array.isArray(S[k].missing) && Array.isArray(S[k].extra) && ITEMS[k].keys[S[k].best])) Object.assign(S[k], {done:false, ok:null});   // 存壞了就當作還沒送出
+  });
   cur = Math.min(Math.max(0, p.cur|0), ITEMS.length - 1);
 }
 
@@ -531,15 +535,17 @@ function jsonp(p, ms=15000){
     document.body.appendChild(s);
   });
 }
-let flushing = false;
+let flushing = false, misconfig = false;
 async function flush(){
   if(!ONLINE || flushing) return;
   flushing = true; renderSync();
   let q = LS.get(QKEY, []);
   while(q.length){
     const sent = q[0];
-    try{ await jsonp(sent); }
+    try{ await jsonp(sent); misconfig = false; }
     catch(e){
+      // unknown quiz 是後端設定問題（Sheet 的 QUIZZES 沒填這一章），不是這筆資料的錯：留在佇列，設定好之後會自動補送
+      if(e && e.error === "unknown quiz"){ misconfig = true; break; }
       if(e && e.server){ const dl = LS.get(DLKEY, []); dl.push({payload:sent, error:e.error}); LS.set(DLKEY, dl); }
       else break;   // 斷網或逾時：留在佇列，下次再送
     }
@@ -551,7 +557,8 @@ function renderSync(){
   const el = document.getElementById("sync"); if(!el) return;
   if(!ONLINE){ el.innerHTML = '<span class="pend">Saved on this device only</span>'; return; }
   const n = LS.get(QKEY, []).length, dl = LS.get(DLKEY, []).length;
-  let s = n ? `<span class="pend">Uploading, ${n} left</span>` : '<span class="ok">Answers recorded</span>';
+  let s = misconfig ? `<span class="pend">The grade sheet is not ready yet. Your ${n} answer(s) are kept on this device and will be sent later. Please tell your TA.</span>`
+    : n ? `<span class="pend">Uploading, ${n} left</span>` : '<span class="ok">Answers recorded</span>';
   if(dl) s += ` <span class="pend">${dl} answer(s) were not accepted. Please tell your TA.</span>`;
   el.innerHTML = s;
 }
@@ -560,7 +567,7 @@ function renderWho(){
   if(!student){ el.hidden = true; return; }
   el.hidden = false;
   el.innerHTML = `<span>Signed in as <b>${esc(student.sid)}</b> ${esc(student.name)} · <button class="linkbtn" id="logout">Switch student</button></span><span class="sync" id="sync"></span>`;
-  document.getElementById("logout").onclick = () => { student = null; LS.set("ling_student", null); S = ITEMS.map(fresh); cur = 0; renderWho(); route(); };
+  document.getElementById("logout").onclick = () => { student = null; armed = null; LS.set("ling_student", null); S = ITEMS.map(fresh); cur = 0; renderWho(); route(); };
   renderSync();
 }
 function renderLogin(){
@@ -684,7 +691,7 @@ function render(){
   const $ = q => stage.querySelector(q);
   G = geometry(it, $("#cvwrap").clientWidth - 2);
   if(!st.done) wire();
-  stage.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { cur = +b.dataset.go; armed = null; saveProg(); render(); });
+  stage.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { cur = +b.dataset.go; go(); });
   const why = $("#why");
   if(why){ why.value = st.why || ""; why.oninput = () => { st.why = why.value; saveProg(); status(); }; }
   if($("#undo")) $("#undo").onclick = () => { if(st.hist.length){ Object.assign(st, st.hist.pop()); st.sel = null; refresh(); } };
@@ -702,8 +709,8 @@ function render(){
     saveProg(); render();
   };
   if($("#again")) $("#again").onclick = () => { st.done = false; st.ok = null; st.extra = null; st.why = ""; st.attempt = (st.attempt || 1) + 1; saveProg(); render(); };
-  $("#prev").onclick = () => { cur--; armed = null; saveProg(); render(); };
-  $("#next").onclick = () => { cur++; armed = null; saveProg(); render(); };
+  $("#prev").onclick = () => { cur--; go(); };
+  $("#next").onclick = () => { cur++; go(); };
   if(st.done){
     const miss = st.missing.length ? `<span>Missing: ${st.missing.map(m => describe(m, it)).join("; ")}.</span>` : "";
     const ext = st.extra.length ? `<span>Not in the standard tree (red above): ${st.extra.map(m => describe(m, it)).join("; ")}.</span>` : "";
@@ -713,7 +720,11 @@ function render(){
       <code class="std">${esc(bracketOf(it.keys[st.best].tree, it))}</code></details>`;
   }
   refresh();
-  if(!st.done) requestAnimationFrame(reveal);   // 一打開就讓詞那一排（和發亮的 +）露在標籤盤上面
+  if(!st.done) requestAnimationFrame(() => reveal(true));   // 一打開就讓詞那一排（和發亮的 +）露在標籤盤上面
+}
+function go(){   // 換題：題目從卡片頂端開始看
+  armed = null; saveProg(); render();
+  const card = stage.querySelector(".card"); if(card.getBoundingClientRect().top < 0) card.scrollIntoView({block:"start"});
 }
 const whyOk = () => ITEMS[cur].tut || (S[cur].why || "").trim().length >= WHY_MIN;
 function status(){   // 送出鍵和旁邊的提示：樹還沒好、推理還沒寫，或可以送了
@@ -766,10 +777,12 @@ function autoScroll(e){   // 只往上捲和左右捲：從底部標籤盤往上
   const w = stage.querySelector("#cvwrap"), r = w.getBoundingClientRect();   // 畫布比螢幕寬時（手機），拖到左右邊緣就橫向捲
   if(e.clientY > r.top && e.clientY < r.bottom){
     if(e.clientX > r.right - 32) w.scrollLeft += 10; else if(e.clientX < r.left + 32) w.scrollLeft -= 10; } }
-function reveal(){   // 開始拖標籤或選了標籤時，把畫布底部（詞那一排）捲到標籤盤上面
-  const pal = stage.querySelector("#pal"), cv = stage.querySelector("#cvwrap"); if(!pal || !cv) return;
+function reveal(keepQ){   // 開始拖標籤或選了標籤時，把畫布底部（詞那一排）捲到標籤盤上面；keepQ：剛換題時，最多捲到題目還看得到
+  const pal = stage.querySelector("#pal"), cv = stage.querySelector("#cvwrap"), q = stage.querySelector(".q"); if(!pal || !cv) return;
   const c = cv.getBoundingClientRect(), top = pal.getBoundingClientRect().top;
-  if(c.bottom > top - 8) scrollBy(0, c.bottom - top + 8); }
+  let dy = c.bottom - top + 8;
+  if(keepQ && q) dy = Math.min(dy, q.getBoundingClientRect().top - 8);
+  if(dy > 0) scrollBy(0, dy); }
 
 function wire(){
   const st = S[cur], svg = stage.querySelector("#cv"), pal = stage.querySelector("#pal");
@@ -852,6 +865,7 @@ function tap(t, e){
   const id = t && (t.dataset.plus || t.dataset.n || t.dataset.w || t.dataset.e || t.dataset.del);
   if(kind === "del"){ remove(id); return; }
   if(armed){
+    if(kind === "edge"){ cut(id); return; }
     if(kind === "plus" || kind === "node" || kind === "word") dropLabel(armed, {kind, id}, e);
     else if(kind === "bg") dropLabel(armed, {kind:"bg"}, e);
     return;
@@ -881,7 +895,7 @@ const TUT = [
   {t:"Build upward", d:`Drag a label from the tray onto the <span class="pl">+</span> above a word. Do it again to stack the next level on top.`, scene:sceneStack},
   {t:"Join pieces", d:"Drop a label on an empty spot. Then drag each piece up onto it to connect them.", scene:sceneJoin},
   {t:"Fix mistakes", d:"Tap a line to cut it. Drag anything you don't need to <b>Delete</b>. To rename a node, drop a different label on it.", scene:sceneFix},
-  {t:"Check and submit", d:"When every word is in one tree, press <b>Submit</b>. On a phone you can also tap a label, then tap where it goes. The practice sentence walks you through it step by step.", scene:sceneSubmit},
+  {t:"Check and submit", d:"When every word is in one tree, write a short explanation of one choice (scored sentences only), then press <b>Submit</b>. On a phone you can also tap a label, then tap where it goes. The practice sentence walks you through it step by step.", scene:sceneSubmit},
 ];
 let tutAnims = [];
 const TP_ = (x, y) => `translate(${x}px,${y}px)`;
@@ -981,22 +995,24 @@ function openTutorial(start=0){
   $("#tut-next").onclick = () => { if(k < TUT.length-1){ k++; show(); } else done(); };
   $("#tut-skip").onclick = done;
   ov.onclick = e => { if(e.target === ov) done(); };
-  ov.onkeydown = e => {
-    if(e.key === "Escape"){ e.preventDefault(); done(); }
+  ov._key = e => {
+    if(e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); done(); }
     else if(e.key === "ArrowRight") $("#tut-next").click();
     else if(e.key === "ArrowLeft") $("#tut-back").click();
     else if(e.key === "Tab"){   // 焦點留在對話框裡
       const f = [...ov.querySelectorAll("button:not(:disabled)")]; const i = f.indexOf(document.activeElement);
-      if(e.shiftKey && i <= 0){ e.preventDefault(); f[f.length-1].focus(); } else if(!e.shiftKey && i === f.length-1){ e.preventDefault(); f[0].focus(); }
+      if(i < 0){ e.preventDefault(); f[0].focus(); }
+      else if(e.shiftKey && i === 0){ e.preventDefault(); f[f.length-1].focus(); } else if(!e.shiftKey && i === f.length-1){ e.preventDefault(); f[0].focus(); }
     }
   };
+  document.addEventListener("keydown", ov._key, true);
   ov._fit = fit; addEventListener("resize", fit);
   show(); $("#tut-next").focus();
 }
 function closeTutorial(){
   const ov = document.querySelector(".tut"); if(!ov) return;
   tutAnims.forEach(a => a.cancel()); tutAnims = [];
-  removeEventListener("resize", ov._fit); ov.remove();
+  removeEventListener("resize", ov._fit); document.removeEventListener("keydown", ov._key, true); ov.remove();
 }
 document.getElementById("howto").onclick = () => openTutorial(0);
 

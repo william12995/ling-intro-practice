@@ -26,6 +26,8 @@ with sync_playwright() as p:
         q = urllib.parse.parse_qs(urllib.parse.urlparse(route.request.url).query)
         cb = q.get("callback", ["callback"])[0]; data = json.loads(q["data"][0]) if "data" in q else {}
         if mode["fail"]: route.abort(); return
+        if mode.get("unknown") and data.get("qid"):
+            route.fulfill(status=200, content_type="application/javascript", body=f'{cb}({json.dumps({"ok":False,"error":"unknown quiz"})})'); return
         sent.append(data)
         route.fulfill(status=200, content_type="application/javascript", body=f'{cb}({json.dumps({"ok":True,"id":data.get("event_id")})})')
 
@@ -151,5 +153,61 @@ with sync_playwright() as p:
     c = ctx(STUDENT + TUTSEEN, mobile=True); pg = c.new_page(); pg.goto(URL); pg.wait_for_timeout(600)
     pr = pg.locator('[data-plus="w0"] .pv').bounding_box(); pal = pg.locator("#pal").bounding_box()
     check(pr["y"] + pr["height"] < pal["y"], f"hinted + visible above the tray on load ({pr['y']:.0f} < {pal['y']:.0f})")
+    c.close()
+
+    # ---------- 10. 第二輪 review 的修正 ----------
+    def mk_state(t):
+        nodes, par, n = {}, {}, [0]
+        def go(x):
+            if "w" in x: return "w%d" % x["i"]
+            n[0] += 1; nid = "n%d" % n[0]; nodes[nid] = {"l": x["l"], "x": 0, "h": 1}
+            for k in x["k"]: par[go(k)] = nid
+            return nid
+        go(t); return nodes, par
+    # 10a. 後端沒設 QUIZZES：留在佇列、不進退件區、提醒學生；設好之後補送
+    sent.clear(); mode["unknown"] = True
+    c = ctx(STUDENT + TUTSEEN); c.route("**/script.google.com/**", handler); pg = c.new_page(); pg.goto(URL); pg.wait_for_timeout(400)
+    pg.evaluate("cur=1; render()"); nodes, par = mk_state(pg.evaluate("ITEMS[1].tree"))
+    pg.evaluate(f"S[1].nodes={json.dumps(nodes)}; S[1].par={json.dumps(par)}; S[1].nid=99; refresh()")
+    pg.fill("#why", "read takes the book as its complement inside V'."); pg.click("#submit"); pg.wait_for_timeout(400)
+    q = pg.evaluate("JSON.parse(localStorage.getItem('ling_queue_ch02_syntax')||'[]').length"); dl = pg.evaluate("JSON.parse(localStorage.getItem('ling_deadletter_ch02_syntax')||'[]').length")
+    check(q == 1 and dl == 0 and "not ready" in pg.locator("#sync").inner_text(), f"unknown quiz keeps answer queued (queue={q}, dead={dl})")
+    mode["unknown"] = False; pg.evaluate("flush()"); pg.wait_for_timeout(400)
+    check(pg.evaluate("JSON.parse(localStorage.getItem('ling_queue_ch02_syntax')||'[]').length") == 0 and "recorded" in pg.locator("#sync").inner_text(), "sent once the sheet is fixed")
+    # 10b. 選著標籤時點線：照樣剪線
+    pg.evaluate("cur=2; render()"); pg.evaluate("S[2].nodes={n1:{l:'Det',x:0,h:1}}; S[2].par={w0:'n1'}; S[2].nid=2; refresh()")
+    pg.evaluate("document.querySelector('#cvwrap').scrollIntoView({block:'center'})")
+    pg.click('.chip[data-l="NP"]')
+    mid = pg.evaluate("""(()=>{const l=document.querySelector('[data-e="w0"] .ln'), r=document.querySelector('#cv').getBoundingClientRect();
+      return [r.left+(+l.getAttribute('x1')+ +l.getAttribute('x2'))/2, r.top+(+l.getAttribute('y1')+ +l.getAttribute('y2'))/2]})()""")
+    pg.mouse.click(*mid); pg.wait_for_timeout(50)
+    check("w0" not in pg.evaluate("S[2].par"), "tap a line cuts it even with a label selected")
+    # 10c. 換學生時不帶著選好的標籤
+    pg.click('.chip[data-l="NP"]'); pg.click("#logout"); check(pg.evaluate("armed") is None, "Switch student clears selected label")
+    c.close()
+    # 10d. 手機：捲到底按 Next，新題目的題目文字要看得到
+    c = ctx(STUDENT + TUTSEEN, mobile=True); pg = c.new_page(); pg.goto(URL); pg.wait_for_timeout(500)
+    ok = True
+    for k in range(4):
+        pg.evaluate("scrollTo(0, document.body.scrollHeight)"); pg.wait_for_timeout(80)
+        pg.locator("#next").tap(); pg.wait_for_timeout(250)
+        top = pg.evaluate("document.querySelector('.q').getBoundingClientRect().top")
+        if top < 0: ok = False; print("  q top", top, "after Next to item", k+1)
+    check(ok, "question visible after Next on phone")
+    q0 = pg.evaluate("cur=0; render(); 0"); pg.evaluate("scrollTo(0,0)"); pg.reload(); pg.wait_for_timeout(500)
+    check(pg.evaluate("document.querySelector('.q').getBoundingClientRect().top") >= 0, "question visible on first load")
+    c.close()
+    # 10e. 教學：焦點在 body 時 Esc 照樣關、Tab 不會跑到後面；Esc 不會清掉頁面上選好的標籤
+    c = ctx(STUDENT + TUTSEEN); pg = c.new_page(); pg.goto(URL); pg.wait_for_timeout(400)
+    pg.click('.chip[data-l="NP"]'); pg.click("#howto"); pg.wait_for_timeout(100)
+    pg.evaluate("document.activeElement.blur()"); pg.keyboard.press("Tab")
+    check(bool(pg.evaluate("!!document.activeElement.closest('.tut')")), "Tab from body stays inside tutorial")
+    pg.evaluate("document.activeElement.blur()"); pg.keyboard.press("Escape"); pg.wait_for_timeout(50)
+    check(pg.locator(".tut").count() == 0 and pg.evaluate("armed") == "NP", "Esc closes tutorial without clearing the selected label")
+    # 10f. 存壞的進度不會讓頁面掛掉
+    pg.evaluate("localStorage.setItem('ling_prog_v1_ch02_syntax_Z00000000', JSON.stringify({v:1,cur:1,items:[null,{nodes:{},par:{},done:true,ok:true}]}))")
+    perr = []; pg.on("pageerror", lambda e: perr.append(str(e)))
+    pg.reload(); pg.wait_for_timeout(400)
+    check(not perr and pg.evaluate("S[1].done") is False and pg.locator("#cv").count() == 1, f"corrupted progress handled ({perr})")
     c.close()
     print("FAILS", len(fails)); b.close()
