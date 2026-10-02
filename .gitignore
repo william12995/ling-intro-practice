@@ -1,3 +1,7 @@
 textbook/
 __pycache__/
 *.pyc
+# 老師的上課簡報（Drive 下載），不推上 public repo
+_output/*.pptx
+_output/*.ppt
+_output/*.zip
