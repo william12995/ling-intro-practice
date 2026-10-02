@@ -27,7 +27,9 @@
 | 章 | 原始檔 | 上線版 |
 |---|---|---|
 | Morphology（開源課本 Ch.5 習題 1–7，39 題） | `ch01_morphology/morphology_lab.src.html` | `docs/ch01_morphology/index.html`（已上線：https://william12995.github.io/ling-intro-practice/ch01_morphology/ ） |
-| Syntax 畫樹原型（Ex 14 四句＋教學句，2026-09-29） | `ch02_syntax/tree_lab.src.html` | 未上線、沒接後端，還在等使用者和老師決定（見 `_output/session_log_2026-09-29.md`） |
+| Syntax 拖拉畫樹（Ex 14 四句＋教學句；2026-10-02 改成全拖拉版、記法改照老師簡報） | `ch02_syntax/tree_lab.src.html`，測試在 `ch02_syntax/tests/` | 未上線、沒接後端（見 `_output/session_log_2026-10-02.md`） |
+
+老師的句法簡報 `syntax_part1–3.pptx`（Fromkin 10th ed. Ch.3）在 `_output/`，已列入 .gitignore。畫樹記法以簡報為準：Det（不是 DP）、T 放 ±pst 或情態動詞、have/be 是 V（Appendix C rule 7、20）、名字和代名詞可直接掛 NP。
 
 2026-09-26 整頁換掉：原本的 Fromkin 內文範例版（20 題選擇＋四關切詞）在學生作答前就撤下了，舊版在 git 紀錄 `be842ae`。資料夾名稱和 quiz id 還是 `ch01_morphology`。
 

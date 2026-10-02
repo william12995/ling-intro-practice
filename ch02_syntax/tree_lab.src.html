@@ -1,4 +1,4 @@
-<title>Syntax Practice (prototype)</title>
+<title>Syntax Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap">
@@ -88,12 +88,15 @@ svg.cv .word.over rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width
 svg.cv .word.sel rect{stroke:var(--accent);stroke-width:2.5}
 svg.cv .plus{display:none;cursor:pointer;touch-action:none}
 svg.cv.arming .plus{display:inline}
-svg.cv .plus circle{fill:var(--accent);stroke:var(--accent);stroke-width:2}
+svg.cv .plus .pv{fill:var(--accent);stroke:var(--accent);stroke-width:2}
+svg.cv .plus .ph,svg.cv .xbtn .xh{fill:transparent}
 svg.cv .plus text{fill:var(--surface);font:600 16px var(--sans)}
-svg.cv .plus.over circle{fill:var(--accent-soft)}
+svg.cv .plus.over .pv{fill:var(--accent-soft)}
 svg.cv .plus.over text{fill:var(--accent)}
 svg.cv .xbtn{cursor:pointer}
-svg.cv .xbtn circle{fill:var(--cut)}
+svg.cv .xbtn .xv{fill:var(--cut)}
+svg.cv [tabindex]:focus{outline:none}
+svg.cv [tabindex]:focus-visible .pill,svg.cv [tabindex]:focus-visible rect,svg.cv [tabindex]:focus-visible .pv,svg.cv [tabindex]:focus-visible .xv{stroke:var(--accent);stroke-width:3}
 svg.cv .xbtn text{fill:#fff;font:600 13px var(--sans)}
 svg.cv.done .node,svg.cv.done .word{cursor:default}
 
@@ -126,7 +129,7 @@ svg.tree .ln{stroke:var(--muted);stroke-width:1.2;fill:none}
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Syntax · prototype</div>
+    <div class="eyebrow">Syntax</div>
     <h1>Build the tree</h1>
     <p class="lede">Drag labels onto the canvas and connect them down to the words.</p>
   </header>
@@ -144,7 +147,7 @@ svg.tree .ln{stroke:var(--muted);stroke-width:1.2;fill:none}
 const ITEMS = [
   { ex:"Practice", tut:true, say:"A dog barked", words:["a","dog","$","bark"], t:"+pst",
     key:"[TP [NP [Det a] [N' [N dog]]] [T' [T $] [VP [V' [V bark]]]]]",
-    e:"This is the shape of every English sentence in this chapter. The subject NP is the specifier of TP; T' holds T and the VP. T carries the tense (+pst), and the verb is written in its base form, as in class: +pst and <em>bark</em> together are pronounced <em>barked</em>. Every phrase has three levels, even with one word: V, V', VP." },
+    e:"This is the shape of every English sentence in this chapter. The subject NP is the specifier of TP; T' holds T and the VP. T carries the tense (+pst), and the verb is written in its base form, as in class: +pst and <em>bark</em> together are pronounced <em>barked</em>. A one-word VP still has three levels: V, V', VP." },
   { ex:"Ex. 14a", say:"The children read the book", words:["the","children","$","read","the","book"], t:"+pst",
     key:"[TP [NP [Det the] [N' [N children]]] [T' [T $] [VP [V' [V read] [NP [Det the] [N' [N book]]]]]]]",
     e:"Both NPs have the same shape: Det, then N' over N (rule 2 and rule 3). There is no modal, so T holds only the tense. <em>Read</em> could also be present tense (–pst); the tree is the same either way. <em>The book</em> is the complement of the verb, so it is a sister of V inside V' (rule 5)." },
@@ -152,13 +155,13 @@ const ITEMS = [
     key:"[TP [NP [Det the] [N' [N weather]]] [T' [T $] [VP [V' [V be] [AP [A' [A cold]]]]]]]",
     e:"<em>Is</em> is not a modal, so T holds only the tense, –pst, and <em>be</em> is a verb (–pst and <em>be</em> are pronounced <em>is</em>). <em>Be</em> takes the AP <em>cold</em> as its complement (rule 7, V' → V AP). A lone adjective still projects A and A' before AP (rules 11 and 12)." },
   { ex:"Ex. 14d", say:"Emily may win the race", words:["Emily","may","win","the","race"],
-    key:"[TP [NP [N' [N Emily]]] [T' [T may] [VP [V' [V win] [NP [Det the] [N' [N race]]]]]]]",
-    alts:["[TP [NP Emily] [T' [T may] [VP [V' [V win] [NP [Det the] [N' [N race]]]]]]]"],
-    e:"<em>May</em> is a modal, so it sits in T and heads the TP. <em>Win</em> takes <em>the race</em> as its complement inside V'. A name has no determiner; drawing it as NP over N' over N, or as NP directly over the name, are both accepted." },
+    key:"[TP [NP Emily] [T' [T may] [VP [V' [V win] [NP [Det the] [N' [N race]]]]]]]",
+    alts:["[TP [NP [N' [N Emily]]] [T' [T may] [VP [V' [V win] [NP [Det the] [N' [N race]]]]]]]"],
+    e:"<em>May</em> is a modal, so it sits in T and heads the TP. <em>Win</em> takes <em>the race</em> as its complement inside V'. A name has no determiner. It can sit directly under NP, as in class, or be drawn as NP over N' over N; both are accepted." },
   { ex:"Ex. 14e", say:"I have finished my homework", words:["I","$","have","finished","my","homework"], t:"–pst",
-    key:"[TP [NP [N' [N I]]] [T' [T $] [VP [V' [V have] [VP [V' [V finished] [NP [Det my] [N' [N homework]]]]]]]]]",
-    alts:["[TP [NP I] [T' [T $] [VP [V' [V have] [VP [V' [V finished] [NP [Det my] [N' [N homework]]]]]]]]]"],
-    e:"<em>Have</em> is not a modal, so T holds the tense (–pst) and <em>have</em> is a verb. Its complement is another VP, <em>finished my homework</em> (rule 20, V' → V VP). The possessive <em>my</em> is in the same position as a determiner. A pronoun can be drawn as NP over N' over N, or as NP directly over the word; both are accepted." },
+    key:"[TP [NP I] [T' [T $] [VP [V' [V have] [VP [V' [V finished] [NP [Det my] [N' [N homework]]]]]]]]]",
+    alts:["[TP [NP [N' [N I]]] [T' [T $] [VP [V' [V have] [VP [V' [V finished] [NP [Det my] [N' [N homework]]]]]]]]]"],
+    e:"<em>Have</em> is not a modal, so T holds the tense (–pst) and <em>have</em> is a verb. Its complement is another VP, <em>finished my homework</em> (rule 20, V' → V VP). The possessive <em>my</em> is in the same position as a determiner. A pronoun can sit directly under NP, as in class, or be drawn as NP over N' over N; both are accepted." },
 ];
 // 標籤表集中放這裡，記法要改只改這一段
 const GROUPS = [["Word",["N","V","T","A","P","Adv","Det"]],["Bar",["N'","V'","T'","A'","P'"]],["Phrase",["TP","NP","VP","AP","PP","AdvP"]]];
@@ -166,7 +169,7 @@ const LABELS = GROUPS.flatMap(g => g[1]);
 const ALIAS = {};                  // 同一個節點兩種寫法都收時填這裡，例如 {S:"TP"}
 const al = l => ALIAS[l] || l;
 const GLOSS = {
-  N:"noun: dog, children, Emily, I", V:"verb: bark, read, win, be, have", A:"adjective: cold, happy", P:"preposition: in, at, on",
+  N:"noun: dog, children, book", V:"verb: bark, read, win, be, have", A:"adjective: cold, happy", P:"preposition: in, at, on",
   Adv:"adverb: completely, yesterday, often",
   T:"tense: a modal (may, will, can) or the tense feature +pst / –pst. T is the head of the sentence",
   Det:"determiner: a, the, this, every, and possessives like my",
@@ -175,7 +178,7 @@ const GLOSS = {
   "T'":"T-bar, the middle level between T and TP. It holds T and the VP",
   "A'":"A-bar, the middle level between A and AP", "P'":"P-bar, the middle level between P and PP",
   TP:"the sentence. T is its head, the subject NP is its specifier, and the VP is inside T'",
-  NP:"noun phrase: a dog, the book, Emily", VP:"verb phrase: the verb with its complement", AP:"adjective phrase", PP:"prepositional phrase: at me, in the house",
+  NP:"noun phrase: a dog, the book. A name or pronoun (Emily, I) can sit directly under NP", VP:"verb phrase: the verb with its complement", AP:"adjective phrase", PP:"prepositional phrase: at me, in the house",
   AdvP:"adverb phrase: completely, yesterday",
 };
 
@@ -188,7 +191,10 @@ const wordText = (i, it) => it.words[i] === "$" ? (it.t || "+PAST") : it.words[i
 
 /* ---------- 共用的樹工具（巢狀結構 {l, k:[...]}，詞是 {w, i}） ---------- */
 function span(n){ if(n.w !== undefined){ n.s = n.e = n.i; return; } n.k.forEach(span); n.s = n.k[0].s; n.e = n.k[n.k.length-1].e; }
-function sigs(n, out=new Set()){ if(n.w !== undefined) return out; if(n.l){ n.sig = `${al(n.l)}|${n.s}|${n.e}`; out.add(n.sig); } n.k.forEach(c => sigs(c, out)); return out; }
+function sigs(n, out=new Set(), cnt={}){   // 同一個標籤在同一段詞上疊兩層時，第二個記成 …|2，才不會被 Set 合併掉
+  if(n.w !== undefined) return out;
+  if(n.l){ const b = `${al(n.l)}|${n.s}|${n.e}`; cnt[b] = (cnt[b] || 0) + 1; n.sig = cnt[b] > 1 ? `${b}|${cnt[b]}` : b; out.add(n.sig); }
+  n.k.forEach(c => sigs(c, out, cnt)); return out; }
 const canon = (n, it) => n.w !== undefined ? it.words[n.i].toLowerCase() : `[${al(n.l)} ${n.k.map(c => canon(c, it)).join(" ")}]`;
 const nodesOf = n => n.w !== undefined ? [] : [n, ...n.k.flatMap(nodesOf)];
 const heightOf = n => n.w !== undefined ? 0 : 1 + Math.max(...n.k.map(heightOf));
@@ -207,7 +213,7 @@ ITEMS.forEach(it => {
 });
 
 /* ---------- 學生的樹：一堆節點 + 「子 → 父」的連線 ----------
-   st.nodes[id] = {l, x, h}：x、h 只在節點底下還沒接東西時用（放在哪就在哪）；
+   st.nodes[id] = {l, x, h}：x、h 只在節點底下還沒接東西時用（放在哪就在哪；x 是相對第一個詞的距離）；
    一旦接了東西，位置自動算：x 在子節點中間，高度 = 底下最高的子節點 + 1，所以樹永遠是整齊的。
    st.par[子 id] = 父 id；詞的 id 是 w0、w1…，節點是 n1、n2… */
 const DY = 50, PH = 26;
@@ -224,7 +230,7 @@ function layout(it, st, G){
   const xOf = id => {
     if(pos[id]) return pos[id].x;
     const k = kids[id];
-    if(!k.length){ pos[id] = {x:st.nodes[id].x}; return pos[id].x; }
+    if(!k.length){ pos[id] = {x:G.wx[0] + st.nodes[id].x}; return pos[id].x; }
     const xs = k.map(xOf); k.sort((a, b) => pos[a].x - pos[b].x);
     pos[id] = {x:(Math.min(...xs) + Math.max(...xs))/2}; return pos[id].x;
   };
@@ -326,7 +332,10 @@ function coach(it, st, L){
     const part = Object.keys(st.nodes).find(id => al(st.nodes[id].l) === al(n.l) && L.kids[id].length && L.kids[id].every(c => want.includes(c)));
     if(part){ const miss = want.filter(c => !L.kids[part].includes(c)).map(desc);
       tip = `Now connect ${list(miss)} to this <b>${esc(st.nodes[part].l)}</b> too: drag ${miss.length > 1 ? "each one" : "it"} up onto <b>${esc(st.nodes[part].l)}</b>. ${why}`; return; }
-    const wrong = want.find(c => st.par[c]);
+    const crowded = Object.keys(st.nodes).find(id => al(st.nodes[id].l) === al(n.l) && L.kids[id].some(c => want.includes(c)) && L.kids[id].some(c => !want.includes(c)));
+    if(crowded){ const x = L.kids[crowded].filter(c => !want.includes(c)).map(desc);
+      tip = `${list(x)} ${x.length > 1 ? "don't" : "doesn't"} belong under this <b>${esc(st.nodes[crowded].l)}</b>. Tap the line above ${x.length > 1 ? "each one" : "it"} to cut it. ${why}`; return; }
+    const wrong = want.find(c => st.par[c] && al(st.nodes[st.par[c]].l) !== al(n.l));
     if(wrong){ tip = `${desc(wrong)} is connected to the wrong node. Tap the line above it to cut it. ${why}`; return; }
     const waiting = Object.keys(st.nodes).find(id => al(st.nodes[id].l) === al(n.l) && !L.kids[id].length);
     if(waiting){ tip = `Good. Now drag ${list(want.map(desc))} up onto this <b>${esc(st.nodes[waiting].l)}</b>${want.length > 1 ? ", one at a time" : ""}. ${why}`; return; }
@@ -369,7 +378,7 @@ function draw(root, it){
 const stage = document.getElementById("stage");
 let cur = 0, armed = null, drag = null, G = null, L = null, A = null;
 const S = ITEMS.map(() => ({nodes:{}, par:{}, nid:1, hist:[], sel:null, done:false, ok:null}));
-const describe = (sig, it) => { const [l, s, e] = sig.split("|"); return `<b>${esc(l)}</b> over ${over(+s, +e, it)}`; };
+const describe = (sig, it) => { const [l, s, e, k] = sig.split("|"); return `${k ? "a second " : ""}<b>${esc(l)}</b> over ${over(+s, +e, it)}`; };
 
 const snap = st => ({nodes:clone(st.nodes), par:{...st.par}, nid:st.nid});
 const save = st => { st.hist.push(snap(st)); if(st.hist.length > 80) st.hist.shift(); };
@@ -379,19 +388,19 @@ function say(t, warn){ const m = stage.querySelector("#msg"); if(m){ m.innerHTML
 function attach(child, parent){
   const st = S[cur];
   if(child[0] === "n" && isAnc(st, child, parent)){ say(`Can't put <b>${esc(st.nodes[child].l)}</b> under something that is already below it.`, true); return; }
-  if(st.par[child] === parent) return;
+  if(st.par[child] === parent){ st.sel = null; refresh(); say("It is already connected there."); return; }
   save(st); st.par[child] = parent; st.sel = null; refresh();
 }
 function newNode(label, x, h){ const st = S[cur], id = "n" + st.nid++; st.nodes[id] = {l:label, x, h}; return id; }
 function addAbove(id, label){
   const st = S[cur]; save(st);
-  const p = L.pos[id], n = newNode(label, p.x, L.hh[id] + 1);
+  const p = L.pos[id], n = newNode(label, p.x - G.wx[0], L.hh[id] + 1);
   if(st.par[id]) st.par[n] = st.par[id];
   st.par[id] = n; refresh();
 }
 function addFree(label, x, y){
   const st = S[cur]; save(st);
-  newNode(label, x, Math.max(0.6, (L.wordY - y)/DY)); refresh();
+  newNode(label, x - G.wx[0], Math.max(0.6, (L.wordY - y)/DY)); refresh();
 }
 function relabel(id, label){ const st = S[cur]; if(st.nodes[id].l === label) return; save(st); st.nodes[id].l = label; refresh(); }
 function remove(id){
@@ -402,7 +411,7 @@ function remove(id){
   if(st.sel === id) st.sel = null; refresh();
 }
 function cut(child){ const st = S[cur]; save(st); delete st.par[child]; refresh(); }
-function moveFree(id, x, y){ const st = S[cur], n = st.nodes[id]; save(st); n.x = x; n.h = Math.max(0.6, (L.wordY - y)/DY); refresh(); }
+function moveFree(id, x, y){ const st = S[cur], n = st.nodes[id]; save(st); n.x = x - G.wx[0]; n.h = Math.max(0.6, (L.wordY - y)/DY); refresh(); }
 
 /* ---------- 畫布 ---------- */
 function drawCanvas(){
@@ -417,36 +426,40 @@ function drawCanvas(){
   }
   it.words.forEach((w, i) => {
     const id = "w"+i, x = P[id].x, y = L.wordY, ww = G.ww[i];
-    g += `<g class="word ${st.par[id] || st.done ? "" : "loose"} ${st.sel === id ? "sel" : ""}" data-w="${id}"><rect x="${x-ww/2}" y="${y-14}" width="${ww}" height="28" rx="6"/><text x="${x}" y="${y+5}" text-anchor="middle">${esc(wordText(i, it))}</text></g>`;
+    g += `<g class="word ${st.par[id] || st.done ? "" : "loose"} ${st.sel === id ? "sel" : ""}" data-w="${id}" ${edit ? `tabindex="0" role="button" aria-label="word ${esc(wordText(i, it))}"` : ""}><rect x="${x-ww/2}" y="${y-14}" width="${ww}" height="28" rx="6"/><text x="${x}" y="${y+5}" text-anchor="middle">${esc(wordText(i, it))}</text></g>`;
     if(edit && !st.par[id]) g += plus(id, x, y - 34);
   });
   for(const id in st.nodes){
     const n = st.nodes[id], x = P[id].x, y = P[id].y, w = pillW(n.l);
-    g += `<g class="node ${st.sel === id ? "sel" : ""} ${L.kids[id].length ? "" : "empty"} ${badIds.has(id) ? "bad" : ""}" data-n="${id}"><rect class="pill" x="${x-w/2}" y="${y-PH/2}" width="${w}" height="${PH}" rx="7"/><text x="${x}" y="${y+5.5}" text-anchor="middle">${esc(n.l)}</text></g>`;
+    g += `<g class="node ${st.sel === id ? "sel" : ""} ${L.kids[id].length ? "" : "empty"} ${badIds.has(id) ? "bad" : ""}" data-n="${id}" ${edit ? `tabindex="0" role="button" aria-label="node ${esc(n.l)}"` : ""}><rect class="pill" x="${x-w/2}" y="${y-PH/2}" width="${w}" height="${PH}" rx="7"/><text x="${x}" y="${y+5.5}" text-anchor="middle">${esc(n.l)}</text></g>`;
     if(edit && !st.par[id]) g += plus(id, x, y - PH/2 - 18);
-    if(edit && st.sel === id) g += `<g class="xbtn" data-del="${id}" role="button" aria-label="delete ${esc(n.l)}"><circle cx="${x+w/2+4}" cy="${y-PH/2-2}" r="9"/><text x="${x+w/2+4}" y="${y-PH/2+2.5}" text-anchor="middle">✕</text></g>`;
+    if(edit && st.sel === id) g += `<g class="xbtn" data-del="${id}" role="button" tabindex="0" aria-label="delete ${esc(n.l)}"><circle class="xh" cx="${x+w/2+12}" cy="${y-PH/2-4}" r="14"/><circle class="xv" cx="${x+w/2+12}" cy="${y-PH/2-4}" r="10"/><text x="${x+w/2+12}" y="${y-PH/2+0.5}" text-anchor="middle">✕</text></g>`;
   }
   svg.setAttribute("width", G.W); svg.setAttribute("height", L.H); svg.setAttribute("viewBox", `0 0 ${G.W} ${L.H}`);
   svg.setAttribute("class", `cv ${edit ? "edit" : "done"} ${armed ? "arming" : ""}`);
+  const f = document.activeElement?.closest?.("#cv [tabindex]");
+  const fk = f && ["n","w","plus","del"].map(k => f.dataset[k] && `[data-${k}="${f.dataset[k]}"]`).find(Boolean);
   svg.innerHTML = g;
+  if(fk) svg.querySelector(fk)?.focus({preventScroll:true});
 }
-const plus = (id, x, y) => `<g class="plus" data-plus="${id}" role="button" aria-label="add a node above"><circle cx="${x}" cy="${y}" r="10"/><text x="${x}" y="${y+5.5}" text-anchor="middle">+</text></g>`;
+const plus = (id, x, y) => `<g class="plus" data-plus="${id}" role="button" tabindex="0" aria-label="add a node above"><circle class="ph" cx="${x}" cy="${y}" r="15"/><circle class="pv" cx="${x}" cy="${y}" r="10"/><text x="${x}" y="${y+5.5}" text-anchor="middle">+</text></g>`;
 
 /* ---------- 換題或送出時整張重畫；refresh 只重畫畫布和文字 ---------- */
 function render(){
   const it = ITEMS[cur], st = S[cur];
+  drag = null; document.querySelectorAll(".ghost").forEach(g => g.remove());
   const dots = ITEMS.map((_, k) => `<span class="dot ${S[k].ok===true?"ok":S[k].ok===false?"no":""} ${k===cur?"cur":""}"></span>`).join("");
   stage.innerHTML = `<section class="card">
     <div class="meta"><span>${it.tut ? "Practice sentence, not scored" : `${it.ex} · Sentence ${cur} of ${ITEMS.length-1}`}</span><div class="dots">${dots}</div></div>
-    <p class="q">Draw the tree for <em>${esc(it.say)}.</em>${it.words.includes("$") ? ` There is no modal, so the tense is its own box, <b>${esc(it.t)}</b>, and the verb is in its base form.` : ""}</p>
+    <p class="q">Draw the tree for <em>${esc(it.say)}.</em>${it.words.includes("$") ? ` There is no modal, so the tense is its own box, <b>${esc(it.t)}</b>; the verb it attaches to is written in its base form.` : ""}</p>
     ${st.done ? "" : `<ul class="howto">
       <li><b>Build upward:</b> drag a label onto the <span class="pl">+</span> above a word or node.</li>
       <li><b>Join pieces:</b> drop a label on an empty spot, then drag each piece up onto it.</li>
       <li><b>Fix:</b> drop a label on a node to change it. Tap a line to cut it. Drag anything to <b>Delete</b>.</li>
-      <li>You can also tap instead of dragging: tap a label, then tap where it goes; or tap a piece, then tap the node it goes under.</li></ul>`}
+      <li>You can also tap instead of dragging: tap a label, then tap where it goes; or tap a piece, then tap the node it goes under. With a keyboard, use Tab and Enter the same way.</li></ul>`}
     <details class="glossary"><summary>What do the labels mean?</summary><dl>${LABELS.map(l => `<dt>${esc(l)}</dt><dd>${esc(GLOSS[l])}</dd>`).join("")}</dl></details>
     ${it.tut && !st.done ? `<div class="coach" id="coach" aria-live="polite"></div>` : ""}
-    <div class="cvwrap" id="cvwrap"><svg class="cv" id="cv" role="application" aria-label="Tree canvas"></svg></div>
+    <div class="cvwrap" id="cvwrap"><svg class="cv" id="cv" tabindex="0" role="application" aria-label="Tree canvas. With a label chosen, press Enter here to place it on an empty spot."></svg></div>
     ${st.done ? "" : `<div class="palette" id="pal">${GROUPS.map(([nm, arr], gi) => `<div class="pgrp"><span class="pname">${nm}</span>${arr.map(l => `<button class="chip" data-l="${esc(l)}" title="${esc(GLOSS[l])}">${esc(l)}</button>`).join("")}${gi === GROUPS.length-1 ? `<span class="trash" id="trash">Delete</span>` : ""}</div>`).join("")}<p class="hint" id="msg" aria-live="polite"></p></div>`}
     <div class="readout"><span class="hint">Labeled bracketing</span><code id="ro"></code></div>
     <div class="row"><div class="btns">${st.done ? `<button class="btn" id="again">Try again</button>` : `<button class="btn" id="undo">Undo</button><button class="btn" id="clear">Start over</button>`}</div>
@@ -522,22 +535,24 @@ function autoScroll(e){
 function reveal(){   // 開始拖標籤或選了標籤時，把畫布底部（詞那一排）捲到標籤盤上面
   const pal = stage.querySelector("#pal"), cv = stage.querySelector("#cvwrap"); if(!pal || !cv) return;
   const c = cv.getBoundingClientRect(), top = pal.getBoundingClientRect().top;
-  if(c.bottom > top - 8) scrollBy(0, Math.min(c.bottom - top + 8, c.top - 8)); }
+  if(c.bottom > top - 8) scrollBy(0, c.bottom - top + 8); }
 
 function wire(){
   const st = S[cur], svg = stage.querySelector("#cv"), pal = stage.querySelector("#pal");
 
   // 標籤盤：拖到 + 上＝往上加一層並接好；拖到節點上＝換標籤；拖到詞上＝在詞上面加一層；拖到空白處＝放一個還沒接的節點
-  pal.onpointerdown = e => { const c = e.target.closest(".chip"); if(!c) return;
+  pal.onpointerdown = e => { const c = e.target.closest(".chip"); if(!c || drag || !e.isPrimary) return;
     e.preventDefault(); c.setPointerCapture(e.pointerId);
-    drag = {src:"pal", l:c.dataset.l, x:e.clientX, y:e.clientY, moved:false}; reveal(); };
-  pal.onpointermove = e => { const d = drag; if(!d || d.src !== "pal") return;
+    drag = {src:"pal", l:c.dataset.l, x:e.clientX, y:e.clientY, moved:false, pid:e.pointerId}; reveal(); };
+  pal.onclick = e => { const c = e.target.closest(".chip");   // 鍵盤（Enter / 空白鍵）按標籤：detail 是 0；滑鼠和觸控已經在 pointerup 處理過
+    if(!c || e.detail !== 0) return; armed = armed === c.dataset.l ? null : c.dataset.l; st.sel = null; refresh(); };
+  pal.onpointermove = e => { const d = drag; if(!d || d.src !== "pal" || e.pointerId !== d.pid) return;
     if(!d.moved){ if(Math.hypot(e.clientX-d.x, e.clientY-d.y) < 6) return;
       d.moved = true; d.ghost = ghost(d.l); svg.classList.add("arming"); }
     moveGhost(d.ghost, e); autoScroll(e);
     const t = targetAt(e.clientX, e.clientY, "[data-plus],[data-n],[data-w]");
     hover(d, t && t.kind !== "bg" && t.kind !== "trash" ? t : null); };
-  const palEnd = e => { const d = drag; if(!d || d.src !== "pal") return; drag = null;
+  const palEnd = e => { const d = drag; if(!d || d.src !== "pal" || e.pointerId !== d.pid) return; drag = null;
     if(!d.moved){ if(e.type === "pointerup"){ armed = armed === d.l ? null : d.l; st.sel = null; refresh(); } return; }
     d.ghost.remove(); d.over?.classList.remove("over");
     if(e.type !== "pointerup"){ refresh(); return; }
@@ -547,14 +562,16 @@ function wire(){
   // 畫布：拖節點或詞到另一個節點上＝接到它底下。
   // 原本節點下方還有一個點可以往下拉線，手機上 Chrome 的觸控校正會把按在節點上的手指吸到那個點，變成反方向接線，所以拿掉了
   svg.onpointerdown = e => {
+    if(drag || !e.isPrimary) return;
     const t = e.target.closest("[data-n],[data-w],[data-plus],[data-e],[data-del]");
     if(t && (t.dataset.n || t.dataset.w)) e.preventDefault();
     drag = {src:"cv", t, x:e.clientX, y:e.clientY, moved:false, pid:e.pointerId};
   };
-  svg.onpointermove = e => { const d = drag; if(!d || d.src !== "cv") return;
+  svg.onpointermove = e => { const d = drag; if(!d || d.src !== "cv" || e.pointerId !== d.pid) return;
+    if(e.pointerType === "mouse" && e.buttons === 0){ d.ghost?.remove(); d.over?.classList.remove("over"); drag = null; refresh(); return; }   // 在畫布外放開滑鼠
     if(!d.t || d.t.dataset.e){   // 空白處或線上拖：捲動畫布和頁面
       if(!d.moved && Math.hypot(e.clientX-d.x, e.clientY-d.y) < 6) return;
-      if(!d.moved){ d.moved = true; d.pan = true; d.lx = e.clientX; d.ly = e.clientY; }
+      if(!d.moved){ d.moved = true; d.pan = true; d.lx = e.clientX; d.ly = e.clientY; svg.setPointerCapture(d.pid); }
       stage.querySelector("#cvwrap").scrollLeft -= e.clientX - d.lx; scrollBy(0, -(e.clientY - d.ly));
       d.lx = e.clientX; d.ly = e.clientY; return; }
     const item = d.t.dataset.n || d.t.dataset.w;
@@ -567,7 +584,7 @@ function wire(){
     const t = targetAt(e.clientX, e.clientY, "[data-n]");
     hover(d, t && (t.kind === "trash" || (t.kind === "node" && t.id !== item)) ? t : null);
   };
-  const cvEnd = e => { const d = drag; if(!d || d.src !== "cv") return; drag = null;
+  const cvEnd = e => { const d = drag; if(!d || d.src !== "cv" || e.pointerId !== d.pid) return; drag = null;
     d.ghost?.remove(); d.over?.classList.remove("over");
     if(e.type !== "pointerup"){ refresh(); return; }
     if(!d.moved){ tap(d.t, e); return; }
@@ -581,6 +598,11 @@ function wire(){
     else refresh();
   };
   svg.onpointerup = cvEnd; svg.onpointercancel = cvEnd;
+  svg.onkeydown = e => { if(e.key !== "Enter" && e.key !== " ") return;
+    const t = e.target.closest("[data-n],[data-w],[data-plus],[data-del]");
+    if(!t){ if(e.target === svg && armed){ e.preventDefault(); addFree(armed, G.W/2, 30); } return; }   // 鍵盤：選了標籤後在畫布上按 Enter，放在上方空白處
+    e.preventDefault();
+    const r = t.getBoundingClientRect(); tap(t, {clientX:r.x + r.width/2, clientY:r.y + r.height/2}); };
 }
 function dropLabel(l, t, e){
   const st = S[cur];
@@ -614,10 +636,7 @@ document.addEventListener("keydown", e => {
 let rw = 0;
 addEventListener("resize", () => { clearTimeout(rw); rw = setTimeout(() => {   // 寬度變了，詞的位置要重算
   const w = stage.querySelector("#cvwrap")?.clientWidth; if(!w) return;
-  const st = S[cur], oldWx = G.wx;
-  G = geometry(ITEMS[cur], w - 2);
-  const dx = G.wx[0] - oldWx[0]; for(const id in st.nodes) st.nodes[id].x += dx;
-  refresh(); }, 150); });
+  G = geometry(ITEMS[cur], w - 2); refresh(); }, 150); });
 render();
 document.fonts?.ready.then(() => { G = geometry(ITEMS[cur], stage.querySelector("#cvwrap").clientWidth - 2); refresh(); });   // 字型載入後重量字寬
 </script>
