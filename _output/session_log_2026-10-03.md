@@ -37,7 +37,12 @@ Commit：`6dfb1f2`（教學動畫、提示、成績紀錄）、`9c3631c`、之�
 
 ## 下次從這裡開始
 
-1. 使用者照 `DEPLOY.md` 第 6 節建第二份 Sheet：新 Sheet → 貼 `apps_script/Code.gs` → 指令碼屬性 `QUIZZES` = `ch02_syntax` → 部署成網頁應用程式 → 把 `/exec` 網址給我。
+1. 使用者說下次由我來建第二份 Sheet 和部署腳本，不要再丟步驟給他照做。做法：
+   - 用 clasp（Google 官方的 Apps Script 命令列工具，`npm i -g @google/clasp`）。唯一要使用者自己做的是 `clasp login` 那一次瀏覽器授權（請他在對話框打 `! clasp login`），帳號要跟構詞 Sheet 同一個；還要到 https://script.google.com/home/usersettings 打開「Google Apps Script API」。
+   - `clasp create --type sheets --title "語言學概論 句法練習成績"` 會同時建 Sheet 和綁定的腳本；把 `apps_script/Code.gs` 和 `appsscript.json`（要有 webapp 設定：executeAs USER_DEPLOYING、access ANYONE_ANONYMOUS，以及 oauthScopes）推上去（`clasp push`），`clasp deploy` 拿到網址。
+   - `QUIZZES` 指令碼屬性 clasp 不能直接設；改成在 Code.gs 加一個只跑一次的 `setup_()`，或用 `clasp run`（要另外設定 GCP 專案），擇簡單的做。也可以考慮讓 ch02 這份的 Code.gs 預設值吃部署時寫進去的常數。
+   - 建好後 `python build_site.py --endpoint ch02_syntax=<網址>`（會自動檢查後端），push，然後自己用 `Z00000000` 測一題、看 Sheet、刪測試列。
+   - 如果 clasp 卡住（NTU Workspace 帳號可能擋 Apps Script API），退回 DEPLOY.md 第 6 節的手動步驟，但先問使用者。
 2. 拿到網址後：`python build_site.py --endpoint ch02_syntax=<網址>`（會自動檢查後端設定），commit、push，頁面就在 `https://william12995.github.io/ling-intro-practice/ch02_syntax/`。用 `Z00000000` 做一題，看 Sheet 有那一列，重算總表，刪測試列。
 3. 請老師核答案和記法（同 10-02 的待辦）。
 4. 之後可以加的題目：Every girl read some poetry、A hyena laughed at me、帶 PP/AdvP 附加語的句子、歧義句兩棵樹。加題只能加在 ITEMS 最後。
