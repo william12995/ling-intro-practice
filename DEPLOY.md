@@ -28,9 +28,13 @@ Google Sheet：answers 分頁（每次作答一列）→ 選單「成績 → 重
 
 ## 2. 把網址烤進網頁
 
+每一章記在自己的 Sheet，所以每章有自己的網址，存在 `endpoints.json`。設定或更新某一章的網址：
+
 ```
-C:\Python313\python.exe build_site.py --endpoint "https://script.google.com/macros/s/AKfy…/exec"
+C:\Python313\python.exe build_site.py --endpoint ch01_morphology=https://script.google.com/macros/s/AKfy…/exec
 ```
+
+之後只要重建、不改網址，直接 `python build_site.py` 就好，它會用 `endpoints.json` 裡的網址。還沒有網址的章節不會輸出到 `docs/`，也就不會上線。
 
 會重新產生 `docs/`。頁面右上角應該顯示「成績已記錄」，而不是「成績只存在這台電腦」。
 
@@ -86,3 +90,28 @@ C:\Python313\python.exe build_site.py --endpoint "https://script.google.com/macr
 - 答案寫在網頁原始碼裡，懂得看原始碼的學生查得到。後端網址也在原始碼裡，理論上有人可以偽造紀錄。這套適合練習和參與分數，不適合當正式考試。
 - 學生換電腦或清掉瀏覽器資料，頁面上的進度會從頭開始，但 Sheet 裡的紀錄不受影響，首次作答仍以最早那筆為準。
 - 姓名是學生自己填的，對照點名單時以學號為準。
+
+## 6. 句法頁（ch02_syntax）：另一份 Sheet
+
+句法的成績記在另一份 Sheet，跟構詞分開。後端程式是同一支 `apps_script/Code.gs`，差別只在指令碼屬性 `QUIZZES`：每一份 Sheet 只收自己那一章，送錯網址會被拒收，不會默默寫進別章的 Sheet。
+
+1. 用建構詞 Sheet 的同一個帳號，新建一份空白 Google Sheet，例如「語言學概論 句法練習成績」。一樣不要開公開連結。
+2. **擴充功能 → Apps Script**，把目前 repo 裡的 `apps_script/Code.gs` 全文貼上，存檔。
+3. **專案設定 → 指令碼屬性**，新增 `QUIZZES` = `ch02_syntax`。
+4. **部署 → 新增部署 → 網頁應用程式**，執行身分「我」、具存取權者「任何人」，授權。
+5. 把網址貼進瀏覽器，看到 `callback({"ok":true,"ping":true})` 就是活的。
+6. 把網址烤進網頁並推上去：
+   ```
+   C:\Python313\python.exe build_site.py --endpoint ch02_syntax=https://script.google.com/macros/s/AKfy…/exec
+   ```
+   推上 GitHub 後，句法頁在 `https://william12995.github.io/ling-intro-practice/ch02_syntax/`，首頁也會多一個連結。
+7. 用假學號 `Z00000000` 做一題計分題（練習句不送成績），回 Sheet 看 `answers` 分頁有一列、`response` 欄是帶標籤的括號寫法、`reasoning` 欄是推理。再按 **成績 → 重算總表**，然後刪掉測試列。
+
+句法頁的紀錄長這樣：
+
+- 練習句（A dog barked）不計分，也不送。四題計分題的題號是 `S1-01`～`S1-04`（14a、14c、14d、14e），之後加題只能加在後面。
+- `response` 是學生的樹寫成帶標籤的括號，`correct` 1 或 0，`reasoning` 是送出前必填的推理（至少 20 字元）。
+- 學生按「Try again」會重做同一題，`attempt` 加 1。學生在第一次送出後就看得到標準樹，所以第二次以後很可能是照抄的；評分建議看 summary 的「首次答對」。
+
+構詞那份 Sheet 不用動。如果哪天把它的 Code.gs 也換成新版，不要設 `QUIZZES`（沒設就是 `ch01_morphology`）。新版的 summary 只列有計分作答的部分，構詞頁的欄位跟以前一樣是 S1–S6。
+

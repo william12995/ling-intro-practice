@@ -16,7 +16,13 @@ var SUMMARY = 'summary';
 var HEADER = ['event_id', 'server_time', 'client_time', 'quiz', 'student_id', 'name',
               'part', 'level', 'qid', 'prompt', 'response', 'correct', 'attempt',
               'reasoning', 'truncated'];   // 新欄位只能加在最後，不然舊資料會錯位
-var QUIZZES = {'ch01_morphology': true};   // 新增章節時把 quiz id 加進來
+// 這份 Sheet 收哪些章節。每章各用一份 Sheet、各自部署一次，在 指令碼屬性 QUIZZES 填這份 Sheet 要收的 quiz id
+// （逗號分隔，例如 ch02_syntax）。沒設就是 ch01_morphology，跟最早那份 Sheet 一樣。
+// 收到別章的資料會回 unknown quiz，網頁上會顯示「沒被接受」，不會默默寫進錯的 Sheet。
+function quizzes_() {
+  var v = PropertiesService.getScriptProperties().getProperty('QUIZZES') || 'ch01_morphology';
+  var o = {}; v.split(',').forEach(function (q) { q = q.trim(); if (q) o[q] = true; }); return o;
+}
 
 function doGet(e) {
   var cb = (e && e.parameter && e.parameter.callback) || 'callback';
@@ -24,8 +30,8 @@ function doGet(e) {
   if (!e || !e.parameter || !e.parameter.data) return jsonp_(cb, {ok: true, ping: true});
   var d;
   try { d = JSON.parse(e.parameter.data); } catch (err) { return jsonp_(cb, {ok: false, error: 'bad json'}); }
-  if (d.action === 'config') return jsonp_(cb, {ok: true, feedback: feedbackOn_(), missing: feedbackMissing_()});
-  if (!QUIZZES[d.quiz]) return jsonp_(cb, {ok: false, error: 'unknown quiz'});
+  if (d.action === 'config') return jsonp_(cb, {ok: true, feedback: feedbackOn_(), missing: feedbackMissing_(), quizzes: Object.keys(quizzes_())});
+  if (!quizzes_()[d.quiz]) return jsonp_(cb, {ok: false, error: 'unknown quiz'});
   if (!/^[A-Z][0-9]{8}$/.test(String(d.student_id))) return jsonp_(cb, {ok: false, error: 'bad student_id'});
   if (!d.event_id) return jsonp_(cb, {ok: false, error: 'missing event_id'});
   if (d.action === 'feedback') return jsonp_(cb, feedback_(d));
@@ -59,6 +65,7 @@ function rebuildSummary() {
   // 每個 (學生, 測驗, 題目) 留最早一筆與「有沒有答對過」
   var per = {};      // key: sid|quiz -> {name, lastTime, q: {qid: {t, first, ever, sec}}}
   var seen = {};
+  var scoredSecs = {};   // 有計分題的部分才列欄位（ch01 的 S7 申論不計分，不會出現）
   rows.forEach(function (r) {
     var eid = String(r[col.event_id]);
     if (seen[eid]) return;   // 重送造成的重複列
@@ -72,11 +79,12 @@ function rebuildSummary() {
     if (t > s.lastTime) { s.lastTime = t; s.name = r[col.name]; }
     var sec = 'S' + r[col.level];
     var q = s.q[qid];
+    if (scored) scoredSecs[sec] = true;
     if (!q) s.q[qid] = {t: t, first: ok, ever: ok, sec: sec, scored: scored};
     else { if (t < q.t) { q.t = t; q.first = ok; } q.ever = q.ever || ok; }
   });
 
-  var SECS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];   // S7 是不計分的申論題，不列欄位
+  var SECS = Object.keys(scoredSecs).sort(function (a, b) { return Number(a.slice(1)) - Number(b.slice(1)); });
   var head = ['student_id', 'name', 'quiz', '已作答題數', '首次答對', '最佳答對']
     .concat(SECS.map(function (x) { return x + ' 首次答對'; }))
     .concat(['最後作答時間']);

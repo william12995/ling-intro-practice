@@ -1,5 +1,6 @@
 import sys, pathlib, json
 from playwright.sync_api import sync_playwright
+SEED = "localStorage.setItem('ling_student', JSON.stringify({sid:'Z00000000',name:'Test'})); localStorage.setItem('ling_syntax_tutorial_seen','true');"
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 from build_site import wrap
 src = (pathlib.Path(__file__).resolve().parents[1] / "tree_lab.src.html").read_text(encoding="utf-8")
@@ -17,9 +18,9 @@ def check(cond, what):
 with sync_playwright() as p:
     b = p.chromium.launch(channel="msedge")
     if MODE == "touch":
-        c = b.new_context(viewport={"width":390,"height":844}, has_touch=True, is_mobile=True, device_scale_factor=2)
+        c = b.new_context(viewport={"width":390,"height":844}, has_touch=True, is_mobile=True, device_scale_factor=2); c.add_init_script(SEED)
     else:
-        c = b.new_context(viewport={"width":1100,"height":900})
+        c = b.new_context(viewport={"width":1100,"height":900}); c.add_init_script(SEED)
     pg = c.new_page(); errs=[]; pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(out.resolve().as_uri()); pg.wait_for_timeout(500)
     cdp = c.new_cdp_session(pg)
@@ -82,6 +83,7 @@ with sync_playwright() as p:
             if ki: pg.locator("#again").click(); pg.locator("#clear").click(); pg.wait_for_timeout(40)
             try: build(kt)
             except AssertionError as e: check(False, f"item {i} key {ki}: {e}"); continue
+            if pg.locator("#why").count(): pg.fill("#why", "Because the verb takes the object NP as its complement inside V'.")
             sub = pg.locator("#submit"); check(sub.is_enabled(), f"item {i} key {ki}: submit enabled (status: {pg.locator('#need').inner_text()})")
             if sub.is_enabled():
                 sub.click(); pg.wait_for_timeout(60)
@@ -95,7 +97,7 @@ with sync_playwright() as p:
         if n["l"] == "N'" : return strip(n["k"][0])
         return {"l":n["l"], "k":[strip(k) for k in n["k"]]}
     build(strip(kt)) if not QUICK else None
-    if not QUICK: pg.locator("#submit").click(); pg.wait_for_timeout(60)
+    if not QUICK: pg.fill("#why", "Because the verb takes the object NP as its complement inside V'."); pg.locator("#submit").click(); pg.wait_for_timeout(60)
     r = pg.locator("#result .expl").inner_text()
     check(r.startswith("Not quite") and "Missing" in r and "N'" in r, "wrong tree feedback: " + r[:120].replace("\n"," | "))
     # 編輯工具：在練習句上

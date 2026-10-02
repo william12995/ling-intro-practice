@@ -1,6 +1,7 @@
 # 針對 code review 修正的回歸測試
 import sys, pathlib, json
 from playwright.sync_api import sync_playwright
+SEED = "localStorage.setItem('ling_student', JSON.stringify({sid:'Z00000000',name:'Test'})); localStorage.setItem('ling_syntax_tutorial_seen','true');"
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 from build_site import wrap
 src = (pathlib.Path(__file__).resolve().parents[1] / "tree_lab.src.html").read_text(encoding="utf-8")
@@ -9,7 +10,7 @@ fails = []
 def check(c, w): print(("PASS " if c else "FAIL ") + w); (None if c else fails.append(w))
 with sync_playwright() as p:
     b = p.chromium.launch(channel="msedge")
-    c = b.new_context(viewport={"width":1100,"height":900})
+    c = b.new_context(viewport={"width":1100,"height":900}); c.add_init_script(SEED)
     pg = c.new_page(); errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(out.resolve().as_uri()); pg.wait_for_timeout(500)
     st = lambda: json.loads(pg.evaluate("JSON.stringify({nodes:S[cur].nodes, par:S[cur].par, sel:S[cur].sel})"))
@@ -37,8 +38,8 @@ with sync_playwright() as p:
 
     # 3. 多指：拖曳中第二根手指按下，不能留下殘影
     cdp = c.new_cdp_session(pg)
-    pg.evaluate("S[0]=({nodes:{}, par:{}, nid:1, hist:[], sel:null, done:false, ok:null}); render()")
-    tc = b.new_context(viewport={"width":390,"height":844}, has_touch=True, is_mobile=True)
+    pg.evaluate("S[0]=fresh(); render()")
+    tc = b.new_context(viewport={"width":390,"height":844}, has_touch=True, is_mobile=True); tc.add_init_script(SEED)
     tp = tc.new_page(); tp.goto(out.resolve().as_uri()); tp.wait_for_timeout(400); tcdp = tc.new_cdp_session(tp)
     T = lambda t, pts: tcdp.send("Input.dispatchTouchEvent", {"type":t, "touchPoints":pts})
     bb = tp.locator('.chip[data-l="N"]').bounding_box(); x, y = bb["x"]+10, bb["y"]+10
@@ -61,7 +62,7 @@ with sync_playwright() as p:
     check(pg.evaluate("scrollY") == y0 and pg.evaluate("drag") is None, "pan ends when mouse released outside")
 
     # 5. 縮放視窗：沒接東西的節點跟著詞走（也包括 undo 回來的）
-    pg.evaluate("S[0]=({nodes:{}, par:{}, nid:1, hist:[], sel:null, done:false, ok:null}); cur=0; render()")
+    pg.evaluate("S[0]=fresh(); cur=0; render()")
     pg.evaluate("addFree('NP', G.wx[1], 60)")
     dx0 = pg.evaluate("L.pos.n1.x - G.wx[1]")
     pg.set_viewport_size({"width":700,"height":900}); pg.wait_for_timeout(400)
@@ -70,14 +71,14 @@ with sync_playwright() as p:
     pg.set_viewport_size({"width":1100,"height":900}); pg.wait_for_timeout(400)
 
     # 6. 點選模式：點已經接著的父節點要有回饋
-    pg.evaluate("S[0]=({nodes:{}, par:{}, nid:1, hist:[], sel:null, done:false, ok:null}); render()")
+    pg.evaluate("S[0]=fresh(); render()")
     setstate({"n1":{"l":"N","x":0,"h":1}}, {"w1":"n1"})
     pg.evaluate("document.querySelector('#cvwrap').scrollIntoView({block:'center'})")
     pg.locator('[data-w="w1"]').click(); pg.locator('[data-n="n1"]').click()
     check("already" in pg.locator("#msg").inner_text() and st()["sel"] is None, "feedback when tapping current parent")
 
     # 7. 鍵盤：Tab 到標籤按 Enter、Tab 到 + 按 Enter；選標籤後在畫布按 Enter 放空白處；選詞再選節點
-    pg.evaluate("S[0]=({nodes:{}, par:{}, nid:1, hist:[], sel:null, done:false, ok:null}); render()")
+    pg.evaluate("S[0]=fresh(); render()")
     pg.locator('.chip[data-l="Det"]').focus(); pg.keyboard.press("Enter")
     check(pg.evaluate("armed") == "Det", "keyboard Enter on chip arms it")
     pg.locator('[data-plus="w0"]').focus(); pg.keyboard.press("Enter")

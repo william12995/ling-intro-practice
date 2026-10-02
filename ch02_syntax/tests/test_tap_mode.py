@@ -1,5 +1,6 @@
 import sys, pathlib, json
 from playwright.sync_api import sync_playwright
+SEED = "localStorage.setItem('ling_student', JSON.stringify({sid:'Z00000000',name:'Test'})); localStorage.setItem('ling_syntax_tutorial_seen','true');"
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 from build_site import wrap
 src = (pathlib.Path(__file__).resolve().parents[1] / "tree_lab.src.html").read_text(encoding="utf-8")
@@ -7,7 +8,7 @@ out = pathlib.Path("page.html"); out.write_text(wrap(src), encoding="utf-8"); fa
 def check(c, w): print(("PASS " if c else "FAIL ")+w); (None if c else fails.append(w))
 with sync_playwright() as p:
     b = p.chromium.launch(channel="msedge")
-    c = b.new_context(viewport={"width":390,"height":844}, has_touch=True, is_mobile=True, device_scale_factor=2)
+    c = b.new_context(viewport={"width":390,"height":844}, has_touch=True, is_mobile=True, device_scale_factor=2); c.add_init_script(SEED)
     pg = c.new_page(); errs=[]; pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(out.resolve().as_uri()); pg.wait_for_timeout(500)
     st = lambda: json.loads(pg.evaluate("JSON.stringify({nodes:S[cur].nodes, par:S[cur].par, sel:S[cur].sel})"))

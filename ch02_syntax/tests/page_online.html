@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Syntax Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -204,6 +209,8 @@ svg.tree .ln{stroke:var(--muted);stroke-width:1.2;fill:none}
 @media (max-width:480px){.card{padding:16px}.pname{display:none}.palette{padding:8px}.pgrp{gap:5px}.chip{min-width:38px;padding:3px 6px;font-size:15px}.tut-card{padding:16px}}
 </style>
 
+</head>
+<body>
 <div class="wrap">
   <header>
     <div>
@@ -477,10 +484,10 @@ const isAnc = (st, a, b) => { for(let p = b; p; p = st.par[p]) if(p === a) retur
 function say(t, warn){ const m = stage.querySelector("#msg"); if(m){ m.innerHTML = t || RULES; m.className = "hint" + (warn ? " warn" : ""); } }
 
 /* ---------- 學生登入與成績記錄（跟 ch01 同一套，但每章記在自己的 Sheet） ----------
-   build_site.py 會把 __ENDPOINT__ 換成這一章的 Apps Script 網址；沒換就只存在本機。
+   build_site.py 會把 https://script.google.com/macros/s/TESTDEPLOY/exec 換成這一章的 Apps Script 網址；沒換就只存在本機。
    兩章在同一個網域，localStorage 是共用的：學生資料（ling_student）共用，登入一次就好；
    上傳佇列一定要分開，不然這頁會把 ch01 還沒送出的紀錄送到這一章的 Sheet，被拒收後就不見了。 */
-const ENDPOINT = "__ENDPOINT__";
+const ENDPOINT = "https://script.google.com/macros/s/TESTDEPLOY/exec";
 const QUIZ_ID = "ch02_syntax";
 const ONLINE = /^https:\/\//.test(ENDPOINT);
 const QKEY = `ling_queue_${QUIZ_ID}`, DLKEY = `ling_deadletter_${QUIZ_ID}`, TUTKEY = "ling_syntax_tutorial_seen";
@@ -1006,3 +1013,6 @@ flush(); setInterval(flush, 20000);
 window.addEventListener("online", flush);
 document.fonts?.ready.then(() => { if(!stage.querySelector("#cvwrap")) return; G = geometry(ITEMS[cur], stage.querySelector("#cvwrap").clientWidth - 2); refresh(); });   // 字型載入後重量字寬
 </script>
+
+</body>
+</html>
