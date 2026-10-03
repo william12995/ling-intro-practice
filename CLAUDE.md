@@ -35,7 +35,7 @@
 
 只改 `*.src.html`，改完跑 `python build_site.py` 重建 `docs/`，`docs/` 不要手改。每章記在自己的 Google Sheet，各自的網址存在 `endpoints.json`，換網址用 `--endpoint 章節=網址`；沒有網址的章節不會輸出。src 沒有 doctype/head，是因為它同時可以直接發布成 claude.ai artifact 當預覽（https://claude.ai/artifact/NxGDg4swf7XuwU4kNLLs93 ，私人；更新時帶這個 URL 當 `url`）。artifact 裡連不到 Google，成績只會存在瀏覽器。
 
-2026-09-26 老師要求頁面全英文（外文系），學生看得到的文字都是英文，程式註解和 Sheet 欄名維持中文。AI 回饋（Gemini，後端 `action=feedback`）已做好但預設關閉，開啟條件和步驟在 `DEPLOY.md` 第 5 節；每則回饋都固定附一句「AI 寫的，僅供參考」。
+2026-09-26 老師要求頁面全英文（外文系），學生看得到的文字都是英文，程式註解和 Sheet 欄名維持中文。AI 回饋（Gemini，後端 `action=feedback`）程式預設關閉，開啟條件和步驟在 `DEPLOY.md` 第 5 節；構詞那份 Sheet 已經開了（10-03 看到 442 則回饋，83% 是備援的 flash-lite 寫的），句法那份沒開；每則回饋都固定附一句「AI 寫的，僅供參考」。
 
 成績記錄：學生先填學號姓名，每答一題送一筆到 Google Sheet（`apps_script/Code.gs`）。部署步驟和成績算法在 `DEPLOY.md`。新增章節時：照 `clasp_deploy/ch02_syntax/` 的做法用 clasp 建 Sheet 和部署（`config.gs` 寫 `DEFAULT_QUIZZES`，擁有者要開一次網址按授權），或手動貼 Code.gs、設指令碼屬性 `QUIZZES`；根目錄 `.clasp.json` 是構詞那份，會把整個 `apps_script/` 推上去，別章的檔案不要放那裡；`build_site.py` 的 `PAGES` 加一列；新頁面的 `QUIZ_ID` 要一致，上傳佇列的 localStorage key 要帶 quiz id（兩頁同網域，共用 localStorage）。
 
