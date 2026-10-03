@@ -5,3 +5,7 @@ __pycache__/
 _output/*.pptx
 _output/*.ppt
 _output/*.zip
+
+# clasp 推送前產生的暫存檔
+clasp_deploy/*/src/
+clasp_deploy/create.log

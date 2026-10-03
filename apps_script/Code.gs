@@ -17,10 +17,12 @@ var HEADER = ['event_id', 'server_time', 'client_time', 'quiz', 'student_id', 'n
               'part', 'level', 'qid', 'prompt', 'response', 'correct', 'attempt',
               'reasoning', 'truncated'];   // 新欄位只能加在最後，不然舊資料會錯位
 // 這份 Sheet 收哪些章節。每章各用一份 Sheet、各自部署一次，在 指令碼屬性 QUIZZES 填這份 Sheet 要收的 quiz id
-// （逗號分隔，例如 ch02_syntax）。沒設就是 ch01_morphology，跟最早那份 Sheet 一樣。
+// （逗號分隔，例如 ch02_syntax）。沒設的話看同專案裡有沒有 config.gs 定義 DEFAULT_QUIZZES（用 clasp 部署的章節靠這個，
+// 見 apps_script/deploy_clasp.py），都沒有就是 ch01_morphology，跟最早那份 Sheet 一樣。
 // 收到別章的資料會回 unknown quiz，網頁上會顯示「沒被接受」，不會默默寫進錯的 Sheet。
 function quizzes_() {
-  var v = PropertiesService.getScriptProperties().getProperty('QUIZZES') || 'ch01_morphology';
+  var v = PropertiesService.getScriptProperties().getProperty('QUIZZES') ||
+          (typeof DEFAULT_QUIZZES !== 'undefined' ? DEFAULT_QUIZZES : 'ch01_morphology');
   var o = {}; v.split(',').forEach(function (q) { q = q.trim(); if (q) o[q] = true; }); return o;
 }
 

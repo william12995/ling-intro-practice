@@ -95,11 +95,23 @@ C:\Python313\python.exe build_site.py --endpoint ch01_morphology=https://script.
 
 句法的成績記在另一份 Sheet，跟構詞分開。後端程式是同一支 `apps_script/Code.gs`，差別只在指令碼屬性 `QUIZZES`：每一份 Sheet 只收自己那一章，送錯網址會被拒收，不會默默寫進別章的 Sheet。
 
-1. 用建構詞 Sheet 的同一個帳號，新建一份空白 Google Sheet，例如「語言學概論 句法練習成績」。一樣不要開公開連結。
+2026-10-03 已經用 clasp 建好了，帳號 rino881209@gmail.com，Sheet 叫「語言學概論 句法練習成績」（https://drive.google.com/open?id=1DM6D84b5SGCnGUVc3rF1KCN2opY3SY_fo23nGISZRJY ）。clasp 的設定在 `clasp_deploy/ch02_syntax/`，部署 id 在同資料夾的 `deployment.txt`，網址已寫進 `endpoints.json`。
+
+這份不用設指令碼屬性 `QUIZZES`：clasp 推上去時多帶一個 `config.gs`，裡面寫 `DEFAULT_QUIZZES = 'ch02_syntax'`。改了 `apps_script/Code.gs` 之後，這樣更新後端（網址不變）：
+
+```
+C:\Python313\python.exe clasp_deploy\deploy_clasp.py ch02_syntax
+```
+
+構詞那份的 clasp 設定是 repo 根目錄的 `.clasp.json`，它把整個 `apps_script/` 推上去，所以別章的檔案不要放進 `apps_script/`。
+
+如果要手動重建（不用 clasp），步驟是：
+
+1. 用建構詞 Sheet 的同一個帳號，新建一份空白 Google Sheet。一樣不要開公開連結。
 2. **擴充功能 → Apps Script**，把目前 repo 裡的 `apps_script/Code.gs` 全文貼上，存檔。
 3. **專案設定 → 指令碼屬性**，新增 `QUIZZES` = `ch02_syntax`。
 4. **部署 → 新增部署 → 網頁應用程式**，執行身分「我」、具存取權者「任何人」，授權。
-5. 把網址貼進瀏覽器，看到 `callback({"ok":true,"ping":true})` 就是活的。
+5. 把網址貼進瀏覽器，看到 `callback({"ok":true,"ping":true})` 就是活的。不管用哪個方法建，第一次都要擁有者自己開一次網址按授權，不然網址回的是 Google 的授權頁。
 6. 把網址烤進網頁並推上去：
    ```
    C:\Python313\python.exe build_site.py --endpoint ch02_syntax=https://script.google.com/macros/s/AKfy…/exec
