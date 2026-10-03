@@ -27,7 +27,7 @@
 | 章 | 原始檔 | 上線版 |
 |---|---|---|
 | Morphology（開源課本 Ch.5 習題 1–7，39 題） | `ch01_morphology/morphology_lab.src.html` | `docs/ch01_morphology/index.html`（已上線：https://william12995.github.io/ling-intro-practice/ch01_morphology/ ） |
-| Syntax 拖拉畫樹（Ex 14 四句＋練習句；10-02 全拖拉版、記法照老師簡報；10-03 加教學動畫、提示發亮、登入和成績紀錄） | `ch02_syntax/tree_lab.src.html`，測試在 `ch02_syntax/tests/` | 程式已接好，等使用者建第二份 Sheet、給網址才上線（DEPLOY.md 第 6 節、`_output/session_log_2026-10-03.md`） |
+| Syntax 拖拉畫樹（Ex 14 四句＋練習句；10-02 全拖拉版、記法照老師簡報；10-03 加教學動畫、提示發亮、登入和成績紀錄） | `ch02_syntax/tree_lab.src.html`，測試在 `ch02_syntax/tests/` | `docs/ch02_syntax/index.html`（2026-10-03 已上線：https://william12995.github.io/ling-intro-practice/ch02_syntax/ ）。成績 Sheet 用 clasp 建在 rino881209@gmail.com，後端更新跑 `python clasp_deploy/deploy_clasp.py ch02_syntax`（DEPLOY.md 第 6 節） |
 
 老師的句法簡報 `syntax_part1–3.pptx`（Fromkin 10th ed. Ch.3）在 `_output/`，已列入 .gitignore。畫樹記法以簡報為準：Det（不是 DP）、T 放 ±pst 或情態動詞、have/be 是 V（Appendix C rule 7、20）、名字和代名詞可直接掛 NP。
 
@@ -37,7 +37,7 @@
 
 2026-09-26 老師要求頁面全英文（外文系），學生看得到的文字都是英文，程式註解和 Sheet 欄名維持中文。AI 回饋（Gemini，後端 `action=feedback`）已做好但預設關閉，開啟條件和步驟在 `DEPLOY.md` 第 5 節；每則回饋都固定附一句「AI 寫的，僅供參考」。
 
-成績記錄：學生先填學號姓名，每答一題送一筆到 Google Sheet（`apps_script/Code.gs`）。部署步驟和成績算法在 `DEPLOY.md`。新增章節時：建一份新的 Sheet、貼同一支 Code.gs、指令碼屬性 `QUIZZES` 填這章的 quiz id、部署；`build_site.py` 的 `PAGES` 加一列；新頁面的 `QUIZ_ID` 要一致，上傳佇列的 localStorage key 要帶 quiz id（兩頁同網域，共用 localStorage）。
+成績記錄：學生先填學號姓名，每答一題送一筆到 Google Sheet（`apps_script/Code.gs`）。部署步驟和成績算法在 `DEPLOY.md`。新增章節時：照 `clasp_deploy/ch02_syntax/` 的做法用 clasp 建 Sheet 和部署（`config.gs` 寫 `DEFAULT_QUIZZES`，擁有者要開一次網址按授權），或手動貼 Code.gs、設指令碼屬性 `QUIZZES`；根目錄 `.clasp.json` 是構詞那份，會把整個 `apps_script/` 推上去，別章的檔案不要放那裡；`build_site.py` 的 `PAGES` 加一列；新頁面的 `QUIZ_ID` 要一致，上傳佇列的 localStorage key 要帶 quiz id（兩頁同網域，共用 localStorage）。
 
 題號是照陣列位置編的（`S1-01`、`S5-07`），學生開始作答後不能調換或替換既有題目，只能在最後加。
 
