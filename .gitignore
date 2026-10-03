@@ -9,3 +9,6 @@ _output/*.zip
 # clasp 推送前產生的暫存檔
 clasp_deploy/*/src/
 clasp_deploy/create.log
+
+# 學生作答資料（有姓名學號），不推上 public repo
+_output/private/
