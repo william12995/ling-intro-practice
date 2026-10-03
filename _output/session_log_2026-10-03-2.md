@@ -41,6 +41,9 @@
 | 句法後端 | `clasp_deploy/ch02_syntax/`，部署 id 在 `deployment.txt` |
 | 構詞後端 | 根目錄 `.clasp.json`（rootDir=apps_script） |
 | 每章網址 | `endpoints.json` |
+| 構詞成績 Sheet | `1doD3tRlHDfJ8zRIMcppIHKwF6rXbx9swWlcf79sYnGw`（answers、feedback 兩個分頁，沒有 summary 分頁） |
+| 讀成績 | Drive 工具 `download_file_content` 匯出 xlsx（read_file_content 只給前十幾列），再用 openpyxl 讀；以 event_id 去重，排除 Z00000000、B20260101、R13142001（使用者自己）。分析腳本沒留，結果在 `_output/private/` |
+| 改善規劃 | Claude Docs https://claude.ai/code/artifact/42866cb1-4aa1-4b21-8021-099dc096e00d |
 
 改後端並更新部署：
 ```
