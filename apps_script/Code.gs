@@ -87,7 +87,7 @@ function rebuildSummary() {
   });
 
   // 每章固定的欄位：計分的部分（ch01 是 S1–S6，S7 申論不計分；ch02 只有 S1）。沒列的章就用目前出現過的部分
-  var FIXED = {'ch01_morphology': ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'], 'ch02_syntax': ['S1']};
+  var FIXED = {'ch01_morphology': ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'], 'ch02_syntax': ['S1'], 'ch03_morph_tree': ['S1']};
   var SECS = [];
   Object.keys(quizzes_()).forEach(function (q) { (FIXED[q] || []).forEach(function (x) { if (SECS.indexOf(x) < 0) SECS.push(x); }); });
   Object.keys(scoredSecs).forEach(function (x) { if (SECS.indexOf(x) < 0) SECS.push(x); });

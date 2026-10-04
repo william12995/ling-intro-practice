@@ -23,6 +23,7 @@ EP_FILE = ROOT / "endpoints.json"
 PAGES = [  # (quiz id＝endpoints.json 的 key, src, 輸出路徑, 首頁上顯示的名稱)
     ("ch01_morphology", "ch01_morphology/morphology_lab.src.html", "ch01_morphology/index.html", "Morphology"),
     ("ch02_syntax", "ch02_syntax/tree_lab.src.html", "ch02_syntax/index.html", "Syntax: build the tree"),
+    ("ch03_morph_tree", "ch03_morph_tree/morph_tree.src.html", "ch03_morph_tree/index.html", "Morphology: word trees"),
 ]
 URL_RE = r"^https://script\.google\.com/macros/s/[^/]+/exec$"
 

@@ -1,0 +1,1047 @@
+<title>Morphology Trees</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap">
+<style>
+:root{
+  --ground:#F2F4F7; --surface:#FFFFFF; --ink:#1B2230; --muted:#5B6475; --line:#D9DEE7;
+  --accent:#2F5BD3; --accent-soft:#E4EBFB; --cut:#D2463A; --cut-soft:#FBE7E4;
+  --ok:#2E7D4F; --ok-soft:#E2F2E8; --warn:#9A6A12; --warn-soft:#F7EED9;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --serif:"IBM Plex Serif",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#12151C; --surface:#1A1F29; --ink:#E6E9EF; --muted:#9AA3B2; --line:#2C3340;
+    --accent:#8FA8F7; --accent-soft:#232D47; --cut:#F07A6E; --cut-soft:#3A2224;
+    --ok:#6CC894; --ok-soft:#1C3326; --warn:#E0B55C; --warn-soft:#352C18;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#12151C; --surface:#1A1F29; --ink:#E6E9EF; --muted:#9AA3B2; --line:#2C3340;
+  --accent:#8FA8F7; --accent-soft:#232D47; --cut:#F07A6E; --cut-soft:#3A2224;
+  --ok:#6CC894; --ok-soft:#1C3326; --warn:#E0B55C; --warn-soft:#352C18;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;padding:0 16px}
+.wrap{max-width:820px;margin:0 auto;padding-block:32px 64px;display:flex;flex-direction:column;gap:20px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+header>div{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,5vw,38px);line-height:1.2;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:0;max-width:62ch}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dot{appearance:none;border:0;padding:0;width:12px;height:12px;border-radius:50%;background:var(--line);cursor:pointer}
+.dot.ok{background:var(--ok)} .dot.no{background:var(--cut)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.q{font-size:18px;margin:0}
+.q em,.expl em{font-family:var(--serif);font-style:italic}
+.expl{border-left:3px solid var(--ok);padding:4px 0 4px 14px;margin:0;display:flex;flex-direction:column;gap:6px}
+.expl.bad{border-left-color:var(--cut)}
+.expl .verdict{font-weight:600}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{appearance:none;font:inherit;font-weight:500;font-size:15px;border-radius:8px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.small{font-size:14px;padding:5px 12px}
+.linkbtn{appearance:none;border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.credit{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+code{font-family:var(--mono);font-size:.92em}
+details summary{cursor:pointer;font-weight:500;margin-bottom:8px}
+.glossary summary{font-size:14px}
+.glossary dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:6px 0 0;font-size:14px}
+.glossary dt{font:600 15px var(--serif)}
+.glossary dd{margin:0;color:var(--muted)}
+.pl{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--surface);font-weight:600;font-size:13px;line-height:1;vertical-align:-3px}
+
+/* 登入、成績上傳狀態 */
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.who b{color:var(--ink);font-weight:500;font-family:var(--mono)}
+.sync{font-family:var(--mono);font-size:13px}
+.sync .ok{color:var(--ok)} .sync .pend{color:var(--warn)}
+.login{display:flex;flex-direction:column;gap:14px;max-width:420px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:14px;font-weight:500}
+.field input{font:inherit;font-size:16px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.field input:focus-visible,.why textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.err{color:var(--cut);font-size:14px;margin:0;min-height:1.4em}
+.why{display:flex;flex-direction:column;gap:6px}
+.why label{font-size:15px;font-weight:500}
+.why textarea{font:inherit;font-size:15px;line-height:1.6;min-height:88px;resize:vertical;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.why textarea:disabled{background:var(--ground);color:var(--ink)}
+.why .cnt{font-family:var(--mono);font-size:12px;color:var(--muted);align-self:flex-end}
+
+/* 教學提示框：進度條＋這一步要做什麼 */
+.coach{border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-size:15px;display:flex;flex-direction:column;gap:6px}
+.coach .gl{display:block;font-size:14px;color:var(--muted)}
+.coach .prog{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.coach .bar{flex:1;height:6px;border-radius:3px;background:var(--surface);overflow:hidden}
+.coach .bar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+
+/* 畫布 */
+.cvwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:20px 20px}
+svg.cv{display:block;touch-action:none;user-select:none;-webkit-user-select:none}   /* Chrome 不吃 SVG 子元素的 touch-action，所以整張關掉，空白處拖曳由程式自己捲 */
+svg.cv:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+svg.cv text{pointer-events:none}
+svg.cv .ln{stroke:var(--muted);stroke-width:1.4;fill:none}
+svg.cv .edge{cursor:pointer}
+svg.cv .edge .hit{stroke:transparent;stroke-width:16;fill:none}
+svg.cv.edit .edge:hover .ln,svg.cv .edge.hinted .ln{stroke:var(--cut);stroke-dasharray:5 3;stroke-width:2}
+svg.cv .pill{fill:var(--surface);stroke:var(--ink);stroke-width:1.3}
+svg.cv .node{cursor:grab;touch-action:none}
+svg.cv .node text{font:600 16px var(--serif);fill:var(--ink)}
+svg.cv .node.sel .pill{stroke:var(--accent);stroke-width:2.5}
+svg.cv .node.over .pill{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+svg.cv .node.bad .pill{stroke:var(--cut);fill:var(--cut-soft)}
+svg.cv .node.bad text{fill:var(--cut)}
+svg.cv .node.empty .pill{stroke-dasharray:4 3}
+svg.cv .word{cursor:grab;touch-action:none}
+svg.cv .word rect{fill:var(--ground);stroke:var(--line)}
+svg.cv .word text{font:italic 500 16px var(--serif);fill:var(--ink)}
+svg.cv .word.loose rect{stroke:var(--warn);stroke-dasharray:4 3}
+svg.cv .word.over rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+svg.cv .word.sel rect{stroke:var(--accent);stroke-width:2.5}
+svg.cv .plus{display:none;cursor:pointer;touch-action:none}
+svg.cv.arming .plus,svg.cv .plus.hinted{display:inline}
+svg.cv .plus .pv{fill:var(--accent);stroke:var(--accent);stroke-width:2}
+svg.cv .plus .ph,svg.cv .xbtn .xh{fill:transparent}
+svg.cv .plus text{fill:var(--surface);font:600 16px var(--sans)}
+svg.cv .plus.over .pv{fill:var(--accent-soft)}
+svg.cv .plus.over text{fill:var(--accent)}
+svg.cv .xbtn{cursor:pointer}
+svg.cv .xbtn .xv{fill:var(--cut)}
+svg.cv .xbtn text{fill:#fff;font:600 13px var(--sans)}
+svg.cv [tabindex]:focus{outline:none}
+svg.cv [tabindex]:focus-visible .pill,svg.cv [tabindex]:focus-visible rect,svg.cv [tabindex]:focus-visible .pv,svg.cv [tabindex]:focus-visible .xv{stroke:var(--accent);stroke-width:3}
+svg.cv.done .node,svg.cv.done .word{cursor:default}
+/* 教學提示：要拖的東西和要放的地方會發亮 */
+svg.cv .ring{fill:none;stroke:var(--accent);stroke-width:2;pointer-events:none}
+svg.cv .hintzone circle{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}
+svg.cv .hintzone text{font:500 12px var(--sans);fill:var(--accent)}
+svg.cv .hintzone,svg.cv .harrow{pointer-events:none}
+svg.cv .harrow{stroke:var(--accent);stroke-width:2.2;fill:none;stroke-dasharray:7 5}
+svg.cv .pulse .pill,svg.cv .pulse rect{stroke:var(--accent);stroke-width:2.5}
+@media (prefers-reduced-motion:no-preference){
+  svg.cv .ring{animation:ring 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}
+  @keyframes ring{from{opacity:.9;transform:scale(.7)}to{opacity:0;transform:scale(1.6)}}
+  svg.cv .harrow{animation:march 1s linear infinite}
+  @keyframes march{to{stroke-dashoffset:-24}}
+  svg.cv .hintzone circle{animation:breathe 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  @keyframes breathe{50%{transform:scale(1.12)}}
+  .chip.pulse,.trash.pulse,.btn.pulse{animation:glow 1.4s ease-in-out infinite}
+  @keyframes glow{50%{box-shadow:0 0 0 5px var(--accent-soft),0 0 0 7px var(--accent)}}
+  .expl{animation:fade .2s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}
+}
+.chip.pulse,.trash.pulse{border-color:var(--accent);border-width:2px}
+
+/* 標籤盤：黏在視窗底部，拖的起點和畫布最遠的地方在同一個畫面裡 */
+.palette{position:sticky;bottom:0;z-index:5;display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:8px;
+  background:var(--ground);border:1px solid var(--line);box-shadow:0 -4px 12px rgba(0,0,0,.06)}
+.pgrp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pname{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);width:52px}
+.chip{appearance:none;font:600 16px var(--serif);min-width:44px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--surface)}
+.trash{margin-left:auto;font:500 14px var(--sans);color:var(--cut);border:1px dashed var(--cut);border-radius:6px;padding:4px 12px;user-select:none}
+.trash.over{background:var(--cut);color:var(--surface)}
+#msg{min-height:1.4em}
+#msg.warn{color:var(--cut)}
+#msg .r{white-space:nowrap}
+#msg .r b{color:var(--ink);font-weight:500}
+.ghost{position:fixed;left:0;top:0;z-index:10;pointer-events:none;font:600 16px var(--serif);background:var(--accent);color:var(--surface);border-radius:6px;padding:4px 10px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.ghost.w{font-style:italic;font-weight:500}
+.status{font-size:14px;color:var(--warn)}
+.status.ready{color:var(--ok)}
+.readout{display:flex;flex-direction:column;gap:2px}
+.readout code,.std{font-size:13px;color:var(--muted);word-break:break-word}
+.std{display:block;margin-top:8px}
+.treewrap{overflow-x:auto;padding:8px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:center}
+svg.tree{display:inline-block;overflow:visible;max-width:100%;height:auto}
+svg.tree .lab{font:600 16px var(--serif);fill:var(--ink)}
+svg.tree .wd{font:italic 500 16px var(--serif);fill:var(--ink)}
+svg.tree .ln{stroke:var(--muted);stroke-width:1.2;fill:none}
+
+/* How to play：遊戲式的教學動畫 */
+.tut{position:fixed;inset:0;z-index:20;background:rgba(15,20,30,.55);display:grid;place-items:center;padding:16px}
+.tut-card{background:var(--surface);border-radius:12px;max-width:440px;width:100%;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.25);max-height:100%;overflow:auto}
+.tut-card h2{font:600 22px var(--serif);margin:0}
+.tut-card p{margin:0}
+.tut-stagewrap{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;
+  background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:20px 20px}
+.tut-stage{position:relative;width:320px;height:222px;transform-origin:0 0}
+.tut-dots{display:flex;gap:6px}
+.tut-dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.tut-dots i.on{background:var(--accent)}
+.ta{position:absolute;left:0;top:0;pointer-events:none}
+.ta>*{position:absolute;transform:translate(-50%,-50%);white-space:nowrap}
+.tw{font:italic 500 14px var(--serif);background:var(--ground);border:1px solid var(--line);border-radius:6px;padding:2px 10px}
+.tp{font:600 14px var(--serif);background:var(--surface);border:1.3px solid var(--ink);border-radius:7px;padding:1px 9px}
+.tp.dash{border-style:dashed}
+.tc{font:600 14px var(--serif);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:2px 9px}
+.tg{font:600 14px var(--serif);background:var(--accent);color:var(--surface);border-radius:6px;padding:2px 9px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.tplus{width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--surface);display:grid;place-items:center;font:600 14px var(--sans)}
+.tdel{font:500 13px var(--sans);color:var(--cut);border:1px dashed var(--cut);border-radius:6px;padding:2px 10px;background:var(--surface)}
+.tdel.on{background:var(--cut);color:var(--surface)}
+.ttray{width:320px;height:36px;background:var(--ground);border-top:1px solid var(--line)}
+.tbtn{font:500 14px var(--sans);background:var(--accent);color:var(--surface);border-radius:8px;padding:5px 14px}
+.tok{font:600 14px var(--sans);background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:2px 12px}
+.tst{font:500 13px var(--sans);color:var(--ok)}
+.tsvg{position:absolute;inset:0;width:320px;height:222px;pointer-events:none}
+.tsvg line{stroke:var(--muted);stroke-width:1.4}
+.tsvg line.red{stroke:var(--cut);stroke-width:2.5;stroke-dasharray:5 3}
+.thand>*{transform:none}
+.thand svg{left:-4px;top:-2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.thand .tring{left:-13px;top:-13px;width:26px;height:26px;border-radius:50%;border:2px solid var(--accent);opacity:0}
+@media (max-width:480px){.card{padding:16px}.pname{display:none}.palette{padding:8px}.pgrp{gap:5px}.chip{min-width:38px;padding:3px 6px;font-size:15px}.tut-card{padding:16px}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Morphology</div>
+      <h1>Word trees</h1>
+      <p class="lede">Drag labels onto the canvas and connect them down to the morphemes.</p>
+    </div>
+    <button class="btn small" id="howto">How to play</button>
+  </header>
+  <div class="who" id="who" hidden></div>
+  <div id="stage"></div>
+  <p class="credit">Some words and explanations adapted from Anderson et al., <em>Essentials of Linguistics</em>, 2nd ed. (CC BY-NC-SA 4.0).</p>
+</div>
+
+<script>
+/* ---------- 題目 ----------
+   記法照老師的構詞投影片 Lecture4Morphology 第 28 張（reusable 的樹）：每個詞綴上面一個 Affix，每個詞根上面一個詞類（N、V、Adj、Adv），
+   詞根和詞綴合起來的節點標新詞的詞類。詞素照投影片寫成不帶連字號的形式（re、use、able），拼字變化（happy → happi-）不另外標。
+   key 是主要標準答案（教學提示照它走）；alts 是也算對的畫法。判分：學生的樹要跟其中一個完全一樣（含順序）。
+   歧義詞（unlockable、river boat race）拆成兩題、各附一個意思，每題只有一棵標準樹；這是要學生練的，不是答案有爭議。
+   題號照陣列位置編（S1-01 是 ITEMS[1]），學生開始作答後只能在最後加題，不能調換或替換。ITEMS[0] 是練習題，不送成績。
+   標準答案是 AI 依投影片和開源課本 5.6、5.8–5.10 節推的，還要人核。 */
+const ITEMS = [
+  { ex:"Practice", tut:true, say:"reusable", words:["re","use","able"],
+    key:"[Adj [V [Affix re] [V use]] [Affix able]]",
+    e:"This is the tree from class. <em>Re-</em> attaches to verbs (<em>redo, retype, repay</em>), so it joins <em>use</em> first and makes the verb <em>reuse</em>. Then <em>-able</em> turns that verb into an adjective. The other order, <em>re + usable</em>, would need <em>re-</em> to attach to an adjective, which it doesn't do." },
+  { ex:"Basic", say:"reader", words:["read","er"],
+    key:"[N [V read] [Affix er]]",
+    e:"<em>Read</em> is a verb. <em>-er</em> attaches to verbs and makes nouns meaning 'someone who does it' (<em>singer, teacher</em>). The top node is labeled with the category of the whole word, N." },
+  { ex:"Basic", say:"unkind", words:["un","kind"],
+    key:"[Adj [Affix un] [Adj kind]]",
+    e:"<em>Kind</em> is an adjective, and <em>un-</em> on an adjective means 'not'. The meaning changes but the category doesn't, so the whole word is still Adj." },
+  { ex:"Basic", say:"kindness", words:["kind","ness"],
+    key:"[N [Adj kind] [Affix ness]]",
+    e:"<em>-ness</em> attaches to adjectives and makes nouns (<em>happiness, politeness</em>), so the top node is N." },
+  { ex:"Order of affixes", say:"unkindness", words:["un","kind","ness"],
+    key:"[N [Adj [Affix un] [Adj kind]] [Affix ness]]",
+    e:"Both <em>unkind</em> and <em>kindness</em> are words, so either order looks possible. But <em>un-</em> attaches to adjectives and verbs, never to nouns. If <em>-ness</em> came first, <em>kindness</em> would be a noun and <em>un-</em> could no longer attach. So <em>un-</em> attaches first, while <em>kind</em> is still an adjective." },
+  { ex:"Order of affixes", say:"foolishness", words:["fool","ish","ness"],
+    key:"[N [Adj [N fool] [Affix ish]] [Affix ness]]",
+    e:"With only suffixes there is just one order: the suffix closest to the root attaches first. <em>-ish</em> turns the noun <em>fool</em> into the adjective <em>foolish</em>, and <em>-ness</em> turns that adjective into a noun." },
+  { ex:"Order of affixes", say:"unhappiness", words:["un","happy","ness"],
+    key:"[N [Adj [Affix un] [Adj happy]] [Affix ness]]",
+    e:"Same pattern as <em>unkindness</em>: <em>un-</em> needs an adjective, so it attaches to <em>happy</em> before <em>-ness</em> makes the noun. (The <em>y</em> is spelled <em>i</em> in <em>happiness</em>; it is the same morpheme.)" },
+  { ex:"Order of affixes", say:"governmental", words:["govern","ment","al"],
+    key:"[Adj [N [V govern] [Affix ment]] [Affix al]]",
+    e:"<em>-ment</em> turns the verb <em>govern</em> into the noun <em>government</em>. Then <em>-al</em> attaches to that noun and makes an adjective." },
+  { ex:"Order of affixes", say:"encouragement", words:["en","courage","ment"],
+    key:"[N [V [Affix en] [N courage]] [Affix ment]]",
+    e:"<em>Courage</em> is a noun. <em>En-</em> makes verbs (<em>enable, endanger</em>), so <em>encourage</em> is a verb, and <em>-ment</em> attaches to verbs to make nouns. <em>-ment</em> can't attach to the noun <em>courage</em> (there is no <em>couragement</em>), so <em>en-</em> must come first." },
+  { ex:"Compound", say:"mailbox", words:["mail","box"],
+    key:"[N [N mail] [N box]]",
+    e:"A compound joins two roots. Both are nouns, and the whole word is a noun because its right-hand part, <em>box</em>, is a noun: a mailbox is a kind of box." },
+  { ex:"Longer word", say:"deactivation", words:["de","act","ive","ate","ion"],
+    key:"[N [V [Affix de] [V [Adj [V act] [Affix ive]] [Affix ate]]] [Affix ion]]",
+    e:"Build it from the root out. <em>Act</em> (V) + <em>-ive</em> gives the adjective <em>active</em>; + <em>-ate</em> gives the verb <em>activate</em>; <em>de-</em> attaches to verbs (<em>defrost, decode</em>) and gives the verb <em>deactivate</em>; finally <em>-ion</em> turns the verb into a noun." },
+  { ex:"Ambiguity", say:"unlockable", mean:"able to be unlocked", words:["un","lock","able"],
+    key:"[Adj [V [Affix un] [V lock]] [Affix able]]",
+    e:"On this meaning you can <em>unlock</em> it. <em>Un-</em> attaches to the verb <em>lock</em> first, with its reversing meaning ('undo the action'), giving the verb <em>unlock</em>. Then <em>-able</em> makes the adjective." },
+  { ex:"Ambiguity", say:"unlockable", mean:"not able to be locked", words:["un","lock","able"],
+    key:"[Adj [Affix un] [Adj [V lock] [Affix able]]]",
+    e:"On this meaning you cannot <em>lock</em> it. <em>-able</em> attaches to <em>lock</em> first, giving the adjective <em>lockable</em>. Then <em>un-</em> attaches to that adjective with its 'not' meaning. Same morphemes in the same order, but a different tree and a different meaning." },
+  { ex:"Ambiguity", say:"river boat race", mean:"a race between river boats", words:["river","boat","race"],
+    key:"[N [N [N river] [N boat]] [N race]]",
+    e:"Here <em>river boat</em> is a kind of boat, so <em>river</em> and <em>boat</em> join first. The race could be held anywhere, even on a lake." },
+  { ex:"Ambiguity", say:"river boat race", mean:"a boat race held on a river", words:["river","boat","race"],
+    key:"[N [N river] [N [N boat] [N race]]]",
+    e:"Here <em>boat race</em> is the unit: any race between boats. <em>River</em> attaches to it and says where the race is held." },
+];
+// 標籤表集中放這裡，記法要改只改這一段
+const GROUPS = [["Category",["N","V","Adj","Adv"]],["Morpheme",["Affix"]]];
+const LABELS = GROUPS.flatMap(g => g[1]);
+const ALIAS = {};                  // 同一個節點兩種寫法都收時填這裡，例如 {A:"Adj"}
+const al = l => ALIAS[l] || l;
+const GLOSS = {
+  N:"noun: book, fool, courage, government. Also the label for a whole word that is a noun",
+  V:"verb: use, read, lock, govern. Also the label for a whole word that is a verb",
+  Adj:"adjective: kind, happy, active. Also the label for a whole word that is an adjective",
+  Adv:"adverb: fast, quickly. Also the label for a whole word that is an adverb",
+  Affix:"a prefix or suffix (re-, un-, -able, -ness). It sits directly above the affix; the node above it shows the category of the new word",
+};
+const WHY_MIN = 20, WHY_MAX = 600;
+const RULES = `<span class="r"><span class="pl">+</span> <b>stack up</b></span> · <span class="r"><b>empty spot</b> new group</span> · <span class="r"><b>drag up</b> connect</span> · <span class="r"><b>tap a line</b> cut</span>`;
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const plain = s => String(s).replace(/<[^>]+>/g, "");
+const clone = x => JSON.parse(JSON.stringify(x));
+const pad2 = n => String(n).padStart(2, "0");
+const isPre = n => n.k && n.k.length === 1 && n.k[0].w !== undefined;
+const norm = s => s.replace(/[’′‘]/g,"'");
+const toks = s => norm(s).match(/\[|\]|[^\s\[\]]+/g) || [];
+const wordText = (i, it) => it.words[i] === "$" ? (it.t || "+pst") : it.words[i];
+
+/* ---------- 共用的樹工具（巢狀結構 {l, k:[...]}，詞是 {w, i}） ---------- */
+function span(n){ if(n.w !== undefined){ n.s = n.e = n.i; return; } n.k.forEach(span); n.s = n.k[0].s; n.e = n.k[n.k.length-1].e; }
+function sigs(n, out=new Set(), cnt={}){   // 同一個標籤在同一段詞上疊兩層時，第二個記成 …|2，才不會被 Set 合併掉
+  if(n.w !== undefined) return out;
+  if(n.l){ const b = `${al(n.l)}|${n.s}|${n.e}`; cnt[b] = (cnt[b] || 0) + 1; n.sig = cnt[b] > 1 ? `${b}|${cnt[b]}` : b; out.add(n.sig); }
+  n.k.forEach(c => sigs(c, out, cnt)); return out; }
+const canon = (n, it) => n.w !== undefined ? it.words[n.i].toLowerCase() : `[${al(n.l)} ${n.k.map(c => canon(c, it)).join(" ")}]`;
+const nodesOf = n => n.w !== undefined ? [] : [n, ...n.k.flatMap(nodesOf)];
+const heightOf = n => n.w !== undefined ? 0 : 1 + Math.max(...n.k.map(heightOf));
+const bracketOf = (n, it) => n.w !== undefined ? wordText(n.i, it) : `[${n.l} ${n.k.map(c => bracketOf(c, it)).join(" ")}]`;
+const over = (s0, e0, it) => `<em>${it.words.slice(s0, e0+1).map((w,j) => wordText(s0+j, it)).join(" ")}</em>`;
+
+function parseKey(str){
+  const tk = toks(str); let p = 0, i = 0;
+  const node = () => { p++; const n = {l:tk[p++], k:[]};
+    while(tk[p] !== "]") n.k.push(tk[p] === "[" ? node() : {w:tk[p++], i:i++}); p++; return n; };
+  return node();
+}
+ITEMS.forEach(it => {
+  it.keys = [it.key, ...(it.alts || [])].map(k => { const t = parseKey(k); span(t); return {tree:t, sigs:sigs(t), canon:canon(t, it)}; });
+  it.tree = it.keys[0].tree; it.h = Math.max(...it.keys.map(k => heightOf(k.tree)));
+});
+
+/* ---------- 學生的樹：一堆節點 + 「子 → 父」的連線 ----------
+   st.nodes[id] = {l, x, h}：x、h 只在節點底下還沒接東西時用（放在哪就在哪；x 是相對第一個詞的距離）；
+   一旦接了東西，位置自動算：x 在子節點中間，高度 = 底下最高的子節點 + 1，所以樹永遠是整齊的。
+   st.par[子 id] = 父 id；詞的 id 是 w0、w1…，節點是 n1、n2… */
+const DY = 50, PH = 26;
+const ctx = document.createElement("canvas").getContext("2d");
+const LF = '600 16px "IBM Plex Serif", Georgia, serif', WF = 'italic 500 16px "IBM Plex Serif", Georgia, serif';
+const tw = (s, f) => { ctx.font = f; return ctx.measureText(s).width; };
+const pillW = l => Math.max(tw(l, LF) + 20, 38);
+
+function layout(it, st, G){
+  const kids = {}, pos = {};
+  for(const id in st.nodes) kids[id] = [];
+  for(const c in st.par) kids[st.par[c]].push(c);
+  it.words.forEach((w, i) => { pos["w"+i] = {x:G.wx[i]}; });
+  const xOf = id => {
+    if(pos[id]) return pos[id].x;
+    const k = kids[id];
+    if(!k.length){ pos[id] = {x:G.wx[0] + st.nodes[id].x}; return pos[id].x; }
+    const xs = k.map(xOf); k.sort((a, b) => pos[a].x - pos[b].x);
+    pos[id] = {x:(Math.min(...xs) + Math.max(...xs))/2}; return pos[id].x;
+  };
+  for(const id in st.nodes) xOf(id);
+  // 高度：底下最高的子節點 + 1。同一層有兩個節點疊在一起（例如線交叉的時候），把其中一個往上推一層
+  const lift = {};
+  let hh;
+  for(let round = 0; round < 30; round++){
+    hh = {}; it.words.forEach((w, i) => hh["w"+i] = 0);
+    const hOf = id => {
+      if(hh[id] !== undefined) return hh[id];
+      const k = kids[id];
+      return hh[id] = Math.max(k.length ? 1 + Math.max(...k.map(hOf)) : st.nodes[id].h, lift[id] || 0);
+    };
+    for(const id in st.nodes) hOf(id);
+    const ids = Object.keys(st.nodes).filter(id => kids[id].length);
+    let hit = null;
+    for(let a = 0; a < ids.length && !hit; a++) for(let b = a+1; b < ids.length; b++){
+      const p = ids[a], q = ids[b];
+      if(hh[p] === hh[q] && Math.abs(pos[p].x - pos[q].x) < (pillW(st.nodes[p].l) + pillW(st.nodes[q].l))/2 + 6){ hit = [p, q]; break; }
+    }
+    if(!hit) break;
+    const up = isAnc(st, hit[0], hit[1]) ? hit[0] : isAnc(st, hit[1], hit[0]) ? hit[1] : (kids[hit[0]].length >= kids[hit[1]].length ? hit[0] : hit[1]);
+    lift[up] = hh[up] + 1;
+  }
+  const maxH = Math.max(it.h, ...Object.values(hh));
+  const wordY = 52 + maxH*DY;                 // 根節點上面留位置給 +
+  for(const id in pos) pos[id].y = wordY - hh[id]*DY;
+  return {kids, hh, pos, wordY, H:wordY + 26};
+}
+function geometry(it, minW){
+  const ww = it.words.map((w, i) => Math.max(tw(wordText(i, it), WF) + 26, 64));
+  const total = ww.reduce((a, b) => a + b, 0) + 10*(ww.length-1);
+  const W = Math.max(minW, total + 48);
+  let x = (W - total)/2; const wx = [];
+  ww.forEach(w => { wx.push(x + w/2); x += w + 10; });
+  return {W, ww, wx};
+}
+
+/* 檢查學生的樹，能判分時回傳巢狀結構 */
+function analyse(it, st, L){
+  const ids = Object.keys(st.nodes);
+  const loose = it.words.map((w, i) => "w"+i).filter(w => !st.par[w]);
+  const empty = ids.filter(id => !L.kids[id].length);
+  const tops = ids.filter(id => !st.par[id]);
+  const mk = id => id[0] === "w" ? {w:it.words[+id.slice(1)], i:+id.slice(1)} : {l:st.nodes[id].l, id, k:L.kids[id].map(mk)};
+  const lab = id => `<b>${esc(st.nodes[id].l)}</b>`;
+  const frag = [...tops, ...loose].sort((a, b) => L.pos[a].x - L.pos[b].x).map(id => {
+    const n = mk(id); return id[0] === "w" ? wordText(n.i, it) : brStudent(n, it); });
+  let msg = "";
+  if(!ids.length) msg = "Start by dragging a label onto the + above a morpheme.";
+  else if(loose.length) msg = `${loose.length === 1 ? "One morpheme is" : loose.length + " morphemes are"} not attached yet: ${loose.map(w => `<em>${esc(wordText(+w.slice(1), it))}</em>`).join(", ")}.`;
+  else if(empty.length) msg = `${empty.map(lab).join(", ")} ${empty.length > 1 ? "have" : "has"} nothing under ${empty.length > 1 ? "them" : "it"}. Connect something to it, or drag it to Delete.`;
+  else if(tops.length > 1) msg = `There are ${tops.length} separate pieces (${tops.map(lab).join(", ")}). Put them all under one top node.`;
+  if(msg) return {msg, frag};
+  const t = mk(tops[0]);
+  // 每個節點的詞要連在一起，不然線會交叉
+  const yieldOf = n => n.w !== undefined ? [n.i] : n.k.flatMap(yieldOf);
+  for(const n of nodesOf(t)){
+    const y = yieldOf(n).sort((a, b) => a - b);
+    if(y[y.length-1] - y[0] !== y.length - 1) return {frag, msg:`Lines cross: <b>${esc(n.l)}</b> is connected to morphemes that are not next to each other.`};
+    n.k.sort((a, b) => Math.min(...yieldOf(a)) - Math.min(...yieldOf(b)));
+  }
+  span(t); sigs(t);
+  return {t, frag, msg:""};
+}
+const brStudent = (n, it) => n.w !== undefined ? wordText(n.i, it) : `[${n.l}${n.k.length ? " " : ""}${n.k.map(c => brStudent(c, it)).join(" ")}]`;
+
+/* ---------- 教學題的逐步提示：照標準答案由下往上，找第一個學生還沒做好的節點 ----------
+   回傳文字、進度和 hint（畫布上要讓哪些東西發亮）：
+   chip 要拖的標籤、plus 要放的 +、zone 建議放的空白處、piece/onto 要往上拖的那塊和目標、node 要換標籤的節點、cut 要剪的線、del 要刪的節點 */
+function coach(it, st, L){
+  const ground = {}, sigOf = {};
+  const g = id => {
+    if(id[0] === "w") return [+id.slice(1)];
+    if(id in ground) return ground[id];
+    const k = L.kids[id]; ground[id] = null;
+    if(!k.length) return null;
+    const ys = k.map(g); if(ys.some(y => !y)) return null;
+    const y = ys.flat().sort((a, b) => a - b);
+    if(y[y.length-1] - y[0] !== y.length - 1) return null;
+    sigOf[id] = `${al(st.nodes[id].l)}|${y[0]}|${y[y.length-1]}`;
+    return ground[id] = y;
+  };
+  for(const id in st.nodes) g(id);
+  const ref = {};               // 標準答案的 sig → 學生節點 id
+  const desc = id => id[0] === "w" ? `<em>${esc(wordText(+id.slice(1), it))}</em>` : `<b>${esc(st.nodes[id].l)}</b>`;
+  const list = a => a.length === 1 ? a[0] : a.slice(0, -1).join(", ") + " and " + a[a.length-1];
+  const same = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+  const total = nodesOf(it.tree).length + 1;   // 每個節點一步，最後送出一步
+  let tip = null, hint = {}, done = 0;
+  (function walk(n){
+    if(tip || n.w !== undefined) return;
+    n.k.forEach(walk); if(tip) return;
+    const want = n.k.map(c => c.w !== undefined ? "w"+c.i : ref[c.sig]);
+    const why = `<span class="gl"><b>${esc(n.l)}</b> = ${esc(GLOSS[n.l])}.</span>`;
+    const hit = Object.keys(st.nodes).find(id => sigOf[id] === n.sig && same(L.kids[id], want));
+    if(hit){ ref[n.sig] = hit; done++; return; }
+    const relabel = Object.keys(st.nodes).find(id => same(L.kids[id], want));
+    if(relabel){ tip = `The <b>${esc(st.nodes[relabel].l)}</b> over ${over(n.s, n.e, it)} should be <b>${esc(n.l)}</b>. Drop <b>${esc(n.l)}</b> on it to replace it. ${why}`; hint = {chip:n.l, node:relabel}; return; }
+    const part = Object.keys(st.nodes).find(id => al(st.nodes[id].l) === al(n.l) && L.kids[id].length && L.kids[id].every(c => want.includes(c)));
+    if(part){ const miss = want.filter(c => !L.kids[part].includes(c));
+      tip = `Now connect ${list(miss.map(desc))} to this <b>${esc(st.nodes[part].l)}</b> too: drag ${miss.length > 1 ? "each one" : "it"} up onto <b>${esc(st.nodes[part].l)}</b>. ${why}`; hint = {piece:miss[0], onto:part}; return; }
+    const crowded = Object.keys(st.nodes).find(id => al(st.nodes[id].l) === al(n.l) && L.kids[id].some(c => want.includes(c)) && L.kids[id].some(c => !want.includes(c)));
+    if(crowded){ const x = L.kids[crowded].filter(c => !want.includes(c));
+      tip = `${list(x.map(desc))} ${x.length > 1 ? "don't" : "doesn't"} belong under this <b>${esc(st.nodes[crowded].l)}</b>. Tap the line above ${x.length > 1 ? "each one" : "it"} to cut it. ${why}`; hint = {cut:x[0]}; return; }
+    const wrong = want.find(c => st.par[c] && al(st.nodes[st.par[c]].l) !== al(n.l));
+    if(wrong){ tip = `${desc(wrong)} is connected to the wrong node. Tap the line above it to cut it. ${why}`; hint = {cut:wrong}; return; }
+    const waiting = Object.keys(st.nodes).find(id => al(st.nodes[id].l) === al(n.l) && !L.kids[id].length);
+    if(waiting){ tip = `Good. Now drag ${list(want.map(desc))} up onto this <b>${esc(st.nodes[waiting].l)}</b>${want.length > 1 ? ", one at a time" : ""}. ${why}`; hint = {piece:want[0], onto:waiting}; return; }
+    if(want.length === 1){ tip = `Drag <b>${esc(n.l)}</b> from the tray onto the <span class="pl">+</span> above ${desc(want[0])}. ${why}`; hint = {chip:n.l, plus:want[0]}; }
+    else { tip = `${list(want.map(desc))} belong together. Drop <b>${esc(n.l)}</b> on the empty spot above them, then drag each of them up onto it. ${why}`; hint = {chip:n.l, zone:want}; }
+  })(it.tree);
+  if(!tip){
+    const used = new Set(Object.values(ref));
+    const extra = Object.keys(st.nodes).find(id => !used.has(id));
+    if(extra){ tip = `This tree doesn't need the extra <b>${esc(st.nodes[extra].l)}</b>. Drag it to <b>Delete</b>.`; hint = {del:extra}; }
+    else { tip = "Everything is in place. Press <b>Submit</b>."; hint = {submit:true}; }
+  }
+  return {tip, hint, step:Math.min(done + 1, total), total};
+}
+
+/* ---------- 畫標準答案（詞直接在詞類下面） ---------- */
+function draw(root, it){
+  const DY2 = 56, TOP = 22; let x = 0, maxY = 0, g = "";
+  const lw = l => tw(l, LF) + 16;
+  (function lay(n, d){
+    n.y = TOP + d*DY2;
+    if(isPre(n)){
+      const w = n.k[0], cw = Math.max(tw(wordText(w.i, it), WF) + 14, lw(n.l) + 22, 46);
+      w.y = n.y + 26;
+      n.x = w.x = x + cw/2; x += cw; maxY = Math.max(maxY, w.y); return;
+    }
+    n.k.forEach(c => lay(c, d+1));
+    n.x = (n.k[0].x + n.k[n.k.length-1].x)/2;
+  })(root, 0);
+  (function walk(n){
+    if(isPre(n)){
+      const w = n.k[0], txt = wordText(w.i, it);
+      g += `<text class="wd" x="${w.x}" y="${w.y}" text-anchor="middle">${esc(txt)}</text>`;
+    } else n.k.forEach(c => { g += `<line class="ln" x1="${n.x}" y1="${n.y+9}" x2="${c.x}" y2="${c.y-19}"/>`; walk(c); });
+    g += `<text class="lab" x="${n.x}" y="${n.y}" text-anchor="middle">${esc(n.l)}</text>`;
+  })(root);
+  const W = x + 8, H = maxY + 14;
+  return `<svg class="tree" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Standard tree">${g}</svg>`;
+}
+
+/* ---------- 狀態 ---------- */
+const stage = document.getElementById("stage");
+let cur = 0, armed = null, drag = null, G = null, L = null, A = null, C = null;
+const fresh = () => ({nodes:{}, par:{}, nid:1, hist:[], sel:null, done:false, ok:null, why:"", attempt:1});
+let S = ITEMS.map(fresh);
+const describe = (sig, it) => { const [l, s, e, k] = sig.split("|"); return `${k ? "a second " : ""}<b>${esc(l)}</b> over ${over(+s, +e, it)}`; };
+
+const snap = st => ({nodes:clone(st.nodes), par:{...st.par}, nid:st.nid});
+const save = st => { st.hist.push(snap(st)); if(st.hist.length > 80) st.hist.shift(); };
+const isAnc = (st, a, b) => { for(let p = b; p; p = st.par[p]) if(p === a) return true; return false; };  // a 是不是 b 的祖先（含自己）
+function say(t, warn){ const m = stage.querySelector("#msg"); if(m){ m.innerHTML = t || RULES; m.className = "hint" + (warn ? " warn" : ""); } }
+
+/* ---------- 學生登入與成績記錄（跟 ch01 同一套，但每章記在自己的 Sheet） ----------
+   build_site.py 會把 __ENDPOINT__ 換成這一章的 Apps Script 網址；沒換就只存在本機。
+   兩章在同一個網域，localStorage 是共用的：學生資料（ling_student）共用，登入一次就好；
+   上傳佇列一定要分開，不然這頁會把 ch01 還沒送出的紀錄送到這一章的 Sheet，被拒收後就不見了。 */
+const ENDPOINT = "__ENDPOINT__";
+const QUIZ_ID = "ch03_morph_tree";
+const ONLINE = /^https:\/\//.test(ENDPOINT);
+const QKEY = `ling_queue_${QUIZ_ID}`, DLKEY = `ling_deadletter_${QUIZ_ID}`, TUTKEY = "ling_morph_tree_tutorial_seen";
+const URL_MAX = 6000;   // 整條 GET 網址的上限。中文一個字編碼後佔 9 個字元
+const LS = {
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+let student = LS.get("ling_student", null);
+const progKey = () => `ling_prog_v1_${QUIZ_ID}_${student.sid}`;
+function saveProg(){
+  if(!student) return;
+  LS.set(progKey(), {v:1, cur, items:S.map(s => ({nodes:s.nodes, par:s.par, nid:s.nid, done:s.done, ok:s.ok, best:s.best,
+    missing:s.missing, extra:s.extra, why:s.why, attempt:s.attempt}))});
+}
+function loadProg(){
+  S = ITEMS.map(fresh); cur = 0;
+  const p = LS.get(progKey(), null);
+  if(!p || p.v !== 1 || !Array.isArray(p.items)) return;
+  p.items.forEach((x, k) => {   // 之後在最後加題，舊進度照樣讀得回來
+    if(k >= S.length || !x || typeof x.nodes !== "object" || typeof x.par !== "object") return;
+    Object.assign(S[k], x, {hist:[], sel:null});
+    if(S[k].done && !(Array.isArray(S[k].missing) && Array.isArray(S[k].extra) && ITEMS[k].keys[S[k].best])) Object.assign(S[k], {done:false, ok:null});   // 存壞了就當作還沒送出
+  });
+  cur = Math.min(Math.max(0, p.cur|0), ITEMS.length - 1);
+}
+
+let seq = 0;
+const urlLen = p => ENDPOINT.length + 40 + encodeURIComponent(JSON.stringify(p)).length;
+function record(level, qid, prompt, response, correct, attempt, reasoning){
+  const t = Date.now();
+  const p = {event_id:`${student.sid}|${QUIZ_ID}|${qid}|${attempt}|${t}-${seq++}`,
+    client_time:new Date(t).toISOString(), quiz:QUIZ_ID, student_id:student.sid, name:student.name,
+    part:"S", level, qid, prompt:prompt.slice(0,120), response:response.slice(0,300),
+    correct: correct===null ? "" : (correct?1:0), attempt, reasoning};
+  // 網址太長會被 Google 擋下，而且會卡住後面所有紀錄，所以送出前先截短推理欄
+  while(urlLen(p) > URL_MAX && p.reasoning.length > 0){ p.reasoning = p.reasoning.slice(0, Math.floor(p.reasoning.length*0.8)); p.truncated = 1; }
+  if(!ONLINE) return null;
+  const q = LS.get(QKEY, []); q.push(p); LS.set(QKEY, q);
+  flush();
+  return p.event_id;
+}
+function jsonp(p, ms=15000){
+  return new Promise((res,rej)=>{
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    const t = setTimeout(()=>{cleanup();rej({server:false,error:"timeout"})}, ms);
+    function cleanup(){clearTimeout(t);delete window[cb];s.remove()}
+    window[cb] = r => {cleanup(); if(r&&r.ok) res(r); else rej({server:!(r&&r.retry), error:(r&&r.error)||"rejected"}); };  // retry=暫時性錯誤，留著重送
+    s.onerror = () => {cleanup();rej({server:false,error:"network"})};
+    s.src = ENDPOINT + "?callback=" + cb + "&data=" + encodeURIComponent(JSON.stringify(p));
+    document.body.appendChild(s);
+  });
+}
+let flushing = false, misconfig = false;
+async function flush(){
+  if(!ONLINE || flushing) return;
+  flushing = true; renderSync();
+  let q = LS.get(QKEY, []);
+  while(q.length){
+    const sent = q[0];
+    try{ await jsonp(sent); misconfig = false; }
+    catch(e){
+      // unknown quiz 是後端設定問題（Sheet 的 QUIZZES 沒填這一章），不是這筆資料的錯：留在佇列，設定好之後會自動補送
+      if(e && e.error === "unknown quiz"){ misconfig = true; break; }
+      if(e && e.server){ const dl = LS.get(DLKEY, []); dl.push({payload:sent, error:e.error}); LS.set(DLKEY, dl); }
+      else break;   // 斷網或逾時：留在佇列，下次再送
+    }
+    q = LS.get(QKEY, []).filter(x => x.event_id !== sent.event_id); LS.set(QKEY, q);
+  }
+  flushing = false; renderSync();
+}
+function renderSync(){
+  const el = document.getElementById("sync"); if(!el) return;
+  if(!ONLINE){ el.innerHTML = '<span class="pend">Saved on this device only</span>'; return; }
+  const n = LS.get(QKEY, []).length, dl = LS.get(DLKEY, []).length;
+  let s = misconfig ? `<span class="pend">The grade sheet is not ready yet. Your ${n} answer(s) are kept on this device and will be sent later. Please tell your TA.</span>`
+    : n ? `<span class="pend">Uploading, ${n} left</span>` : '<span class="ok">Answers recorded</span>';
+  if(dl) s += ` <span class="pend">${dl} answer(s) were not accepted. Please tell your TA.</span>`;
+  el.innerHTML = s;
+}
+function renderWho(){
+  const el = document.getElementById("who");
+  if(!student){ el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<span>Signed in as <b>${esc(student.sid)}</b> ${esc(student.name)} · <button class="linkbtn" id="logout">Switch student</button></span><span class="sync" id="sync"></span>`;
+  document.getElementById("logout").onclick = () => { student = null; armed = null; LS.set("ling_student", null); S = ITEMS.map(fresh); cur = 0; renderWho(); route(); };
+  renderSync();
+}
+function renderLogin(){
+  stage.innerHTML = `<section class="card"><form class="login" id="login" novalidate>
+    <p class="q">Enter your student ID and name to begin.</p>
+    <div class="field"><label for="sid">Student ID</label><input id="sid" autocomplete="off" placeholder="e.g. B13012345" maxlength="9"></div>
+    <div class="field"><label for="sname">Name</label><input id="sname" autocomplete="name" maxlength="30"></div>
+    <p class="err" id="lerr"></p>
+    <div><button class="btn primary" type="submit">Start</button></div></form></section>`;
+  document.getElementById("login").onsubmit = e => {
+    e.preventDefault();
+    const sid = document.getElementById("sid").value.trim().toUpperCase();
+    const nm = document.getElementById("sname").value.trim();
+    const err = document.getElementById("lerr");
+    if(!/^[A-Z][0-9]{8}$/.test(sid)){ err.textContent = "A student ID is one letter followed by 8 digits, e.g. B13012345."; return; }
+    if(!nm){ err.textContent = "Please enter your name."; return; }
+    student = {sid, name:nm}; LS.set("ling_student", student);
+    loadProg(); renderWho(); route();
+  };
+}
+function route(){
+  if(!student){ renderLogin(); return; }
+  render();
+  if(!LS.get(TUTKEY, false)) openTutorial();
+}
+
+function attach(child, parent){
+  const st = S[cur];
+  if(child[0] === "n" && isAnc(st, child, parent)){ say(`Can't put <b>${esc(st.nodes[child].l)}</b> under something that is already below it.`, true); return; }
+  if(st.par[child] === parent){ st.sel = null; refresh(); say("It is already connected there."); return; }
+  save(st); st.par[child] = parent; st.sel = null; refresh();
+}
+function newNode(label, x, h){ const st = S[cur], id = "n" + st.nid++; st.nodes[id] = {l:label, x, h}; return id; }
+function addAbove(id, label){
+  const st = S[cur]; save(st);
+  const p = L.pos[id], n = newNode(label, p.x - G.wx[0], L.hh[id] + 1);
+  if(st.par[id]) st.par[n] = st.par[id];
+  st.par[id] = n; refresh();
+}
+function addFree(label, x, y){
+  const st = S[cur]; save(st);
+  newNode(label, x - G.wx[0], Math.max(0.6, (L.wordY - y)/DY)); refresh();
+}
+function relabel(id, label){ const st = S[cur]; if(st.nodes[id].l === label) return; save(st); st.nodes[id].l = label; refresh(); }
+function remove(id){
+  const st = S[cur]; save(st);
+  if(id[0] === "w"){ delete st.par[id]; refresh(); return; }
+  for(const c in st.par) if(st.par[c] === id) delete st.par[c];
+  delete st.par[id]; delete st.nodes[id];
+  if(st.sel === id) st.sel = null; refresh();
+}
+function cut(child){ const st = S[cur]; save(st); delete st.par[child]; refresh(); }
+function moveFree(id, x, y){ const st = S[cur], n = st.nodes[id]; save(st); n.x = x - G.wx[0]; n.h = Math.max(0.6, (L.wordY - y)/DY); refresh(); }
+
+/* ---------- 畫布 ---------- */
+function drawCanvas(){
+  const it = ITEMS[cur], st = S[cur], edit = !st.done, svg = stage.querySelector("#cv");
+  const P = L.pos, H = (C && C.hint) || {}; let g = "";
+  const badIds = new Set();
+  if(st.done && st.extra && A.t) nodesOf(A.t).forEach(n => { if(st.extra.includes(n.sig)) badIds.add(n.id); });
+  const pulse = id => H.onto === id || H.piece === id || H.node === id || H.del === id ? "pulse" : "";
+  for(const c in st.par){
+    const p = st.par[c], x1 = P[p].x, y1 = P[p].y + PH/2, x2 = P[c].x, y2 = P[c].y - 14;
+    g += `<g class="edge ${H.cut === c ? "hinted" : ""}" data-e="${c}"><line class="hit" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><line class="ln" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/></g>`;
+  }
+  it.words.forEach((w, i) => {
+    const id = "w"+i, x = P[id].x, y = L.wordY, ww = G.ww[i];
+    g += `<g class="word ${st.par[id] || st.done ? "" : "loose"} ${st.sel === id ? "sel" : ""} ${pulse(id)}" data-w="${id}" ${edit ? `tabindex="0" role="button" aria-label="morpheme ${esc(wordText(i, it))}"` : ""}><rect x="${x-ww/2}" y="${y-14}" width="${ww}" height="28" rx="6"/><text x="${x}" y="${y+5}" text-anchor="middle">${esc(wordText(i, it))}</text></g>`;
+    if(edit && !st.par[id]) g += plus(id, x, y - 34, H.plus === id);
+  });
+  for(const id in st.nodes){
+    const n = st.nodes[id], x = P[id].x, y = P[id].y, w = pillW(n.l);
+    g += `<g class="node ${st.sel === id ? "sel" : ""} ${L.kids[id].length ? "" : "empty"} ${badIds.has(id) ? "bad" : ""} ${pulse(id)}" data-n="${id}" ${edit ? `tabindex="0" role="button" aria-label="node ${esc(n.l)}"` : ""}><rect class="pill" x="${x-w/2}" y="${y-PH/2}" width="${w}" height="${PH}" rx="7"/><text x="${x}" y="${y+5.5}" text-anchor="middle">${esc(n.l)}</text></g>`;
+    if(edit && !st.par[id]) g += plus(id, x, y - PH/2 - 18, H.plus === id);
+    if(edit && st.sel === id) g += `<g class="xbtn" data-del="${id}" role="button" tabindex="0" aria-label="delete ${esc(n.l)}"><circle class="xh" cx="${x+w/2+12}" cy="${y-PH/2-4}" r="14"/><circle class="xv" cx="${x+w/2+12}" cy="${y-PH/2-4}" r="10"/><text x="${x+w/2+12}" y="${y-PH/2+0.5}" text-anchor="middle">✕</text></g>`;
+    if(edit && (H.onto === id || H.node === id)) g += `<rect class="ring" x="${x-w/2-4}" y="${y-PH/2-4}" width="${w+8}" height="${PH+8}" rx="10"/>`;
+  }
+  if(edit && H.zone){   // 建議放的空白處：那幾塊的正上方
+    const xs = H.zone.map(id => P[id].x), ys = H.zone.map(id => P[id].y);
+    const zx = (Math.min(...xs) + Math.max(...xs))/2, zy = Math.max(26, Math.min(...ys) - DY);
+    g += `<g class="hintzone"><circle cx="${zx}" cy="${zy}" r="22"/><text x="${zx}" y="${zy+4}" text-anchor="middle">drop</text></g>`;
+  }
+  if(edit && H.piece && H.onto){   // 往上拖的方向：從那一塊畫一條會動的虛線到目標
+    const a = P[H.piece], b = P[H.onto], top = H.piece[0] === "w" ? 14 : PH/2;
+    g += `<line class="harrow" x1="${a.x}" y1="${a.y - top - 2}" x2="${b.x}" y2="${b.y + PH/2 + 6}" marker-end="url(#ah)"/>`;
+  }
+  g = `<defs><marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/></marker></defs>` + g;
+  const f = document.activeElement?.closest?.("#cv [tabindex]");
+  const fk = f && ["n","w","plus","del"].map(k => f.dataset[k] && `[data-${k}="${f.dataset[k]}"]`).find(Boolean);
+  svg.setAttribute("width", G.W); svg.setAttribute("height", L.H); svg.setAttribute("viewBox", `0 0 ${G.W} ${L.H}`);
+  svg.setAttribute("class", `cv ${edit ? "edit" : "done"} ${armed ? "arming" : ""}`);
+  svg.innerHTML = g;
+  if(fk) svg.querySelector(fk)?.focus({preventScroll:true});
+}
+const plus = (id, x, y, hinted) => `<g class="plus ${hinted ? "hinted" : ""}" data-plus="${id}" role="button" tabindex="0" aria-label="add a node above">${hinted ? `<circle class="ring" cx="${x}" cy="${y}" r="13"/>` : ""}<circle class="ph" cx="${x}" cy="${y}" r="15"/><circle class="pv" cx="${x}" cy="${y}" r="10"/><text x="${x}" y="${y+5.5}" text-anchor="middle">+</text></g>`;
+
+/* ---------- 換題或送出時整張重畫；refresh 只重畫畫布和文字 ---------- */
+const scored = () => ITEMS.filter(it => !it.tut).length;
+function render(){
+  const it = ITEMS[cur], st = S[cur];
+  drag = null; document.querySelectorAll(".ghost").forEach(g => g.remove());
+  const dots = ITEMS.map((x, k) => `<button class="dot ${S[k].ok===true?"ok":S[k].ok===false?"no":""} ${k===cur?"cur":""}" data-go="${k}" aria-label="${esc(x.ex)}"></button>`).join("");
+  const score = S.filter((s, k) => !ITEMS[k].tut && s.ok === true).length;
+  stage.innerHTML = `<section class="card">
+    <div class="meta"><span>${it.tut ? "Practice word · not scored" : `${it.ex} · Word ${cur} of ${ITEMS.length-1} · Score ${score}/${scored()}`}</span><div class="dots">${dots}</div></div>
+    <p class="q">Draw the tree for <em>${esc(it.say)}</em>${it.mean ? `, meaning “${esc(it.mean)}”` : ""}.</p>
+    ${it.tut && !st.done ? `<div class="coach" id="coach" aria-live="polite"></div>` : ""}
+    <details class="glossary"><summary>What do the labels mean?</summary><dl>${LABELS.map(l => `<dt>${esc(l)}</dt><dd>${esc(GLOSS[l])}</dd>`).join("")}</dl></details>
+    <div class="cvwrap" id="cvwrap"><svg class="cv" id="cv" tabindex="0" role="application" aria-label="Tree canvas. With a label chosen, press Enter here to place it on an empty spot."></svg></div>
+    ${st.done ? "" : `<div class="palette" id="pal">${GROUPS.map(([nm, arr], gi) => `<div class="pgrp"><span class="pname">${nm}</span>${arr.map(l => `<button class="chip" data-l="${esc(l)}" title="${esc(GLOSS[l])}">${esc(l)}</button>`).join("")}${gi === GROUPS.length-1 ? `<span class="trash" id="trash">Delete</span>` : ""}</div>`).join("")}<p class="hint" id="msg" aria-live="polite"></p></div>`}
+    <div class="readout"><span class="hint">Labeled bracketing</span><code id="ro"></code></div>
+    ${it.tut ? "" : `<div class="why"><label for="why">Your reasoning: explain one decision in your tree.</label>
+      <textarea id="why" maxlength="${WHY_MAX}" placeholder="For example: why one affix attaches before the other, or what category a piece is" ${st.done ? "disabled" : ""}></textarea>
+      <span class="cnt" id="cnt"></span></div>`}
+    <div class="row"><div class="btns">${st.done ? `<button class="btn" id="again">Try again</button>` : `<button class="btn" id="undo">Undo</button><button class="btn" id="clear">Start over</button>`}</div>
+      <div class="btns"><span class="status" id="need"></span>${st.done ? "" : `<button class="btn primary" id="submit">Submit</button>`}</div></div>
+    <div id="result"></div>
+    <div class="row"><div class="btns"><button class="btn" id="prev" ${cur?"":"disabled"}>Previous</button></div>
+      <div class="btns"><button class="btn primary" id="next" ${cur<ITEMS.length-1?"":"disabled"}>Next</button></div></div>
+  </section>`;
+  const $ = q => stage.querySelector(q);
+  G = geometry(it, $("#cvwrap").clientWidth - 2);
+  if(!st.done) wire();
+  stage.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { cur = +b.dataset.go; go(); });
+  const why = $("#why");
+  if(why){ why.value = st.why || ""; why.oninput = () => { st.why = why.value; saveProg(); status(); }; }
+  if($("#undo")) $("#undo").onclick = () => { if(st.hist.length){ Object.assign(st, st.hist.pop()); st.sel = null; refresh(); } };
+  if($("#clear")) $("#clear").onclick = () => { if(!Object.keys(st.nodes).length) return; save(st); st.nodes = {}; st.par = {}; st.sel = null; refresh(); };
+  if($("#submit")) $("#submit").onclick = () => {
+    if(!A.t || !whyOk()) return;
+    const mine = sigs(A.t), c = canon(A.t, it);
+    // 跟哪個標準答案比：完全一樣的優先，不然取缺的加多的最少的
+    const diff = k => [...k.sigs].filter(x => !mine.has(x)).length + [...mine].filter(x => !k.sigs.has(x)).length;
+    const best = it.keys.find(k => k.canon === c) || it.keys.reduce((a, b) => diff(b) < diff(a) ? b : a);
+    st.missing = [...best.sigs].filter(x => !mine.has(x));
+    st.extra = [...mine].filter(x => !best.sigs.has(x));
+    st.ok = best.canon === c; st.best = it.keys.indexOf(best); st.done = true; st.sel = null; armed = null;
+    if(!it.tut){ st.why = st.why.trim(); record(1, `S1-${pad2(cur)}`, it.mean ? `${it.say} (${it.mean})` : it.say, bracketOf(A.t, it), st.ok, st.attempt, st.why); }
+    saveProg(); render();
+  };
+  if($("#again")) $("#again").onclick = () => { st.done = false; st.ok = null; st.extra = null; st.why = ""; st.attempt = (st.attempt || 1) + 1; saveProg(); render(); };
+  $("#prev").onclick = () => { cur--; go(); };
+  $("#next").onclick = () => { cur++; go(); };
+  if(st.done){
+    const miss = st.missing.length ? `<span>Missing: ${st.missing.map(m => describe(m, it)).join("; ")}.</span>` : "";
+    const ext = st.extra.length ? `<span>Not in the standard tree (red above): ${st.extra.map(m => describe(m, it)).join("; ")}.</span>` : "";
+    const order = !st.ok && !miss && !ext ? "<span>You have the right nodes, but some are stacked in the wrong order.</span>" : "";
+    $("#result").innerHTML = `<div class="expl ${st.ok?"":"bad"}"><span class="verdict">${st.ok?"Correct":"Not quite"}</span>${miss}${ext}${order}<span>${it.e}</span></div>
+      <details ${st.ok?"":"open"}><summary>Standard tree</summary><div class="treewrap">${draw(clone(it.keys[st.best].tree), it)}</div>
+      <code class="std">${esc(bracketOf(it.keys[st.best].tree, it))}</code></details>`;
+  }
+  refresh();
+  if(!st.done) requestAnimationFrame(() => reveal(true));   // 一打開就讓詞那一排（和發亮的 +）露在標籤盤上面
+}
+function go(){   // 換題：題目從卡片頂端開始看
+  armed = null; saveProg(); render();
+  const card = stage.querySelector(".card"); if(card.getBoundingClientRect().top < 0) card.scrollIntoView({block:"start"});
+}
+const whyOk = () => ITEMS[cur].tut || (S[cur].why || "").trim().length >= WHY_MIN;
+function status(){   // 送出鍵和旁邊的提示：樹還沒好、推理還沒寫，或可以送了
+  const st = S[cur], $ = q => stage.querySelector(q), need = $("#need"), why = $("#why");
+  if(why) $("#cnt").textContent = `${why.value.length} / ${WHY_MAX}`;
+  if(st.done){ need.textContent = ""; return; }
+  let m = A.msg, ready = false;
+  if(!m && !whyOk()) m = `Now write at least ${WHY_MIN} characters of reasoning.`;
+  if(!m){ m = "Ready to submit."; ready = true; }
+  need.innerHTML = m; need.className = "status" + (ready ? " ready" : "");
+  const sub = $("#submit"); sub.disabled = !ready;
+  sub.classList.toggle("pulse", !!(C && C.hint.submit) && ready);
+}
+function refresh(){
+  const it = ITEMS[cur], st = S[cur], $ = q => stage.querySelector(q);
+  L = layout(it, st, G); A = analyse(it, st, L);
+  C = it.tut && !st.done ? coach(it, st, L) : null;
+  drawCanvas();
+  $("#ro").textContent = A.frag.join("  ");
+  if($("#undo")) $("#undo").disabled = !st.hist.length;
+  stage.querySelectorAll(".chip").forEach(c => { c.setAttribute("aria-pressed", String(armed === c.dataset.l)); c.classList.toggle("pulse", !!C && C.hint.chip === c.dataset.l && armed !== c.dataset.l); });
+  $("#trash")?.classList.toggle("pulse", !!(C && C.hint.del));
+  if($("#coach")) $("#coach").innerHTML = `<div class="prog"><span>Step ${C.step} of ${C.total}</span><span class="bar"><i style="width:${Math.round((C.step-1)/C.total*100)}%"></i></span></div><div>${C.tip}</div>`;
+  status();
+  say(armed ? `<b>${esc(armed)}</b> = ${esc(GLOSS[armed])}. Tap a <span class="pl">+</span>, a node, or an empty spot. Tap <b>${esc(armed)}</b> again to stop.`
+    : st.sel ? `Tap the node that ${st.sel[0] === "w" ? `<em>${esc(wordText(+st.sel.slice(1), it))}</em>` : `<b>${esc(st.nodes[st.sel].l)}</b>`} goes under${st.sel[0] === "n" ? ", or tap ✕ to delete it" : ""}. Tap it again to cancel.` : "");
+  saveProg();
+}
+
+/* ---------- 拖曳和點選（pointer events，滑鼠和觸控同一套）----------
+   拖曳途中不重畫畫布，只切 class，放開時才重畫。 */
+function targetAt(x, y, sel){
+  const el = document.elementFromPoint(x, y);
+  if(!el) return null;
+  if(el.closest("#trash")) return {kind:"trash", el:el.closest("#trash")};
+  const t = el.closest(sel);
+  if(t && t.closest("#cv")) return {kind:t.dataset.plus ? "plus" : t.dataset.n ? "node" : "word", id:t.dataset.plus || t.dataset.n || t.dataset.w, el:t};
+  if(el.closest("#cv")) return {kind:"bg"};
+  return null;
+}
+function hover(d, t){
+  const el = t && t.el;
+  if(el !== d.over){ d.over?.classList.remove("over"); el?.classList.add("over"); d.over = el; }
+}
+function ghost(text, isWord){ const g = document.createElement("div"); g.className = "ghost" + (isWord ? " w" : ""); g.textContent = text; document.body.appendChild(g); return g; }
+const moveGhost = (g, e) => g.style.transform = `translate(${e.clientX}px,${e.clientY}px) translate(-50%,-130%)`;
+function svgPt(e){ const r = stage.querySelector("#cv").getBoundingClientRect(); return {x:e.clientX - r.left, y:e.clientY - r.top}; }
+function autoScroll(e){   // 只往上捲和左右捲：從底部標籤盤往上拖一定會經過下緣，往下捲會讓目標跑掉（9/29 的同一種 bug）
+  if(e.clientY < 40) scrollBy(0, -12);
+  const w = stage.querySelector("#cvwrap"), r = w.getBoundingClientRect();   // 畫布比螢幕寬時（手機），拖到左右邊緣就橫向捲
+  if(e.clientY > r.top && e.clientY < r.bottom){
+    if(e.clientX > r.right - 32) w.scrollLeft += 10; else if(e.clientX < r.left + 32) w.scrollLeft -= 10; } }
+function reveal(keepQ){   // 開始拖標籤或選了標籤時，把畫布底部（詞那一排）捲到標籤盤上面；keepQ：剛換題時，最多捲到題目還看得到
+  const pal = stage.querySelector("#pal"), cv = stage.querySelector("#cvwrap"), q = stage.querySelector(".q"); if(!pal || !cv) return;
+  const c = cv.getBoundingClientRect(), top = pal.getBoundingClientRect().top;
+  let dy = c.bottom - top + 8;
+  if(keepQ && q) dy = Math.min(dy, q.getBoundingClientRect().top - 8);
+  if(dy > 0) scrollBy(0, dy); }
+
+function wire(){
+  const st = S[cur], svg = stage.querySelector("#cv"), pal = stage.querySelector("#pal");
+
+  // 標籤盤：拖到 + 上＝往上加一層並接好；拖到節點上＝換標籤；拖到詞上＝在詞上面加一層；拖到空白處＝放一個還沒接的節點
+  pal.onpointerdown = e => { const c = e.target.closest(".chip"); if(!c || drag || !e.isPrimary) return;
+    e.preventDefault(); c.setPointerCapture(e.pointerId);
+    drag = {src:"pal", l:c.dataset.l, x:e.clientX, y:e.clientY, moved:false, pid:e.pointerId}; reveal(); };
+  pal.onclick = e => { const c = e.target.closest(".chip");   // 鍵盤（Enter / 空白鍵）按標籤：detail 是 0；滑鼠和觸控已經在 pointerup 處理過
+    if(!c || e.detail !== 0) return; armed = armed === c.dataset.l ? null : c.dataset.l; st.sel = null; refresh(); };
+  pal.onpointermove = e => { const d = drag; if(!d || d.src !== "pal" || e.pointerId !== d.pid) return;
+    if(!d.moved){ if(Math.hypot(e.clientX-d.x, e.clientY-d.y) < 6) return;
+      d.moved = true; d.ghost = ghost(d.l); svg.classList.add("arming"); }
+    moveGhost(d.ghost, e); autoScroll(e);
+    const t = targetAt(e.clientX, e.clientY, "[data-plus],[data-n],[data-w]");
+    hover(d, t && t.kind !== "bg" && t.kind !== "trash" ? t : null); };
+  const palEnd = e => { const d = drag; if(!d || d.src !== "pal" || e.pointerId !== d.pid) return; drag = null;
+    if(!d.moved){ if(e.type === "pointerup"){ armed = armed === d.l ? null : d.l; st.sel = null; refresh(); } return; }
+    d.ghost.remove(); d.over?.classList.remove("over");
+    if(e.type !== "pointerup"){ refresh(); return; }
+    dropLabel(d.l, targetAt(e.clientX, e.clientY, "[data-plus],[data-n],[data-w]"), e); };
+  pal.onpointerup = palEnd; pal.onpointercancel = palEnd;
+
+  // 畫布：拖節點或詞到另一個節點上＝接到它底下。
+  // 原本節點下方還有一個點可以往下拉線，手機上 Chrome 的觸控校正會把按在節點上的手指吸到那個點，變成反方向接線，所以拿掉了
+  svg.onpointerdown = e => {
+    if(drag || !e.isPrimary) return;
+    const t = e.target.closest("[data-n],[data-w],[data-plus],[data-e],[data-del]");
+    if(t && (t.dataset.n || t.dataset.w)) e.preventDefault();
+    drag = {src:"cv", t, x:e.clientX, y:e.clientY, moved:false, pid:e.pointerId};
+  };
+  svg.onpointermove = e => { const d = drag; if(!d || d.src !== "cv" || e.pointerId !== d.pid) return;
+    if(e.pointerType === "mouse" && e.buttons === 0){ d.ghost?.remove(); d.over?.classList.remove("over"); drag = null; refresh(); return; }   // 在畫布外放開滑鼠
+    if(!d.t || d.t.dataset.e){   // 空白處或線上拖：捲動畫布和頁面
+      if(!d.moved && Math.hypot(e.clientX-d.x, e.clientY-d.y) < 6) return;
+      if(!d.moved){ d.moved = true; d.pan = true; d.lx = e.clientX; d.ly = e.clientY; svg.setPointerCapture(d.pid); }
+      stage.querySelector("#cvwrap").scrollLeft -= e.clientX - d.lx; scrollBy(0, -(e.clientY - d.ly));
+      d.lx = e.clientX; d.ly = e.clientY; return; }
+    const item = d.t.dataset.n || d.t.dataset.w;
+    if(!item) return;
+    if(!d.moved){ if(Math.hypot(e.clientX-d.x, e.clientY-d.y) < 6) return;
+      d.moved = true; svg.setPointerCapture(d.pid);
+      d.ghost = ghost(item[0] === "w" ? wordText(+item.slice(1), ITEMS[cur]) : st.nodes[item].l, item[0] === "w"); }
+    autoScroll(e);
+    moveGhost(d.ghost, e);
+    const t = targetAt(e.clientX, e.clientY, "[data-n]");
+    hover(d, t && (t.kind === "trash" || (t.kind === "node" && t.id !== item)) ? t : null);
+  };
+  const cvEnd = e => { const d = drag; if(!d || d.src !== "cv" || e.pointerId !== d.pid) return; drag = null;
+    d.ghost?.remove(); d.over?.classList.remove("over");
+    if(e.type !== "pointerup"){ refresh(); return; }
+    if(!d.moved){ tap(d.t, e); return; }
+    if(d.pan) return;
+    const item = d.t.dataset.n || d.t.dataset.w;
+    const t = targetAt(e.clientX, e.clientY, "[data-n]");
+    if(!t){ refresh(); return; }
+    if(t.kind === "trash") remove(item);
+    else if(t.kind === "node" && t.id !== item) attach(item, t.id);
+    else if(t.kind === "bg" && item[0] === "n" && !L.kids[item].length){ const q = svgPt(e); moveFree(item, q.x, q.y); }
+    else refresh();
+  };
+  svg.onpointerup = cvEnd; svg.onpointercancel = cvEnd;
+  svg.onkeydown = e => { if(e.key !== "Enter" && e.key !== " ") return;
+    const t = e.target.closest("[data-n],[data-w],[data-plus],[data-del]");
+    if(!t){ if(e.target === svg && armed){ e.preventDefault(); addFree(armed, G.W/2, 30); } return; }   // 鍵盤：選了標籤後在畫布上按 Enter，放在上方空白處
+    e.preventDefault();
+    const r = t.getBoundingClientRect(); tap(t, {clientX:r.x + r.width/2, clientY:r.y + r.height/2}); };
+}
+function dropLabel(l, t, e){
+  const st = S[cur];
+  if(!t || t.kind === "trash"){ refresh(); return; }
+  if(t.kind === "plus") addAbove(t.id, l);
+  else if(t.kind === "node") relabel(t.id, l);
+  else if(t.kind === "word"){ if(st.par[t.id]) { refresh(); say(`<em>${esc(wordText(+t.id.slice(1), ITEMS[cur]))}</em> already has a node above it. Drop the label on that node to change it.`, true); } else addAbove(t.id, l); }
+  else { const q = svgPt(e); addFree(l, q.x, q.y); }
+}
+function tap(t, e){
+  const st = S[cur];
+  const kind = !t ? "bg" : t.dataset.plus ? "plus" : t.dataset.n ? "node" : t.dataset.w ? "word" : t.dataset.e ? "edge" : "del";
+  const id = t && (t.dataset.plus || t.dataset.n || t.dataset.w || t.dataset.e || t.dataset.del);
+  if(kind === "del"){ remove(id); return; }
+  if(armed){
+    if(kind === "edge"){ cut(id); return; }
+    if(kind === "plus" || kind === "node" || kind === "word") dropLabel(armed, {kind, id}, e);
+    else if(kind === "bg") dropLabel(armed, {kind:"bg"}, e);
+    return;
+  }
+  if(kind === "plus"){ say("First pick a label from the tray, then tap the <span class=\"pl\">+</span>.", true); return; }
+  // 點一塊（詞或節點）選起來，再點一個節點＝把選的那塊接到它底下
+  if(st.sel && kind === "node" && id !== st.sel){ attach(st.sel, id); return; }
+  if(kind === "edge"){ cut(id); return; }
+  if(kind === "node" || kind === "word"){ st.sel = st.sel === id ? null : id; refresh(); return; }
+  st.sel = null; refresh();
+}
+document.addEventListener("keydown", e => {
+  if(document.querySelector(".tut")) return;   // 教學動畫開著時由它自己處理
+  const st = S[cur]; if(!student || !stage.querySelector("#cv")) return;
+  if(e.key === "Escape"){ armed = null; st.sel = null; refresh(); }
+  if((e.key === "Delete" || e.key === "Backspace") && st.sel && st.sel[0] === "n" && !st.done && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName)){ e.preventDefault(); remove(st.sel); }
+});
+let rw = 0;
+addEventListener("resize", () => { clearTimeout(rw); rw = setTimeout(() => {   // 寬度變了，詞的位置要重算
+  const w = stage.querySelector("#cvwrap")?.clientWidth; if(!w) return;
+  G = geometry(ITEMS[cur], w - 2); refresh(); }, 150); });
+
+/* ---------- How to play：四段會自己播的示範動畫 ----------
+   每段是一個 320×222 的小舞台，裡面的東西用 Web Animations 播；同一段裡所有動畫長度相同、無限循環，所以會一直同步。
+   手的路徑寫成 [時間比例, x, y, 按下?]。prefers-reduced-motion 時停在接近結尾的畫面。 */
+const TUT = [
+  {t:"Build upward", d:`Drag a label from the tray onto the <span class="pl">+</span> above a morpheme. Each morpheme gets one label: Affix for an affix, a category for a root.`, scene:sceneStack},
+  {t:"Join pieces", d:"Drop a label on an empty spot. Then drag each piece up onto it to connect them.", scene:sceneJoin},
+  {t:"Fix mistakes", d:"Tap a line to cut it. Drag anything you don't need to <b>Delete</b>. To rename a node, drop a different label on it.", scene:sceneFix},
+  {t:"Check and submit", d:"When every morpheme is in one tree, write a short explanation of one choice (scored words only), then press <b>Submit</b>. On a phone you can also tap a label, then tap where it goes. The practice word walks you through it step by step.", scene:sceneSubmit},
+];
+let tutAnims = [];
+const TP_ = (x, y) => `translate(${x}px,${y}px)`;
+function tEl(st, cls, html, x, y){ const d = document.createElement("div"); d.className = "ta " + cls; d.innerHTML = html; d.style.transform = TP_(x, y); st.appendChild(d); return d; }
+function tLine(svg, x1, y1, x2, y2, cls=""){ const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2); if(cls) l.setAttribute("class", cls); svg.appendChild(l); return l; }
+function tAnim(e, frames, D){ const a = e.animate(frames, {duration:D, iterations:Infinity, fill:"both"}); tutAnims.push(a); return a; }
+function tShow(e, D, on, off=0.95){ tAnim(e, [{offset:0,opacity:0},{offset:on-0.001,opacity:0},{offset:on,opacity:1},{offset:off,opacity:1},{offset:Math.min(1,off+0.02),opacity:0},{offset:1,opacity:0}], D); }
+function tHide(e, D, at){ tAnim(e, [{offset:0,opacity:1},{offset:at-0.001,opacity:1},{offset:at,opacity:0},{offset:0.98,opacity:0},{offset:1,opacity:1}], D); }
+function tCarry(e, D, g, r, from, to){ tAnim(e, [{offset:0,opacity:0,transform:TP_(...from)},{offset:g-0.001,opacity:0,transform:TP_(...from)},{offset:g,opacity:1,transform:TP_(...from),easing:"ease-in-out"},
+  {offset:r,opacity:1,transform:TP_(...to)},{offset:r+0.001,opacity:0,transform:TP_(...to)},{offset:1,opacity:0,transform:TP_(...to)}], D); }
+function tHand(st, D, pts){   // pts：[時間比例, x, y, 按下?]
+  const h = tEl(st, "thand", `<span class="tring"></span><svg width="22" height="26" viewBox="0 0 22 26"><path d="M2 1 L2 20 L7 15.5 L10.5 23.5 L14 22 L10.5 14.5 L17 14.5 Z" fill="#fff" stroke="#1B2230" stroke-width="1.6" stroke-linejoin="round"/></svg>`, pts[0][1], pts[0][2]);
+  tAnim(h, pts.map(([o, x, y, p]) => ({offset:o, transform:`${TP_(x, y)} scale(${p ? .85 : 1})`, easing:"ease-in-out"})), D);
+  const presses = pts.filter(p => p[3]).map(p => p[0]), fr = [{offset:0, opacity:0, transform:"scale(.4)"}];
+  presses.forEach(o => fr.push({offset:Math.max(o-0.001, fr[fr.length-1].offset), opacity:0, transform:"scale(.4)"}, {offset:o, opacity:.9, transform:"scale(.4)"}, {offset:Math.min(o+0.06, 1), opacity:0, transform:"scale(1.7)"}));
+  fr.push({offset:1, opacity:0, transform:"scale(.4)"});
+  tAnim(h.querySelector(".tring"), fr, D);
+}
+function tBase(st){ const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("class", "tsvg"); st.appendChild(svg); tEl(st, "", `<div class="ttray"></div>`, 160, 203); return svg; }
+// 示範都用 re + use → V（投影片 reusable 那棵樹的左半邊）
+function tWords(st){ tEl(st, "", `<span class="tw">re</span>`, 110, 150); tEl(st, "", `<span class="tw">use</span>`, 210, 150); }
+function tLow(st, svg){   // re、use 上面各一個標籤
+  tLine(svg, 110, 139, 110, 116); tLine(svg, 210, 139, 210, 116);
+  tEl(st, "", `<span class="tp">Affix</span>`, 110, 104); tEl(st, "", `<span class="tp">V</span>`, 210, 104);
+}
+function tTop(st, svg){ tLine(svg, 110, 92, 160, 52); tLine(svg, 210, 92, 160, 52); tEl(st, "", `<span class="tp">V</span>`, 160, 40); }
+function sceneStack(st){
+  const D = 5600, svg = tBase(st);
+  tWords(st);
+  [["N",56],["V",104],["Adj",152],["Affix",208]].forEach(([l, x]) => tEl(st, "", `<span class="tc">${esc(l)}</span>`, x, 203));
+  tShow(tEl(st, "", `<span class="tplus">+</span>`, 210, 117), D, .14, .37);
+  tShow(tEl(st, "", `<span class="tplus">+</span>`, 110, 117), D, .56, .77);
+  tShow(tLine(svg, 210, 139, 210, 116), D, .38); tShow(tEl(st, "", `<span class="tp">V</span>`, 210, 104), D, .38);
+  tShow(tLine(svg, 110, 139, 110, 116), D, .78); tShow(tEl(st, "", `<span class="tp">Affix</span>`, 110, 104), D, .78);
+  tCarry(tEl(st, "", `<span class="tg">V</span>`, 0, 0), D, .16, .36, [104, 188], [210, 103]);
+  tCarry(tEl(st, "", `<span class="tg">Affix</span>`, 0, 0), D, .58, .76, [208, 188], [110, 103]);
+  tHand(st, D, [[0,280,40],[.1,106,206],[.13,106,206,1],[.16,106,206],[.36,212,120],[.38,212,120,1],[.42,212,120],[.52,210,206],[.55,210,206,1],[.58,210,206],[.76,112,120],[.78,112,120,1],[.82,112,120],[.95,280,40],[1,280,40]]);
+}
+function sceneJoin(st){
+  const D = 6400, svg = tBase(st);
+  tWords(st); tLow(st, svg);
+  [["N",56],["V",104],["Adj",152]].forEach(([l, x]) => tEl(st, "", `<span class="tc">${esc(l)}</span>`, x, 203));
+  tShow(tEl(st, "", `<span class="tp dash">V</span>`, 160, 40), D, .30, .91);
+  tShow(tEl(st, "", `<span class="tp">V</span>`, 160, 40), D, .91);
+  tShow(tLine(svg, 110, 92, 160, 52), D, .64); tShow(tLine(svg, 210, 92, 160, 52), D, .91);
+  tCarry(tEl(st, "", `<span class="tg">V</span>`, 0, 0), D, .15, .28, [104, 188], [160, 38]);
+  tCarry(tEl(st, "", `<span class="tg">Affix</span>`, 0, 0), D, .49, .62, [110, 100], [160, 38]);
+  tCarry(tEl(st, "", `<span class="tg">V</span>`, 0, 0), D, .80, .89, [210, 100], [160, 38]);
+  tHand(st, D, [[0,280,120],[.1,106,206],[.13,106,206,1],[.15,106,206],[.28,162,42],[.30,162,42,1],[.34,162,42],[.44,112,108],[.47,112,108,1],[.49,112,108],[.62,162,42],[.64,162,42,1],[.68,162,42],[.76,212,108],[.78,212,108,1],[.80,212,108],[.89,162,42],[.91,162,42,1],[.95,280,120],[1,280,120]]);
+}
+function sceneFix(st){
+  const D = 6000, svg = tBase(st);
+  tWords(st); tLow(st, svg); tTop(st, svg);
+  [["N",56],["Affix",110]].forEach(([l, x]) => tEl(st, "", `<span class="tc">${esc(l)}</span>`, x, 203));
+  const del = tEl(st, "", `<span class="tdel">Delete</span>`, 272, 203); tShow(tEl(st, "", `<span class="tdel on">Delete</span>`, 272, 203), D, .52, .66);
+  tHide(tLine(svg, 172, 46, 278, 84), D, .27); tShow(tLine(svg, 172, 46, 278, 84, "red"), D, .19, .26);
+  tHide(tEl(st, "", `<span class="tp">N</span>`, 278, 96), D, .65);
+  tCarry(tEl(st, "", `<span class="tg">N</span>`, 0, 0), D, .46, .63, [278, 92], [272, 189]);
+  tHand(st, D, [[0,40,70],[.15,225,66],[.2,225,66,1],[.25,225,66],[.38,280,99],[.43,280,99,1],[.46,280,99],[.63,274,206],[.65,274,206,1],[.7,274,206],[.9,40,70],[1,40,70]]);
+  void del;
+}
+function sceneSubmit(st){
+  const D = 4800, svg = tBase(st);
+  tWords(st); tLow(st, svg); tTop(st, svg);
+  tEl(st, "", `<span class="tst">Ready to submit.</span>`, 90, 203);
+  const b = tEl(st, "", `<span class="tbtn">Submit</span>`, 262, 203);
+  tAnim(b.firstChild, [{offset:0,transform:"translate(-50%,-50%) scale(1)"},{offset:.29,transform:"translate(-50%,-50%) scale(1)"},{offset:.32,transform:"translate(-50%,-50%) scale(.9)"},{offset:.36,transform:"translate(-50%,-50%) scale(1)"},{offset:1,transform:"translate(-50%,-50%) scale(1)"}], D);
+  tShow(tEl(st, "", `<span class="tok">✓ Correct</span>`, 262, 24), D, .38, .92);
+  tHand(st, D, [[0,200,110],[.25,264,207],[.31,264,207,1],[.36,264,207],[.6,264,207],[.88,200,110],[1,200,110]]);
+}
+function openTutorial(start=0){
+  closeTutorial();
+  const back = document.activeElement;
+  const ov = document.createElement("div"); ov.className = "tut";
+  ov.innerHTML = `<div class="tut-card" role="dialog" aria-modal="true" aria-labelledby="tut-t">
+    <div class="row"><span class="eyebrow" id="tut-n"></span><button class="linkbtn" id="tut-skip">Skip</button></div>
+    <div class="tut-stagewrap" aria-hidden="true"><div class="tut-stage" id="tut-stage"></div></div>
+    <h2 id="tut-t"></h2><p id="tut-d"></p>
+    <div class="row"><div class="tut-dots">${TUT.map(() => "<i></i>").join("")}</div>
+      <div class="btns"><button class="btn" id="tut-back">Back</button><button class="btn primary" id="tut-next">Next</button></div></div></div>`;
+  document.body.appendChild(ov);
+  let k = start;
+  const $ = q => ov.querySelector(q), stg = $("#tut-stage"), wrapEl = $(".tut-stagewrap");
+  const fit = () => { const s = Math.min(1.25, wrapEl.clientWidth / 320); stg.style.transform = `scale(${s})`; wrapEl.style.height = `${222*s}px`; };
+  const show = () => {
+    tutAnims.forEach(a => a.cancel()); tutAnims = []; stg.innerHTML = "";
+    TUT[k].scene(stg); fit();
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches) tutAnims.forEach(a => { a.pause(); a.currentTime = a.effect.getTiming().duration * 0.9; });
+    $("#tut-n").textContent = `How to play · ${k+1} of ${TUT.length}`;
+    $("#tut-t").textContent = TUT[k].t; $("#tut-d").innerHTML = TUT[k].d;
+    ov.querySelectorAll(".tut-dots i").forEach((d, j) => d.classList.toggle("on", j === k));
+    $("#tut-back").disabled = k === 0;
+    $("#tut-next").textContent = k === TUT.length-1 ? (ITEMS[cur].tut && !S[cur].done ? "Start the practice" : "Got it") : "Next";
+  };
+  const done = () => { LS.set(TUTKEY, true); closeTutorial(); (back && back.focus ? back : document.getElementById("howto")).focus?.(); };
+  $("#tut-back").onclick = () => { if(k > 0){ k--; show(); } };
+  $("#tut-next").onclick = () => { if(k < TUT.length-1){ k++; show(); } else done(); };
+  $("#tut-skip").onclick = done;
+  ov.onclick = e => { if(e.target === ov) done(); };
+  ov._key = e => {
+    if(e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); done(); }
+    else if(e.key === "ArrowRight") $("#tut-next").click();
+    else if(e.key === "ArrowLeft") $("#tut-back").click();
+    else if(e.key === "Tab"){   // 焦點留在對話框裡
+      const f = [...ov.querySelectorAll("button:not(:disabled)")]; const i = f.indexOf(document.activeElement);
+      if(i < 0){ e.preventDefault(); f[0].focus(); }
+      else if(e.shiftKey && i === 0){ e.preventDefault(); f[f.length-1].focus(); } else if(!e.shiftKey && i === f.length-1){ e.preventDefault(); f[0].focus(); }
+    }
+  };
+  document.addEventListener("keydown", ov._key, true);
+  ov._fit = fit; addEventListener("resize", fit);
+  show(); $("#tut-next").focus();
+}
+function closeTutorial(){
+  const ov = document.querySelector(".tut"); if(!ov) return;
+  tutAnims.forEach(a => a.cancel()); tutAnims = [];
+  removeEventListener("resize", ov._fit); document.removeEventListener("keydown", ov._key, true); ov.remove();
+}
+document.getElementById("howto").onclick = () => openTutorial(0);
+
+if(student) loadProg();
+renderWho(); route();
+flush(); setInterval(flush, 20000);
+window.addEventListener("online", flush);
+document.fonts?.ready.then(() => { if(!stage.querySelector("#cvwrap")) return; G = geometry(ITEMS[cur], stage.querySelector("#cvwrap").clientWidth - 2); refresh(); });   // 字型載入後重量字寬
+</script>
