@@ -26,7 +26,7 @@
 
 1. 構詞樹 Sheet 的測試列（answers 第 2 列，Z00000000 / TEST-delete-me）請使用者刪掉；時區也不是台北（server_time 顯示上午 3:54，實際 18:54），檔案 → 設定 → 時區改 GMT+08:00。
 2. 標準答案是 AI 擬的，請老師核，特別是 deactivation（act + ive + ate 的切法）、encouragement 的 en- 先接、mailbox 的頂層 N。
-3. 會議的句法部分還沒做：少放 X-bar、多放基礎練習、"I saw the man with the telescope" 兩棵樹。ch02 已上線、有學生作答，既有題目不能換或調順序。要另開一份基礎句法頁，還是在 ch02 最後加題，等使用者決定。
+3. **下次第一件事**：會議的句法部分。使用者 10-04 決定加在現有句法頁 `ch02_syntax/tree_lab.src.html` 的 ITEMS 最後面，不另開新頁。內容：少 X-bar 的基礎題，加上 "I saw the man with the telescope" 兩種讀法各一題，做法跟構詞樹的 unlockable 一樣，每題附一個意思，送 Sheet 的 prompt 也帶意思（要把 ch03 的 `it.mean` 寫法搬回 ch02）。既有的 S1-01～S1-04 不能換也不能調順序，新題從 S1-05 開始。加完跑 ch02 的測試、`build_site.py`、push。
 4. 構詞樹這頁沒接 AI 回饋（後端預設關）。
 5. 之前的待辦：ch01 切詞題 prompt 錯誤（`buildPrompt_` 的 note）、句法 Sheet 測試列和時區。
 
