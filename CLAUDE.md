@@ -28,8 +28,9 @@
 |---|---|---|
 | Morphology（開源課本 Ch.5 習題 1–7，39 題） | `ch01_morphology/morphology_lab.src.html` | `docs/ch01_morphology/index.html`（已上線：https://william12995.github.io/ling-intro-practice/ch01_morphology/ ） |
 | Syntax 拖拉畫樹（Ex 14 四句＋練習句；10-02 全拖拉版、記法照老師簡報；10-03 加教學動畫、提示發亮、登入和成績紀錄） | `ch02_syntax/tree_lab.src.html`，測試在 `ch02_syntax/tests/` | `docs/ch02_syntax/index.html`（2026-10-03 已上線：https://william12995.github.io/ling-intro-practice/ch02_syntax/ ）。成績 Sheet 用 clasp 建在 rino881209@gmail.com，後端更新跑 `python clasp_deploy/deploy_clasp.py ch02_syntax`（DEPLOY.md 第 6 節） |
+| 構詞樹 拖拉畫樹（10-04 會議：句法樹的畫法用到構詞；練習 reusable＋14 題，含 unlockable、river boat race 兩種讀法各一題） | `ch03_morph_tree/morph_tree.src.html`，引擎照抄句法頁，測試在 `ch03_morph_tree/tests/` | 10-04 Sheet「語言學概論 構詞樹練習成績」已用 clasp 建好（`clasp_deploy/ch03_morph_tree/`），等擁有者開 /exec 授權後才 `build_site.py --endpoint ch03_morph_tree=…` 上線 |
 
-老師的句法簡報 `syntax_part1–3.pptx`（Fromkin 10th ed. Ch.3）在 `_output/`，已列入 .gitignore。畫樹記法以簡報為準：Det（不是 DP）、T 放 ±pst 或情態動詞、have/be 是 V（Appendix C rule 7、20）、名字和代名詞可直接掛 NP。
+老師的句法簡報 `syntax_part1–3.pptx`（Fromkin 10th ed. Ch.3）在 `_output/`，已列入 .gitignore。構詞樹的記法照老師的 `_output/Lecture4Morphology.ppt` 第 28 張（reusable）：每個詞綴上面一個 Affix、每個詞根上面一個詞類（N、V、Adj、Adv），合起來的節點標新詞的詞類，詞素寫成不帶連字號（re、use、able）。句法的畫樹記法以簡報為準：Det（不是 DP）、T 放 ±pst 或情態動詞、have/be 是 V（Appendix C rule 7、20）、名字和代名詞可直接掛 NP。
 
 2026-09-26 整頁換掉：原本的 Fromkin 內文範例版（20 題選擇＋四關切詞）在學生作答前就撤下了，舊版在 git 紀錄 `be842ae`。資料夾名稱和 quiz id 還是 `ch01_morphology`。
 
