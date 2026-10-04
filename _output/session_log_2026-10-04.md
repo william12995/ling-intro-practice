@@ -14,6 +14,9 @@
 - 用 clasp 建了 Sheet「語言學概論 構詞樹練習成績」（https://drive.google.com/open?id=1ntELF7RcI20udt-wriuT8waeEiCiUn9P8UA7L3aG7GE ），推上 Code.gs＋config.gs（`DEFAULT_QUIZZES = 'ch03_morph_tree'`），部署 id `AKfycbwoxhgQffIOeRvwBNInh7s1igaXq9UiBObKFopK_rSCvOCrgd4mtmb4DY7kzScY7M34`（存在 `clasp_deploy/ch03_morph_tree/deployment.txt`）。
 - Commit `868f01b`，已 push。docs/ 還沒有 ch03，因為 endpoints.json 還沒填網址。
 
+- 使用者授權後上線：`build_site.py --endpoint` 的後端檢查通過，commit `e0369b9`，網址 https://william12995.github.io/ling-intro-practice/ch03_morph_tree/ 。用建好的 docs 頁（不 mock）以 Z00000000 / TEST-delete-me 送了 S1-11，頁面顯示 Answers recorded，Drive 讀 Sheet 確認 answers 第 2 列正確（prompt 帶意思、response 是括號）。腳本 `ch03_morph_tree/tests/live_submit.py`。
+- 依 advisor 建議改了兩處字：deactivation 解說的 de- 例子換成 decompose、decentralize；標籤盤分組名 Morpheme 改 Affix。
+
 ## 發現的重要資訊
 
 - clasp `create-script` 在新資料夾裡建完，`.clasp.json` 的 rootDir 是空字串，要改成 `src`，並刪掉它拉下來的 appsscript.json。
@@ -21,7 +24,7 @@
 
 ## 下次從這裡開始
 
-1. 等使用者用 rino881209@gmail.com 開 /exec 網址按授權。之後：`python build_site.py --endpoint ch03_morph_tree=https://script.google.com/macros/s/AKfycbwoxhgQffIOeRvwBNInh7s1igaXq9UiBObKFopK_rSCvOCrgd4mtmb4DY7kzScY7M34/exec`，commit、push，用 Z00000000 做一題看 Sheet，請使用者刪測試列。Sheet 時區改台北。
+1. 構詞樹 Sheet 的測試列（answers 第 2 列，Z00000000 / TEST-delete-me）請使用者刪掉；時區也不是台北（server_time 顯示上午 3:54，實際 18:54），檔案 → 設定 → 時區改 GMT+08:00。
 2. 標準答案是 AI 擬的，請老師核，特別是 deactivation（act + ive + ate 的切法）、encouragement 的 en- 先接、mailbox 的頂層 N。
 3. 會議的句法部分還沒做：少放 X-bar、多放基礎練習、"I saw the man with the telescope" 兩棵樹。ch02 已上線、有學生作答，既有題目不能換或調順序。要另開一份基礎句法頁，還是在 ch02 最後加題，等使用者決定。
 4. 構詞樹這頁沒接 AI 回饋（後端預設關）。
