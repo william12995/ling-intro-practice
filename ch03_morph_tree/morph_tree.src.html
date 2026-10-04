@@ -259,7 +259,7 @@ const ITEMS = [
     e:"A compound joins two roots. Both are nouns, and the whole word is a noun because its right-hand part, <em>box</em>, is a noun: a mailbox is a kind of box." },
   { ex:"Longer word", say:"deactivation", words:["de","act","ive","ate","ion"],
     key:"[N [V [Affix de] [V [Adj [V act] [Affix ive]] [Affix ate]]] [Affix ion]]",
-    e:"Build it from the root out. <em>Act</em> (V) + <em>-ive</em> gives the adjective <em>active</em>; + <em>-ate</em> gives the verb <em>activate</em>; <em>de-</em> attaches to verbs (<em>defrost, decode</em>) and gives the verb <em>deactivate</em>; finally <em>-ion</em> turns the verb into a noun." },
+    e:"Build it from the root out. <em>Act</em> (V) + <em>-ive</em> gives the adjective <em>active</em>; + <em>-ate</em> gives the verb <em>activate</em>; <em>de-</em> attaches to verbs (<em>decompose, decentralize</em>) and gives the verb <em>deactivate</em>; finally <em>-ion</em> turns the verb into a noun." },
   { ex:"Ambiguity", say:"unlockable", mean:"able to be unlocked", words:["un","lock","able"],
     key:"[Adj [V [Affix un] [V lock]] [Affix able]]",
     e:"On this meaning you can <em>unlock</em> it. <em>Un-</em> attaches to the verb <em>lock</em> first, with its reversing meaning ('undo the action'), giving the verb <em>unlock</em>. Then <em>-able</em> makes the adjective." },
@@ -274,7 +274,7 @@ const ITEMS = [
     e:"Here <em>boat race</em> is the unit: any race between boats. <em>River</em> attaches to it and says where the race is held." },
 ];
 // 標籤表集中放這裡，記法要改只改這一段
-const GROUPS = [["Category",["N","V","Adj","Adv"]],["Morpheme",["Affix"]]];
+const GROUPS = [["Category",["N","V","Adj","Adv"]],["Affix",["Affix"]]];
 const LABELS = GROUPS.flatMap(g => g[1]);
 const ALIAS = {};                  // 同一個節點兩種寫法都收時填這裡，例如 {A:"Adj"}
 const al = l => ALIAS[l] || l;
