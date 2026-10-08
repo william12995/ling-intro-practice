@@ -251,6 +251,25 @@ const ITEMS = [
     key:"[TP [NP I] [T' [T $] [VP [V' [V have] [VP [V' [V finished] [NP [Det my] [N' [N homework]]]]]]]]]",
     alts:["[TP [NP [N' [N I]]] [T' [T $] [VP [V' [V have] [VP [V' [V finished] [NP [Det my] [N' [N homework]]]]]]]]]"],
     e:"<em>Have</em> is not a modal, so T holds the tense (–pst) and <em>have</em> is a verb. Its complement is another VP, <em>finished my homework</em> (rule 20, V' → V VP). The possessive <em>my</em> is in the same position as a determiner. A pronoun can sit directly under NP, as in class, or be drawn as NP over N' over N; both are accepted." },
+  // 10-04 會議：多放基礎題（只用 Appendix C rule 1–10），加歧義句。歧義句拆兩題、各附一個意思（mean），做法同構詞樹的 unlockable
+  { ex:"Class practice", say:"Every girl read some poetry", words:["every","girl","$","read","some","poetry"], t:"+pst",
+    key:"[TP [NP [Det every] [N' [N girl]]] [T' [T $] [VP [V' [V read] [NP [Det some] [N' [N poetry]]]]]]]",
+    e:"This is the first practice question from class: it needs only the basic rules. <em>Every</em> and <em>some</em> are determiners, so each NP is Det plus N' over N (rules 2 and 3). <em>Some poetry</em> is the object, a sister of V inside V' (rule 5). With no modal, T holds +pst and the verb is written as <em>read</em>." },
+  { ex:"Class example", say:"A hyena laughed at me", words:["a","hyena","$","laugh","at","me"], t:"+pst",
+    key:"[TP [NP [Det a] [N' [N hyena]]] [T' [T $] [VP [V' [V laugh] [PP [P' [P at] [NP me]]]]]]]",
+    alts:["[TP [NP [Det a] [N' [N hyena]]] [T' [T $] [VP [V' [V laugh] [PP [P' [P at] [NP [N' [N me]]]]]]]]]"],
+    e:"This is the worked tree from class. <em>Laugh</em> takes a PP, not an NP, as its complement (rule 6, V' → V PP). The PP has the same three levels as every phrase: PP over P' (rule 9), and P' holds the preposition <em>at</em> with its object NP <em>me</em> (rule 10). The pronoun can sit directly under NP or be drawn as NP over N' over N; both are accepted." },
+  { ex:"Class example", say:"The girl may cry", words:["the","girl","may","cry"],
+    key:"[TP [NP [Det the] [N' [N girl]]] [T' [T may] [VP [V' [V cry]]]]]",
+    e:"<em>May</em> is a modal, so it sits in T. <em>Cry</em> takes no complement, so V' holds only V, but the VP still has all three levels (rule 4, V' → V). Compare <em>The child ate</em> from class: there T holds +pst instead of a modal." },
+  { ex:"Ambiguity", say:"I saw the man with the telescope", mean:"the man has the telescope", words:["I","$","see","the","man","with","the","telescope"], t:"+pst",
+    key:"[TP [NP I] [T' [T $] [VP [V' [V see] [NP [Det the] [N' [N' [N man]] [PP [P' [P with] [NP [Det the] [N' [N telescope]]]]]]]]]]]",
+    alts:["[TP [NP [N' [N I]]] [T' [T $] [VP [V' [V see] [NP [Det the] [N' [N' [N man]] [PP [P' [P with] [NP [Det the] [N' [N telescope]]]]]]]]]]]"],
+    e:"On this meaning <em>with the telescope</em> describes the man, so the PP is inside the object NP. It is an adjunct to N': a new N' sits over the N' <em>man</em> and the PP (rule 17, N' → N' PP). The whole NP <em>the man with the telescope</em> is then the complement of <em>see</em>." },
+  { ex:"Ambiguity", say:"I saw the man with the telescope", mean:"I used the telescope to see the man", words:["I","$","see","the","man","with","the","telescope"], t:"+pst",
+    key:"[TP [NP I] [T' [T $] [VP [V' [V' [V see] [NP [Det the] [N' [N man]]]] [PP [P' [P with] [NP [Det the] [N' [N telescope]]]]]]]]]",
+    alts:["[TP [NP [N' [N I]]] [T' [T $] [VP [V' [V' [V see] [NP [Det the] [N' [N man]]]] [PP [P' [P with] [NP [Det the] [N' [N telescope]]]]]]]]]"],
+    e:"On this meaning <em>with the telescope</em> describes the seeing, so the PP attaches to the verb phrase. It is an adjunct to V': a new V' sits over the V' <em>see the man</em> and the PP (rule 16, V' → V' PP). Same words in the same order, but the PP is a sister of a different node, so the tree and the meaning are different." },
 ];
 // 標籤表集中放這裡，記法要改只改這一段
 const GROUPS = [["Word",["N","V","T","A","P","Adv","Det"]],["Bar",["N'","V'","T'","A'","P'"]],["Phrase",["TP","NP","VP","AP","PP","AdvP"]]];
@@ -680,7 +699,7 @@ function render(){
   const score = S.filter((s, k) => !ITEMS[k].tut && s.ok === true).length;
   stage.innerHTML = `<section class="card">
     <div class="meta"><span>${it.tut ? "Practice sentence · not scored" : `${it.ex} · Sentence ${cur} of ${ITEMS.length-1} · Score ${score}/${scored()}`}</span><div class="dots">${dots}</div></div>
-    <p class="q">Draw the tree for <em>${esc(it.say)}.</em>${it.words.includes("$") ? ` There is no modal, so the tense is its own box, <b>${esc(it.t)}</b>; the verb it attaches to is written in its base form.` : ""}</p>
+    <p class="q">Draw the tree for <em>${esc(it.say)}.</em>${it.mean ? ` Draw it for the meaning “${esc(it.mean)}”.` : ""}${it.words.includes("$") ? ` There is no modal, so the tense is its own box, <b>${esc(it.t)}</b>; the verb it attaches to is written in its base form.` : ""}</p>
     ${it.tut && !st.done ? `<div class="coach" id="coach" aria-live="polite"></div>` : ""}
     <details class="glossary"><summary>What do the labels mean?</summary><dl>${LABELS.map(l => `<dt>${esc(l)}</dt><dd>${esc(GLOSS[l])}</dd>`).join("")}</dl></details>
     <div class="cvwrap" id="cvwrap"><svg class="cv" id="cv" tabindex="0" role="application" aria-label="Tree canvas. With a label chosen, press Enter here to place it on an empty spot."></svg></div>
@@ -712,7 +731,7 @@ function render(){
     st.missing = [...best.sigs].filter(x => !mine.has(x));
     st.extra = [...mine].filter(x => !best.sigs.has(x));
     st.ok = best.canon === c; st.best = it.keys.indexOf(best); st.done = true; st.sel = null; armed = null;
-    if(!it.tut){ st.why = st.why.trim(); record(1, `S1-${pad2(cur)}`, it.say, bracketOf(A.t, it), st.ok, st.attempt, st.why); }
+    if(!it.tut){ st.why = st.why.trim(); record(1, `S1-${pad2(cur)}`, it.mean ? `${it.say} (${it.mean})` : it.say, bracketOf(A.t, it), st.ok, st.attempt, st.why); }
     saveProg(); render();
   };
   if($("#again")) $("#again").onclick = () => { st.done = false; st.ok = null; st.extra = null; st.why = ""; st.attempt = (st.attempt || 1) + 1; saveProg(); render(); };

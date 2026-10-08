@@ -124,6 +124,15 @@ with sync_playwright() as p:
     q = pg.evaluate("JSON.parse(localStorage.getItem('ling_queue_ch02_syntax')||'[]')")
     check(len(q) == 0 and any(d.get("attempt") == 2 for d in sent), "queued answer resent after reconnect")
 
+    # ---------- 5b. 歧義句：題目和送出的 prompt 都帶意思 ----------
+    pg.evaluate("cur=9; render()")
+    check("I used the telescope to see the man" in pg.locator(".q").first.inner_text(), "ambiguous item shows its meaning")
+    nodes, par = build_state(pg.evaluate("ITEMS[9].tree"))
+    pg.evaluate(f"S[9].nodes={json.dumps(nodes)}; S[9].par={json.dumps(par)}; S[9].nid=99; refresh()")
+    pg.fill("#why", WHY); pg.click("#submit"); pg.wait_for_timeout(300)
+    d = [d for d in sent if d.get("qid") == "S1-09"]
+    check(len(d) == 1 and d[0]["correct"] == 1 and d[0]["prompt"] == "I saw the man with the telescope (I used the telescope to see the man)", "S1-09 prompt carries the meaning: " + (d[0]["prompt"] if d else "none"))
+
     # ---------- 6. 進度保存：重新整理後樹和作答狀態還在 ----------
     pg.evaluate("cur=1; render()")
     pg.evaluate("S[1].nodes={n1:{l:'Det',x:0,h:1}}; S[1].par={w0:'n1'}; S[1].nid=2; refresh()")
