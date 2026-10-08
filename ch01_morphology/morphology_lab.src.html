@@ -163,6 +163,7 @@ const SECTIONS = [
     {type:"mc", q:"<em>expectantly</em>", o:["-ant and -ly, both derivational","Only -ly, derivational","-ant derivational, -ly inflectional","-ant inflectional, -ly derivational"], a:0,
      e:"expect (verb) + -ant gives the adjective expectant, and adding -ly gives an adverb. Both steps change the category."}
   ]},
+  // 題目可以有自己的 note，蓋過整節的 note（畫面上的提示和送給 AI 的說明都用它）。10-08 加：切詞題原本顯示「判斷詞類」
   {name:"2 Lexical categories", ex:"Exercise 4", note:"Identify the lexical category of the italicized word in each sentence. In your reasoning, say what evidence you used: the form of the word, its position in the sentence, or its meaning.", items:[
     {type:"mc", q:"The car goes very <em>fast</em>.", o:["Noun","Verb","Adjective","Adverb"], a:3,
      e:"fast modifies the verb goes, and very can come before it. It has no -ly, but its position and function are those of an adverb."},
@@ -184,11 +185,11 @@ const SECTIONS = [
      e:"misclassified comes after the subject and before the object, and it carries past tense -ed."},
     {type:"mc", q:"She founded a <em>nongovernmental</em> organization.", o:["Noun","Verb","Adjective","Adverb"], a:2,
      e:"nongovernmental sits between the determiner a and the noun organization, and it modifies the noun."},
-    {type:"cut", w:"discussion", m:["discuss","ion"], g:["verb root","V → N"],
+    {type:"cut", w:"discussion", note:"Split the word into its smallest morphemes. In your reasoning, say what each morpheme contributes: which category an affix attaches to and which category it makes.", m:["discuss","ion"], g:["verb root","V → N"],
      e:"-ion attaches only to verbs and turns them into nouns."},
-    {type:"cut", w:"misclassified", m:["mis","class","ifi","ed"], g:["‘wrongly’","noun root","-ify: N → V","past tense (inflectional)"],
+    {type:"cut", w:"misclassified", note:"Split the word into its smallest morphemes. In your reasoning, say what each morpheme contributes: which category an affix attaches to and which category it makes.", m:["mis","class","ifi","ed"], g:["‘wrongly’","noun root","-ify: N → V","past tense (inflectional)"],
      e:"class + -ify makes the verb classify. Then mis- is added, and finally inflectional -ed. Before -ed, -ify is spelled ifi."},
-    {type:"cut", w:"nongovernmental", m:["non","govern","ment","al"], g:["negative prefix","verb root","V → N","N → Adj"],
+    {type:"cut", w:"nongovernmental", note:"Split the word into its smallest morphemes. In your reasoning, say what each morpheme contributes: which category an affix attaches to and which category it makes.", m:["non","govern","ment","al"], g:["negative prefix","verb root","V → N","N → Adj"],
      e:"govern → government (noun) → governmental (adjective) → nongovernmental. -al attaches to nouns, so government has to be formed first."}
   ]},
   {name:"3 Compounds", ex:"Exercise 6", note:"Select all the compounds in the sentence. English compounds can be written as one word, as two words, or with a hyphen, so spelling does not tell you whether something is a compound.", items:[
@@ -432,7 +433,7 @@ function askAI(lv,i,it,SEC){
   const S=state.bySec[lv], f=S.fb[i]||{};
   if(!f.eid) return;
   S.fb[i]={...f, state:"loading"}; saveProg(); if(aiHook&&aiHook.lv===lv&&aiHook.i===i) aiHook.draw();
-  const item={note:plain(SEC.note), q:it.type==="cut"?`Split ${it.w} into its smallest morphemes.`:plain(it.q), data:it.d||"",
+  const item={note:plain(it.note||SEC.note), q:it.type==="cut"?`Split ${it.w} into its smallest morphemes.`:plain(it.q), data:it.d||"",
     options:it.o&&it.type!=="multi"?it.o.map((o,k)=>"ABCD"[k]+" "+plain(o)).join(" | "):it.type==="multi"?it.o.map(o=>o.t).join(" | "):"",
     key:keyText(it), expl:plain(it.e), scored:it.grade!==false};
   const req={action:"feedback", quiz:QUIZ_ID, student_id:student.sid, event_id:f.eid, qid:f.qid, attempt:f.attempt,
@@ -465,7 +466,7 @@ function renderSec(){
   if(ans===undefined) ans = it.type==="multi"||it.type==="cut" ? [] : it.type==="fill" ? "" : null;
   const card=document.createElement("section");card.className="card";
   card.innerHTML=`<div class="meta"><span>${esc(SEC.ex)} · Question ${S.i+1} of ${SEC.items.length}</span>${dots(SEC.items.length,S.res,S.i)}</div>
-    <p class="hint">${SEC.note}</p>
+    <p class="hint">${it.note||SEC.note}</p>
     ${it.type==="cut"?`<p class="q">Split <em>${esc(it.w)}</em> into its smallest morphemes.</p>`:`<p class="q">${it.q}</p>`}
     ${it.d?`<div class="data">${esc(it.d)}</div>`:""}
     <div id="widget"></div>
