@@ -218,5 +218,11 @@ with sync_playwright() as p:
     perr = []; pg.on("pageerror", lambda e: perr.append(str(e)))
     pg.reload(); pg.wait_for_timeout(400)
     check(not perr and pg.evaluate("S[1].done") is False and pg.locator("#cv").count() == 1, f"corrupted progress handled ({perr})")
+    # 10g. 10-08 加題前存的進度只有 5 題：讀得回來，新題從頭開始
+    old = [{"nodes":{},"par":{},"nid":1,"done":False,"ok":None,"best":0,"missing":[],"extra":[],"why":"","attempt":1} for _ in range(5)]
+    pg.evaluate(f"localStorage.setItem('ling_prog_v1_ch02_syntax_Z00000000', JSON.stringify({{v:1,cur:4,items:{json.dumps(old)}}}))")
+    perr.clear(); pg.reload(); pg.wait_for_timeout(400)
+    check(not perr and pg.evaluate("S.length") == pg.evaluate("ITEMS.length") == 10 and pg.evaluate("cur") == 4 and pg.evaluate("S[7].done") is False, f"5-item progress from before 10-08 loads ({perr})")
+    pg.evaluate("cur=8; render()"); check(not perr and pg.locator("#cv").count() == 1, "new item renders after old progress")
     c.close()
     print("FAILS", len(fails)); b.close()
