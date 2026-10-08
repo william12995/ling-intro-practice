@@ -38,9 +38,13 @@ with sync_playwright() as p:
         pg.evaluate(f"""(()=>{{const e=document.querySelector('[data-n="{i}"],[data-w="{i}"]'); const w=document.querySelector('#cvwrap');
           if(!e) return; const r=e.getBoundingClientRect(), q=w.getBoundingClientRect();
           if(r.left < q.left+20 || r.right > q.right-20) w.scrollLeft += (r.left+r.right)/2 - (q.left+q.right)/2; }})()""")
+    def both_in_view(src_sel, tgt_sel):   # 兩端都在畫布上時（長詞在手機上），把兩者的中點捲到中間，兩個才都看得到
+        pg.evaluate(f"""(()=>{{const a=document.querySelector({json.dumps(src_sel)}), b=document.querySelector({json.dumps(tgt_sel)}), w=document.querySelector('#cvwrap');
+          if(!a || !b || !a.closest('#cv') || !b.closest('#cv')) return; const r=a.getBoundingClientRect(), s=b.getBoundingClientRect(), q=w.getBoundingClientRect();
+          w.scrollLeft += (r.left+r.right+s.left+s.right)/4 - (q.left+q.right)/2; }})()""")
     def drag(src_sel, tgt):
         into_view(src_sel)
-        if not callable(tgt): into_view(tgt)
+        if not callable(tgt): into_view(tgt); both_in_view(src_sel.split(",")[0], tgt)
         x,y = box(src_sel); down(x,y); pg.wait_for_timeout(20)
         for k in range(1,4): move(x+2*k, y-3*k); pg.wait_for_timeout(15)
         tx,ty = tgt() if callable(tgt) else box(tgt)

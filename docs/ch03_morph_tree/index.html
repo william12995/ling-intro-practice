@@ -51,6 +51,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .expl.bad{border-left-color:var(--cut)}
 .expl .verdict{font-weight:600}
 .hint{font-size:14px;color:var(--muted);margin:0}
+.gl-line{font-size:15px;margin:-4px 0 10px;padding:6px 10px;border-left:3px solid var(--line);color:var(--ink)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .btn{appearance:none;font:inherit;font-weight:500;font-size:15px;border-radius:8px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
@@ -279,9 +280,49 @@ const ITEMS = [
   { ex:"Ambiguity", say:"river boat race", mean:"a boat race held on a river", words:["river","boat","race"],
     key:"[N [N river] [N [N boat] [N race]]]",
     e:"Here <em>boat race</em> is the unit: any race between boats. <em>River</em> attaches to it and says where the race is held." },
+  // 10-08 加：各種詞綴，全部出自開源課本 5.2、5.3、5.6、5.7 和習題 3、習題 1（Turkish）。由淺到深：英語前後綴、屈折、外語後綴串、環綴。
+  // 中綴（Tagalog -um-）樹畫不出來（詞根被切開），只在 unluckiness 的解說裡對照，不出題
+  { ex:"Suffixes", say:"foolishly", words:["fool","ish","ly"],
+    key:"[Adv [Adj [N fool] [Affix ish]] [Affix ly]]",
+    e:"Both affixes are suffixes, so there is only one possible order: the one next to the root attaches first. <em>-ish</em> turns the noun <em>fool</em> into the adjective <em>foolish</em>, and <em>-ly</em> turns that adjective into an adverb. You can label <em>ish</em> and <em>ly</em> either Affix or Suffix." },
+  { ex:"Suffixes", say:"librarianship", words:["library","ian","ship"],
+    key:"[N [N [N library] [Affix ian]] [Affix ship]]",
+    e:"<em>-ian</em> attaches to the noun <em>library</em> and makes the noun <em>librarian</em>; <em>-ship</em> attaches to that and makes <em>librarianship</em>, the role of being a librarian. Neither suffix changes the category, so every node is N. The <em>y</em> spelled <em>i</em> is just English spelling, not a different morpheme." },
+  { ex:"Suffixes", say:"expectantly", words:["expect","ant","ly"],
+    key:"[Adv [Adj [V expect] [Affix ant]] [Affix ly]]",
+    e:"<em>Expect</em> is a verb. <em>-ant</em> turns it into the adjective <em>expectant</em> (like <em>please → pleasant</em>), and <em>-ly</em> turns the adjective into an adverb." },
+  { ex:"Prefix and suffixes", say:"unluckiness", words:["un","luck","y","ness"],
+    key:"[N [Adj [Affix un] [Adj [N luck] [Affix y]]] [Affix ness]]",
+    e:"<em>-y</em> turns the noun <em>luck</em> into the adjective <em>lucky</em>. <em>Un-</em> needs an adjective, so it attaches next, giving <em>unlucky</em>; then <em>-ness</em> makes the noun. Notice that <em>-y</em> sits in the middle of the word but is still a suffix: it attaches after its base <em>luck</em>. A real infix goes inside its base, like Tagalog <em>-um-</em> in <em>t-um-akbuh</em> 'ran' (from <em>takbuh</em> 'run'). An infix splits the root in two, so it can't be drawn in a tree like this one." },
+  { ex:"Inflection", say:"nieces", words:["niece","s"],
+    key:"[N [N niece] [Affix s]]",
+    e:"Plural <em>-s</em> is an inflectional suffix. Inflection never changes the category, so the top node is N, the same as <em>niece</em>. In a longer word, inflection attaches last, outside any derivational affixes (<em>teach-er-s</em>)." },
+  { ex:"Inflection", say:"newest", words:["new","est"],
+    key:"[Adj [Adj new] [Affix est]]",
+    e:"Superlative <em>-est</em> attaches to the adjective <em>new</em> and the result is still an adjective. The textbook notes that some linguists treat comparative <em>-er</em> and superlative <em>-est</em> as derivational instead; the tree is the same either way, because the category doesn't change." },
+  { ex:"Turkish", say:"evdʒıklerimizde", mean:"in our little houses", words:["ev","dʒık","ler","imiz","de"],
+    gl:"<em>ev</em> 'house' · <em>dʒık</em> 'little' · <em>ler</em> plural · <em>imiz</em> 'our' · <em>de</em> 'in'",
+    key:"[N [N [N [N [N ev] [Affix dʒık]] [Affix ler]] [Affix imiz]] [Affix de]]",
+    e:"Turkish stacks suffixes, and each one keeps the word a noun. With only suffixes the order is fixed: the closest one attaches first. So it is <em>ev</em> 'house', then <em>evdʒık</em> 'little house', then <em>evdʒıkler</em> 'little houses', then <em>evdʒıklerimiz</em> 'our little houses', and finally <em>-de</em> 'in'. The tree grows one level per suffix." },
+  { ex:"Japanese", say:"tabesaserareta", mean:"was made to eat", words:["tabe","sase","rare","ta"],
+    gl:"<em>tabe</em> 'eat' · <em>sase</em> causative, 'make someone do it' · <em>rare</em> passive · <em>ta</em> past",
+    key:"[V [V [V [V tabe] [Affix sase]] [Affix rare]] [Affix ta]]",
+    e:"This verb is from the textbook sentence <em>Watasi-wa natto-o tabe-sase-rare-ta</em> 'I was made to eat natto'. Each suffix attaches to the verb built so far: <em>tabe-sase</em> 'make eat', <em>tabe-sase-rare</em> 'be made to eat', then past <em>-ta</em>. The word stays a verb at every step." },
+  { ex:"Meskwaki", say:"neta·nesaki", mean:"my daughters", words:["ne","ta·nes","aki"],
+    gl:"<em>ne</em> 'my' (first person) · <em>ta·nes</em> 'daughter' · <em>aki</em> animate plural",
+    key:"[N [N [Affix ne] [N ta·nes]] [Affix aki]]",
+    alts:["[N [Affix ne] [N [N ta·nes] [Affix aki]]]"],
+    e:"<em>Ne-</em> is a prefix and <em>-aki</em> is a suffix, and nothing in the data shows which one attaches first, so both trees are accepted. Compare the next word, which adds one more piece." },
+  { ex:"Circumfix", say:"neta·nesena·naki", mean:"our daughters", words:["ne","ta·nes","ena·n","aki"],
+    gl:"<em>ne</em> … <em>ena·n</em> together mean 'our' · <em>ta·nes</em> 'daughter' · <em>aki</em> animate plural",
+    key:"[N [N [Affix ne] [N ta·nes] [Affix ena·n]] [Affix aki]]",
+    e:"<em>Ne- … -ena·n</em> is a circumfix: one affix in two parts, around the base. The two parts attach at the same time, so they are both under one node together with <em>ta·nes</em>; drawing <em>ne</em> and <em>ena·n</em> on different levels would make them two separate affixes. The circumfix attaches before <em>-aki</em>, because affixes attach at the outer edge of their base: if <em>-aki</em> came first, <em>-ena·n</em> would end up after it (<em>…-aki-ena·n</em>)." },
 ];
 // 標籤表集中放這裡，記法要改只改這一段
-const GROUPS = [["Category",["N","V","Adj","Adv"]],["Affix",["Affix"]]];
+const GROUPS = [["Category",["N","V","Adj","Adv"]],["Affix",["Affix","Prefix","Suffix","Circumfix"]]];
+// 10-08 加：詞綴可以只標 Affix（老師投影片的記法），也可以標出種類。種類從標準答案的位置推：
+// 兩個子節點裡左邊那個是 Prefix、右邊是 Suffix；三個子節點時頭尾兩個是 Circumfix 的兩半。標錯種類就算錯。標準答案一律寫 Affix。
+const AFFIX_TYPES = ["Prefix","Suffix","Circumfix"];
 const LABELS = GROUPS.flatMap(g => g[1]);
 const ALIAS = {};                  // 同一個節點兩種寫法都收時填這裡，例如 {A:"Adj"}
 const al = l => ALIAS[l] || l;
@@ -290,7 +331,10 @@ const GLOSS = {
   V:"verb: use, read, lock, govern. Also the label for a whole word that is a verb",
   Adj:"adjective: kind, happy, active. Also the label for a whole word that is an adjective",
   Adv:"adverb: fast, quickly. Also the label for a whole word that is an adverb",
-  Affix:"a prefix or suffix (re-, un-, -able, -ness). It sits directly above the affix; the node above it shows the category of the new word",
+  Affix:"any affix (re-, un-, -able, -ness). It sits directly above the affix; the node above it shows the category of the new word. You can always use Affix, or name the type with Prefix, Suffix or Circumfix",
+  Prefix:"an affix that attaches before its base: re-, un-, de-",
+  Suffix:"an affix that attaches after its base: -able, -ness, -s",
+  Circumfix:"one affix in two parts, one before and one after the base, attached at the same time. Label both parts Circumfix and put both under the same node as the base",
 };
 const WHY_MIN = 20, WHY_MAX = 600;
 const RULES = `<span class="r"><span class="pl">+</span> <b>stack up</b></span> · <span class="r"><b>empty spot</b> new group</span> · <span class="r"><b>drag up</b> connect</span> · <span class="r"><b>tap a line</b> cut</span>`;
@@ -325,7 +369,14 @@ function parseKey(str){
 ITEMS.forEach(it => {
   it.keys = [it.key, ...(it.alts || [])].map(k => { const t = parseKey(k); span(t); return {tree:t, sigs:sigs(t), canon:canon(t, it)}; });
   it.tree = it.keys[0].tree; it.h = Math.max(...it.keys.map(k => heightOf(k.tree)));
+  it.atype = {};
+  nodesOf(it.tree).forEach(n => n.k.forEach((c, j) => {
+    if(c.l !== "Affix" || c.k.length !== 1 || c.k[0].w === undefined) return;
+    it.atype[c.k[0].i] = n.k.length === 3 && j !== 1 ? "Circumfix" : j === 0 ? "Prefix" : "Suffix"; }));
 });
+// 學生標的 Prefix / Suffix / Circumfix 跟位置對得上時當成 Affix 比；對不上就留著，判成錯
+const affixOk = (l, kids, it) => AFFIX_TYPES.includes(l) && kids.length === 1 && kids[0].w !== undefined && it.atype[kids[0].i] === l;
+function asAffix(t, it){ nodesOf(t).forEach(n => { if(affixOk(n.l, n.k, it)) n.l = "Affix"; }); span(t); return t; }
 
 /* ---------- 學生的樹：一堆節點 + 「子 → 父」的連線 ----------
    st.nodes[id] = {l, x, h}：x、h 只在節點底下還沒接東西時用（放在哪就在哪；x 是相對第一個詞的距離）；
@@ -427,7 +478,8 @@ function coach(it, st, L){
     const ys = k.map(g); if(ys.some(y => !y)) return null;
     const y = ys.flat().sort((a, b) => a - b);
     if(y[y.length-1] - y[0] !== y.length - 1) return null;
-    sigOf[id] = `${al(st.nodes[id].l)}|${y[0]}|${y[y.length-1]}`;
+    const l = affixOk(st.nodes[id].l, k.map(c => c[0] === "w" ? {w:1, i:+c.slice(1)} : {}), it) ? "Affix" : st.nodes[id].l;
+    sigOf[id] = `${al(l)}|${y[0]}|${y[y.length-1]}`;
     return ground[id] = y;
   };
   for(const id in st.nodes) g(id);
@@ -703,6 +755,7 @@ function render(){
   stage.innerHTML = `<section class="card">
     <div class="meta"><span>${it.tut ? "Practice word · not scored" : `${it.ex} · Word ${cur} of ${ITEMS.length-1} · Score ${score}/${scored()}`}</span><div class="dots">${dots}</div></div>
     <p class="q">Draw the tree for <em>${esc(it.say)}</em>${it.mean ? `, meaning “${esc(it.mean)}”` : ""}.</p>
+    ${it.gl ? `<p class="gl-line">${it.gl}</p>` : ""}
     ${it.tut && !st.done ? `<div class="coach" id="coach" aria-live="polite"></div>` : ""}
     <details class="glossary"><summary>What do the labels mean?</summary><dl>${LABELS.map(l => `<dt>${esc(l)}</dt><dd>${esc(GLOSS[l])}</dd>`).join("")}</dl></details>
     <div class="cvwrap" id="cvwrap"><svg class="cv" id="cv" tabindex="0" role="application" aria-label="Tree canvas. With a label chosen, press Enter here to place it on an empty spot."></svg></div>
@@ -727,7 +780,7 @@ function render(){
   if($("#clear")) $("#clear").onclick = () => { if(!Object.keys(st.nodes).length) return; save(st); st.nodes = {}; st.par = {}; st.sel = null; refresh(); };
   if($("#submit")) $("#submit").onclick = () => {
     if(!A.t || !whyOk()) return;
-    const mine = sigs(A.t), c = canon(A.t, it);
+    const T = asAffix(clone(A.t), it), mine = sigs(T), c = canon(T, it);
     // 跟哪個標準答案比：完全一樣的優先，不然取缺的加多的最少的
     const diff = k => [...k.sigs].filter(x => !mine.has(x)).length + [...mine].filter(x => !k.sigs.has(x)).length;
     const best = it.keys.find(k => k.canon === c) || it.keys.reduce((a, b) => diff(b) < diff(a) ? b : a);

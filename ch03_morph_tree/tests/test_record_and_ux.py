@@ -124,6 +124,34 @@ with sync_playwright() as p:
     q = pg.evaluate("JSON.parse(localStorage.getItem('ling_queue_ch03_morph_tree')||'[]')")
     check(len(q) == 0 and any(d.get("attempt") == 2 for d in sent), "queued answer resent after reconnect")
 
+    # ---------- 5b. 詞綴種類：Affix 或對的種類都算對，標錯種類算錯 ----------
+    def relabel(t, f, alt=None):   # f(詞, 原標籤) → 新標籤；只改詞綴節點
+        t = json.loads(json.dumps(t))
+        def go(x):
+            if "w" in x: return
+            if x["l"] == "Affix" and len(x["k"]) == 1 and "w" in x["k"][0]: x["l"] = f(x["k"][0]["w"], x["l"])
+            for k in x["k"]: go(k)
+        go(t); return t
+    def try_tree(k, t):
+        pg.evaluate(f"cur={k}; render()")
+        if pg.locator("#again").count(): pg.click("#again")
+        nodes, par = build_state(t)
+        pg.evaluate(f"S[{k}].nodes={json.dumps(nodes)}; S[{k}].par={json.dumps(par)}; S[{k}].nid=99; refresh()")
+        pg.fill("#why", WHY); pg.click("#submit"); pg.wait_for_timeout(250)
+        return pg.locator("#result .verdict").inner_text(), [d for d in sent if d.get("qid") == f"S1-{k:02d}"][-1]["response"]
+    unkind = pg.evaluate("ITEMS[2].tree")
+    v, r = try_tree(2, relabel(unkind, lambda w, l: "Prefix")); check(v == "Correct" and r == "[Adj [Prefix un] [Adj kind]]", f"Prefix on un- is Correct, response keeps the label ({v}, {r})")
+    v, r = try_tree(2, relabel(unkind, lambda w, l: "Suffix")); check(v == "Not quite", f"Suffix on un- is Not quite ({v})")
+    v, r = try_tree(2, relabel(unkind, lambda w, l: "Circumfix")); check(v == "Not quite", f"Circumfix on un- is Not quite ({v})")
+    v, r = try_tree(2, unkind); check(v == "Correct", f"plain Affix on un- is still Correct ({v})")
+    our = pg.evaluate("ITEMS[24].tree")
+    v, r = try_tree(24, relabel(our, lambda w, l: "Suffix" if w == "aki" else "Circumfix")); check(v == "Correct", f"Circumfix on ne/ena·n and Suffix on aki is Correct ({v}, {r})")
+    v, r = try_tree(24, relabel(our, lambda w, l: {"ne":"Prefix","ena·n":"Suffix"}.get(w, l))); check(v == "Not quite", f"Prefix/Suffix on circumfix halves is Not quite ({v})")
+    my_alt = pg.evaluate("ITEMS[23].keys[1].tree")
+    v, r = try_tree(23, relabel(my_alt, lambda w, l: "Prefix" if w == "ne" else "Suffix")); check(v == "Correct", f"Meskwaki alt tree with Prefix/Suffix is Correct ({v})")
+    pg.evaluate("cur=21; render()"); check("'little'" in pg.locator(".gl-line").inner_text(), "Turkish item shows the gloss line")
+    pg.evaluate("cur=2; render()"); check(pg.locator(".gl-line").count() == 0, "English item has no gloss line")
+
     # ---------- 6. 進度保存：重新整理後樹和作答狀態還在 ----------
     pg.evaluate("cur=1; render()")
     pg.evaluate("S[1].nodes={n1:{l:'V',x:0,h:1}}; S[1].par={w0:'n1'}; S[1].nid=2; refresh()")
@@ -209,5 +237,11 @@ with sync_playwright() as p:
     perr = []; pg.on("pageerror", lambda e: perr.append(str(e)))
     pg.reload(); pg.wait_for_timeout(400)
     check(not perr and pg.evaluate("S[1].done") is False and pg.locator("#cv").count() == 1, f"corrupted progress handled ({perr})")
+    # 10g. 10-08 加題前存的進度只有 15 題：讀得回來，新題從頭開始
+    old = [{"nodes":{},"par":{},"nid":1,"done":False,"ok":None,"best":0,"missing":[],"extra":[],"why":"","attempt":1} for _ in range(15)]
+    pg.evaluate(f"localStorage.setItem('ling_prog_v1_ch03_morph_tree_Z00000000', JSON.stringify({{v:1,cur:14,items:{json.dumps(old)}}}))")
+    perr.clear(); pg.reload(); pg.wait_for_timeout(400)
+    check(not perr and pg.evaluate("S.length") == pg.evaluate("ITEMS.length") == 25 and pg.evaluate("cur") == 14 and pg.evaluate("S[20].done") is False, f"15-item progress from before 10-08 loads ({perr})")
+    pg.evaluate("cur=24; render()"); check(not perr and pg.locator("#cv").count() == 1, "new item renders after old progress")
     c.close()
     print("FAILS", len(fails)); b.close()
