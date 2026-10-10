@@ -1,7 +1,7 @@
 """用 docs/ 裡建好的正式頁（不 mock 後端）以測試學號送一題 S1-11，看頁面是否顯示 Answers recorded。送完要到 Sheet 刪掉測試列。"""
 import json, pathlib, sys
 from playwright.sync_api import sync_playwright
-page = pathlib.Path(__file__).resolve().parents[2] / "docs" / "ch03_morph_tree" / "index.html"
+page = pathlib.Path(__file__).resolve().parents[2] / "docs" / "ch01-2_morph_tree" / "index.html"
 SEED = "localStorage.setItem('ling_student', JSON.stringify({sid:'Z00000000',name:'TEST-delete-me'})); localStorage.setItem('ling_morph_tree_tutorial_seen','true');"
 with sync_playwright() as p:
     b = p.chromium.launch(channel="msedge"); c = b.new_context(); c.add_init_script(SEED)

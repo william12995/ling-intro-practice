@@ -127,7 +127,7 @@ C:\Python313\python.exe clasp_deploy\deploy_clasp.py ch02_syntax
 
 構詞那份 Sheet 不用動。如果哪天把它的 Code.gs 也換成新版，不要設 `QUIZZES`（沒設就是 `ch01_morphology`）。新版的 summary 只列有計分作答的部分，構詞頁的欄位跟以前一樣是 S1–S6。
 
-## 7. 構詞樹頁（ch03_morph_tree）：第三份 Sheet
+## 7. 構詞樹頁（資料夾 ch01-2_morph_tree，quiz id 仍是 ch03_morph_tree）：第三份 Sheet
 
 做法跟第 6 節的句法頁一樣。2026-10-04 用 clasp 建好，Sheet 叫「語言學概論 構詞樹練習成績」（https://docs.google.com/spreadsheets/d/1ntELF7RcI20udt-wriuT8waeEiCiUn9P8UA7L3aG7GE/edit ），clasp 設定在 `clasp_deploy/ch03_morph_tree/`，網址已寫進 `endpoints.json`。改了 `apps_script/Code.gs` 之後這樣更新後端：
 

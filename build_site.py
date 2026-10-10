@@ -22,9 +22,12 @@ SITE = ROOT / "docs"
 EP_FILE = ROOT / "endpoints.json"
 PAGES = [  # (quiz id＝endpoints.json 的 key, src, 輸出路徑, 首頁上顯示的名稱)
     ("ch01_morphology", "ch01_morphology/morphology_lab.src.html", "ch01_morphology/index.html", "Morphology"),
+    # 構詞樹 10-10 從 ch03 改名 ch01-2（第三單元是別的內容）；quiz id 不改，Sheet 紀錄和學生瀏覽器裡的進度都綁著它
+    ("ch03_morph_tree", "ch01-2_morph_tree/morph_tree.src.html", "ch01-2_morph_tree/index.html", "Morphology: word trees"),
     ("ch02_syntax", "ch02_syntax/tree_lab.src.html", "ch02_syntax/index.html", "Syntax: build the tree"),
-    ("ch03_morph_tree", "ch03_morph_tree/morph_tree.src.html", "ch03_morph_tree/index.html", "Morphology: word trees"),
 ]
+MOVED = {"ch03_morph_tree": "ch01-2_morph_tree"}  # 舊網址 → 新網址，舊連結已經發給學生，留轉址頁
+
 URL_RE = r"^https://script\.google\.com/macros/s/[^/]+/exec$"
 
 HEAD = """<!doctype html>
@@ -106,6 +109,16 @@ def main():
         dst.write_text(wrap(html), encoding="utf-8")
         links.append(f'<li><a href="{out.rsplit("/", 1)[0]}/">{label}</a></li>')
         print(f"wrote {dst.relative_to(ROOT)}  →  {key} 的 Sheet")
+
+    for old, new in MOVED.items():
+        d = SITE / old
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "index.html").write_text(
+            HEAD + f'<title>Moved</title>\n<meta http-equiv="refresh" content="0; url=../{new}/">\n'
+            f'<script>location.replace("../{new}/"+location.search+location.hash)</script>\n'
+            f'</head>\n<body><p>This page has moved to <a href="../{new}/">{new}</a>.</p></body>\n</html>\n',
+            encoding="utf-8")
+        print(f"wrote docs/{old}/index.html  →  轉到 {new}/")
 
     index = HEAD + """<title>Introduction to Linguistics: Practice</title>
 <style>
