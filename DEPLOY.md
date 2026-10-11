@@ -119,11 +119,11 @@ C:\Python313\python.exe clasp_deploy\deploy_clasp.py ch02_syntax
    推上 GitHub 後，句法頁在 `https://william12995.github.io/ling-intro-practice/ch02_syntax/`，首頁也會多一個連結。
 7. 用假學號 `Z00000000` 做一題計分題（練習句不送成績），回 Sheet 看 `answers` 分頁有一列、`response` 欄是帶標籤的括號寫法、`reasoning` 欄是推理。再按 **成績 → 重算總表**，然後刪掉測試列。
 
-句法頁的紀錄長這樣：
+句法頁的紀錄長這樣（10-12 起改成選樹＋論證，拖拉版的紀錄格式作廢；改版前學生還沒作答過）：
 
-- 練習句（A dog barked）不計分，也不送。四題計分題的題號是 `S1-01`～`S1-04`（14a、14c、14d、14e），之後加題只能加在後面。
-- `response` 是學生的樹寫成帶標籤的括號，`correct` 1 或 0，`reasoning` 是送出前必填的推理（至少 20 字元）。
-- 學生按「Try again」會重做同一題，`attempt` 加 1。學生在第一次送出後就看得到標準樹，所以第二次以後很可能是照抄的；評分建議看 summary 的「首次答對」。
+- 練習句（A dog barked）不計分，也不送。計分題 `S1-01`～`S1-09`，之後加題只能加在後面。
+- `response` 是 `Tree B: [TP …]`（學生選的那棵，方括號寫法），`correct` 1 或 0，`reasoning` 是送出前必填的論證（至少 20 字元）。
+- 學生按「Try again」會重做同一題，`attempt` 加 1。第一次送出後就看得到哪棵對，第二次以後一定答得對；評分看 summary 的「首次答對」。
 
 構詞那份 Sheet 不用動。如果哪天把它的 Code.gs 也換成新版，不要設 `QUIZZES`（沒設就是 `ch01_morphology`）。新版的 summary 只列有計分作答的部分，構詞頁的欄位跟以前一樣是 S1–S6。
 
@@ -135,7 +135,7 @@ C:\Python313\python.exe clasp_deploy\deploy_clasp.py ch02_syntax
 C:\Python313\python.exe clasp_deploy\deploy_clasp.py ch03_morph_tree
 ```
 
-計分題 `S1-01`～`S1-14`，練習題 reusable 不送。歧義詞那四題的 `prompt` 會帶意思，例如 `unlockable (able to be unlocked)`。
+10-12 起跟句法頁一樣改成選樹＋論證，紀錄格式同第 6 節。計分題 `S1-01`～`S1-24`，練習題 reusable 不送。歧義詞那四題和外語詞的 `prompt` 會帶意思，例如 `unlockable (able to be unlocked)`。Meskwaki *neta·nesaki*（S1-23）有兩棵樹都算對。
 
 ## 8. 詞組結構律頁（資料夾 ch02-2_cfg，quiz id ch02_cfg）：第四份 Sheet
 

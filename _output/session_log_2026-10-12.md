@@ -14,6 +14,14 @@
 - 用 clasp 建了第四份 Sheet「語言學概論 詞組結構律練習成績」（https://drive.google.com/open?id=1KQJSK3pQcRVI7uZ1vEajzI1Ls13-2pv3BM8-1h6ERx8 ），部署 id 在 `clasp_deploy/ch02_cfg/deployment.txt`。`Code.gs` 的 FIXED 加 `ch02_cfg: ['S1']`，順手重推了 ch02_syntax、ch03_morph_tree 的後端（config 都正常回應）。
 - build_site.py 的 PAGES 加一列，CLAUDE.md 表格、DEPLOY.md 第 8 節已更新。
 
+- 使用者授權了 ch02_cfg 後端，線上用 Z00000000 送一題，頁面顯示 Answers recorded（Sheet 裡有一列 S1-01、一列 S2-01 測試資料，要刪）。
+- 使用者要求句法拖拉頁和構詞樹拖拉頁也改成「選哪個結構對＋論證」，拖拉整個拿掉（兩頁都還沒開放給學生，題號直接從 S1-01 重用）：
+  - `ch02_syntax/tree_lab.src.html`：練習句＋9 題，題目同拖拉版，每題兩棵樹。誘答樹：缺 T'、補語錯放成附加語（do so 測試）、have 後面不成 VP、some poetry 不成 NP、at me 不成 PP、may 當 V；telescope 兩題用同一對樹、問不同意思。
+  - `ch01-2_morph_tree/morph_tree.src.html`：reusable＋24 題，題目同拖拉版。誘答樹：詞綴接錯順序（un 接名詞、en 後面接 *couragement）、節點詞類標錯、兩個後綴一次接（沒有中間的詞）、box 當詞綴、外語詞綴串攤平。Meskwaki neta·nesaki 兩種接法都算對（ans 陣列），第三個選項是當成環綴攤平。
+  - 兩頁共用同一套選擇題引擎（跟詞組結構律頁的畫樹、登入、上傳同一套程式，複製在各頁裡），進度 key 改 v2。
+  - 舊的拖拉測試（`ch02_syntax/tests/`、`ch01-2_morph_tree/tests/`）刪了，新測試 `ch02-2_cfg/tests/test_mc_pages.py`：候選樹葉子一致、答案位置合法、每題可送出、故意錯一題、重新整理後狀態還在、桌機手機都沒有橫向捲動、沒有 JS 錯誤，兩頁都過。
+  - CLAUDE.md 兩列、DEPLOY.md 第 6、7 節的紀錄格式已改。
+
 ## 發現的重要資訊
 
 - 老師的 Colab 沒有 T 節點（`S -> NP VP`），跟句法拖拉頁照簡報用的 T ±pst 不一樣。網頁照老師 Colab 的格式。
@@ -22,14 +30,15 @@
 
 ## 下次從這裡開始
 
-1. 擁有者（rino881209@gmail.com）開一次 https://script.google.com/macros/s/AKfycby9PDgxL0Ry8eabFqauesQ1ZUg1jO9v5pFX63ygP_2LXuXsQwIOSuRu8d4Nj6pDLVML6g/exec 按授權，看到 `callback({"ok":true,"ping":true})`。之後用 Z00000000 做一題，確認 answers 有 S1 和 S2 兩列，再刪掉測試列、時區改 GMT+08:00。
-2. 請老師核：四題的標準答案和解說（AI 寫的）、記法不放 T 可不可以、現有拖拉畫樹頁要不要改成不計分。
-3. 10-10 的待辦還在：ch01 判太嚴的兩處、構詞樹標籤、老師核新題答案、刪測試列、Sheet 時區。
+1. 三份 Sheet（句法、構詞樹、詞組結構律）刪掉 Z00000000 的測試列，時區改 GMT+08:00。句法和構詞樹的 Sheet 裡如果有拖拉版時期的測試列，格式跟新版不同，一併刪。
+2. 請老師核：三頁的標準答案、誘答樹和解說（AI 寫的）；詞組結構律頁不放 T 是否可以（句法選樹頁照簡報放 T）。
+3. 開放給學生前，自己用手機走一遍三頁。
+4. 10-10 的待辦還在：ch01 判太嚴的兩處（S2-12、S5-07）。構詞樹「Affix 或 Prefix／Suffix」那條已經不適用（選擇題全用 Affix）。
 
 ## 環境備忘
 | 項目 | 值 |
 |------|-----|
 | Python | `C:\Python313\python.exe` |
 | 詞組結構律頁 | 改 `ch02-2_cfg/cfg_lab.src.html` 的 `ITEMS`，跑 `python build_site.py` |
-| 本機測試 | `cd ch02-2_cfg/tests && python test_page.py`，看 `t_1100.log`、`t_390.log` |
+| 本機測試 | `cd ch02-2_cfg/tests && python test_page.py`（詞組結構律頁）、`python test_mc_pages.py`（句法、構詞樹），看 `*.log` |
 | 後端 | `python clasp_deploy/deploy_clasp.py ch02_cfg` |
