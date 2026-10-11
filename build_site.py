@@ -25,6 +25,8 @@ PAGES = [  # (quiz id＝endpoints.json 的 key, src, 輸出路徑, 首頁上顯�
     # 構詞樹 10-10 從 ch03 改名 ch01-2（第三單元是別的內容）；quiz id 不改，Sheet 紀錄和學生瀏覽器裡的進度都綁著它
     ("ch03_morph_tree", "ch01-2_morph_tree/morph_tree.src.html", "ch01-2_morph_tree/index.html", "Morphology: word trees"),
     ("ch02_syntax", "ch02_syntax/tree_lab.src.html", "ch02_syntax/index.html", "Syntax: build the tree"),
+    # 10-12 老師要求：學生寫詞組結構律和 lexicon（NLTK 格式），選哪棵樹對再論證
+    ("ch02_cfg", "ch02-2_cfg/cfg_lab.src.html", "ch02-2_cfg/index.html", "Syntax: write a phrase structure grammar"),
 ]
 MOVED = {"ch03_morph_tree": "ch01-2_morph_tree"}  # 舊網址 → 新網址，舊連結已經發給學生，留轉址頁
 

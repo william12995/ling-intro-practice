@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phrase Structure Grammar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap">
+<style>
+:root{
+  --ground:#F2F4F7; --surface:#FFFFFF; --ink:#1B2230; --muted:#5B6475; --line:#D9DEE7;
+  --accent:#2F5BD3; --accent-soft:#E4EBFB; --cut:#D2463A; --cut-soft:#FBE7E4;
+  --ok:#2E7D4F; --ok-soft:#E2F2E8; --warn:#9A6A12; --warn-soft:#F7EED9;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --serif:"IBM Plex Serif",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#12151C; --surface:#1A1F29; --ink:#E6E9EF; --muted:#9AA3B2; --line:#2C3340;
+    --accent:#8FA8F7; --accent-soft:#232D47; --cut:#F07A6E; --cut-soft:#3A2224;
+    --ok:#6CC894; --ok-soft:#1C3326; --warn:#E0B55C; --warn-soft:#352C18;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#12151C; --surface:#1A1F29; --ink:#E6E9EF; --muted:#9AA3B2; --line:#2C3340;
+  --accent:#8FA8F7; --accent-soft:#232D47; --cut:#F07A6E; --cut-soft:#3A2224;
+  --ok:#6CC894; --ok-soft:#1C3326; --warn:#E0B55C; --warn-soft:#352C18;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;padding:0 16px}
+.wrap{max-width:820px;margin:0 auto;padding-block:32px 64px;display:flex;flex-direction:column;gap:20px}
+header>div{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,5vw,38px);line-height:1.2;margin:0;text-wrap:balance}
+h2{font:600 17px var(--sans);margin:0}
+.lede{color:var(--muted);margin:0;max-width:62ch}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dot{appearance:none;border:0;padding:0;width:12px;height:12px;border-radius:50%;background:var(--line);cursor:pointer}
+.dot.ok{background:var(--ok)} .dot.no{background:var(--cut)} .dot.done{background:var(--accent)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.q{font-size:18px;margin:0}
+.q em,.expl em,.task em,td em{font-family:var(--serif);font-style:italic}
+.task{margin:0}
+.step{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:16px}
+.expl{border-left:3px solid var(--ok);padding:4px 0 4px 14px;margin:0;display:flex;flex-direction:column;gap:6px}
+.expl.bad{border-left-color:var(--cut)}
+.expl.plain{border-left-color:var(--accent)}
+.expl .verdict{font-weight:600}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{appearance:none;font:inherit;font-weight:500;font-size:15px;border-radius:8px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.small{font-size:14px;padding:5px 12px}
+.linkbtn{appearance:none;border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.credit{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;margin:0}
+code,pre{font-family:var(--mono);font-size:.92em}
+details summary{cursor:pointer;font-weight:500}
+details.help{font-size:15px}
+details.help[open] summary{margin-bottom:8px}
+details.help ul{margin:0;padding-left:20px}
+table{border-collapse:collapse;font-size:14px;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-weight:600}
+.tblwrap{overflow-x:auto}
+
+/* 登入、成績上傳狀態（跟句法頁同一套） */
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.who b{color:var(--ink);font-weight:500;font-family:var(--mono)}
+.sync{font-family:var(--mono);font-size:13px}
+.sync .ok{color:var(--ok)} .sync .pend{color:var(--warn)}
+.login{display:flex;flex-direction:column;gap:14px;max-width:420px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:14px;font-weight:500}
+.field input{font:inherit;font-size:16px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.field input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.err{color:var(--cut);font-size:14px;margin:0;min-height:1.4em}
+.why{display:flex;flex-direction:column;gap:6px}
+.why label{font-size:15px;font-weight:500}
+textarea{font:inherit;font-size:15px;line-height:1.6;resize:vertical;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);width:100%}
+textarea:disabled{background:var(--ground);color:var(--ink)}
+.why textarea{min-height:96px}
+textarea.gram{font-family:var(--mono);font-size:14px;line-height:1.55;min-height:260px;tab-size:4;white-space:pre;overflow-x:auto}
+.cnt{font-family:var(--mono);font-size:12px;color:var(--muted);align-self:flex-end}
+.status{font-size:14px;color:var(--warn)}
+.status.ready{color:var(--ok)}
+
+/* 文法檢查的輸出 */
+.out{display:flex;flex-direction:column;gap:10px}
+.msg{margin:0;padding:8px 12px;border-radius:8px;font-size:15px}
+.msg.bad{background:var(--cut-soft);color:var(--ink);border-left:3px solid var(--cut)}
+.msg.warn{background:var(--warn-soft);border-left:3px solid var(--warn)}
+.msg.ok{background:var(--ok-soft);border-left:3px solid var(--ok)}
+.msg.info{background:var(--accent-soft);border-left:3px solid var(--accent)}
+.msg ul{margin:4px 0 0;padding-left:20px}
+.checks{font-family:var(--mono);font-size:14px;margin:0;padding:0;list-style:none}
+.checks li{padding:2px 0}
+.treebox{display:flex;flex-direction:column;gap:4px}
+.treebox .tlabel{font:600 14px var(--sans);color:var(--muted)}
+.treewrap{overflow-x:auto;padding:8px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:center}
+svg.tree{display:inline-block;overflow:visible;height:auto}
+svg.tree .lab{font:600 16px var(--serif);fill:var(--ink)}
+svg.tree .wd{font:italic 500 16px var(--serif);fill:var(--ink)}
+svg.tree .ln{stroke:var(--muted);stroke-width:1.2;fill:none}
+.br{font-size:13px;color:var(--muted);word-break:break-word}
+
+/* 選哪棵樹 */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.opt{border:1.5px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;cursor:pointer;background:var(--surface)}
+.opt:hover{border-color:var(--accent)}
+.opt input{margin:0 6px 0 0;accent-color:var(--accent)}
+.opt .head{font-weight:600;display:flex;align-items:center}
+.opt.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--cut);background:var(--cut-soft)}
+.opt.locked{cursor:default}
+.opt .treewrap{border:0}
+.opt svg.tree{max-width:100%}
+pre.sample{margin:0;padding:10px 12px;background:var(--ground);border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.5}
+@media (max-width:480px){.card{padding:16px}.opts{grid-template-columns:1fr}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Syntax</div>
+      <h1>Write a phrase structure grammar</h1>
+      <p class="lede">Write rules and a lexicon, see the trees they give, then decide which tree is right.</p>
+    </div>
+  </header>
+  <div class="who" id="who" hidden></div>
+  <div id="stage"></div>
+  <p class="credit">The practice grammar is from Bird, Klein &amp; Loper, <em>Natural Language Processing with Python</em>, ch. 8. The grammar format is the one used by NLTK (<code>nltk.CFG.fromstring</code>).</p>
+</div>
+
+<script>
+/* ---------- 題目 ----------
+   10-12 老師來信：拖拉畫樹不適合評分。改成 (1) 學生照老師 Colab 的 nltk.CFG.fromstring 格式寫詞組結構律和 lexicon，
+   頁面畫出這份文法產生的樹（不判對錯、不計分，S2-xx）；(2) 給兩棵樹選哪棵對，再用詞組測試法論證（計分，S1-xx）。
+   記法照老師的 Colab：S -> NP VP，沒有 T 節點、沒有 bar 層。補語接在 V 旁邊（VP -> V NP PP），附加語往上疊（VP -> VP PP、NP -> NP PP）。
+   opts 是兩棵樹（NLTK 括號寫法），ans 是對的那棵的位置。標準答案和解說是 AI 寫的，要老師核。
+   題號照陣列位置編（ITEMS[1] 是 S1-01／S2-01），學生開始作答後只能在最後加題，不能調換或替換。ITEMS[0] 是練習，不送成績。 */
+const STARTER = `# Phrase structure rules
+S -> NP VP
+
+# Lexicon
+`;
+const ITEMS = [
+  { ex:"Practice", tut:true, say:"Mary saw Bob",
+    task:"This grammar is already written. Press <b>Draw the trees</b> to see what it does. Then try a change: add <code>'Sue'</code> to the NP rule and type the sentence <em>Sue saw Bob</em> in your head. Does the grammar need anything else?",
+    start:`# Phrase structure rules
+S -> NP VP
+VP -> V NP | V NP PP
+PP -> P NP
+NP -> 'John' | 'Mary' | 'Bob' | Det N | Det N PP
+
+# Lexicon
+V -> 'saw' | 'ate' | 'walked'
+Det -> 'a' | 'an' | 'the' | 'my'
+N -> 'man' | 'dog' | 'cat' | 'telescope' | 'park'
+P -> 'in' | 'on' | 'by' | 'with'
+` },
+  { ex:"Sentence 1", say:"John put the book on the desk",
+    task:"Write rules and a lexicon that generate this sentence. Note that <em>put</em> needs both an object and a place: <em>*John put the book</em> is not a sentence.",
+    opts:["(S (NP John) (VP (V put) (NP (Det the) (N book)) (PP (P on) (NP (Det the) (N desk)))))",
+          "(S (NP John) (VP (V put) (NP (NP (Det the) (N book)) (PP (P on) (NP (Det the) (N desk))))))"],
+    ans:0,
+    e:"Tree A is right: <em>the book</em> and <em>on the desk</em> are two separate sisters of the verb. Substitution: <em>John put it on the desk</em> works with <em>it</em> = the book, but <em>*John put it</em> (with <em>it</em> = the book on the desk) is bad, so <em>the book on the desk</em> is not one NP here. Question: <em>Where did John put the book? On the desk.</em> Movement: <em>On the desk, John put the book.</em> In tree B the verb has no place phrase of its own, which <em>put</em> needs.",
+    sample:`S -> NP VP
+VP -> V NP PP
+NP -> 'John' | Det N
+PP -> P NP
+V -> 'put'
+Det -> 'the'
+N -> 'book' | 'desk'
+P -> 'on'` },
+  { ex:"Sentence 2", say:"The girl with the hat smiled",
+    task:"Write a grammar for this sentence. <em>Smiled</em> has no object. Watch the capital letter: the sentence starts with <code>'The'</code>, not <code>'the'</code>.",
+    opts:["(S (NP (Det The) (N girl)) (PP (P with) (NP (Det the) (N hat))) (VP (V smiled)))",
+          "(S (NP (NP (Det The) (N girl)) (PP (P with) (NP (Det the) (N hat)))) (VP (V smiled)))"],
+    ans:1,
+    e:"Tree B is right: <em>the girl with the hat</em> is one NP, the subject. Substitution: <em>She smiled</em>, with <em>she</em> = the girl with the hat. Question: <em>Who smiled? The girl with the hat.</em> Coordination: <em>The girl with the hat and the boy smiled.</em> Tree A splits the subject into two pieces and makes the PP a direct part of S, so nothing in the tree says the hat belongs to the girl.",
+    sample:`S -> NP VP
+NP -> Det N | NP PP
+PP -> P NP
+VP -> V
+Det -> 'The' | 'the'
+N -> 'girl' | 'hat'
+P -> 'with'
+V -> 'smiled'` },
+  { ex:"Sentence 3", say:"Bob ate the cake with a fork",
+    task:"Write a grammar for this sentence. Think about what <em>with a fork</em> goes with: the cake, or the eating?",
+    opts:["(S (NP Bob) (VP (VP (V ate) (NP (Det the) (N cake))) (PP (P with) (NP (Det a) (N fork)))))",
+          "(S (NP Bob) (VP (V ate) (NP (NP (Det the) (N cake)) (PP (P with) (NP (Det a) (N fork))))))"],
+    ans:0,
+    e:"Tree A is right: the fork is what Bob ate with, so <em>with a fork</em> modifies the eating and sits outside the object NP. Substitution: <em>Bob ate it with a fork</em> (<em>it</em> = the cake). <em>Do so</em>: <em>Bob ate the cake with a fork, and Mary did so with a spoon</em>: <em>did so</em> replaces <em>ate the cake</em>, so <em>ate the cake</em> is a VP without the PP. Question: <em>What did Bob eat? The cake</em>, not <em>the cake with a fork</em>. Tree B would mean a cake that comes with a fork.",
+    sample:`S -> NP VP
+VP -> V NP | VP PP
+NP -> 'Bob' | Det N
+PP -> P NP
+V -> 'ate'
+Det -> 'the' | 'a'
+N -> 'cake' | 'fork'
+P -> 'with'` },
+  { ex:"Sentence 4", say:"Mary saw the man with the telescope", mean:"the man was holding the telescope",
+    task:"This sentence has two meanings. Write <b>one</b> grammar that gives <b>two</b> trees, one for each meaning. Then choose the tree for the meaning <em>the man was holding the telescope</em>.",
+    opts:["(S (NP Mary) (VP (VP (V saw) (NP (Det the) (N man))) (PP (P with) (NP (Det the) (N telescope)))))",
+          "(S (NP Mary) (VP (V saw) (NP (NP (Det the) (N man)) (PP (P with) (NP (Det the) (N telescope))))))"],
+    ans:1,
+    e:"Tree B is right for this meaning: <em>with the telescope</em> describes the man, so it is inside the object NP. Substitution: <em>Mary saw him</em>, with <em>him</em> = the man with the telescope. Question: <em>Who did Mary see? The man with the telescope.</em> Tree A is the other meaning, where Mary used the telescope to see: there <em>Mary saw him with the telescope</em> (<em>him</em> = the man) keeps the meaning, and <em>do so</em> can replace <em>saw the man</em>.",
+    sample:`S -> NP VP
+VP -> V NP | VP PP
+NP -> 'Mary' | Det N | NP PP
+PP -> P NP
+V -> 'saw'
+Det -> 'the'
+N -> 'man' | 'telescope'
+P -> 'with'` },
+  { ex:"Sentence 5", final:true, say:"One grammar for everything",
+    task:"Combine your grammars into <b>one</b> grammar that generates all four sentences and does <b>not</b> generate the starred ones. Hint: <em>put</em>, <em>ate</em>, <em>saw</em> and <em>smiled</em> do not take the same things after them, so you may need more than one verb category (for example <code>Vt</code>, <code>Vi</code>, <code>Vput</code>).",
+    good:["John put the book on the desk", "The girl with the hat smiled", "Bob ate the cake with a fork", "Mary saw the man with the telescope"],
+    bad:["John put the book", "The girl smiled the cake", "Mary saw"],
+    e:"Two things make this work. A PP that modifies something attaches with an extra layer (<code>NP -> NP PP</code>, <code>VP -> VP PP</code>), so it can go on any NP or VP. And the verbs are split by what they need after them (subcategorization): <em>put</em> needs an NP and a PP, <em>ate</em> and <em>saw</em> need an NP, <em>smiled</em> needs nothing. With a single <code>V</code> category the grammar would also generate <em>*The girl smiled the cake</em>.",
+    sample:`S -> NP VP
+VP -> Vput NP PP | Vt NP | Vi | VP PP
+NP -> 'John' | 'Bob' | 'Mary' | Det N | NP PP
+PP -> P NP
+Vput -> 'put'
+Vt -> 'ate' | 'saw'
+Vi -> 'smiled'
+Det -> 'The' | 'the' | 'a'
+N -> 'book' | 'desk' | 'girl' | 'hat' | 'cake' | 'fork' | 'man' | 'telescope'
+P -> 'on' | 'with'` },
+];
+const WHY_MIN = 20, WHY_MAX = 800, MAX_TREES = 6;
+
+const HELP_FORMAT = `<details class="help" id="h-format"><summary>How to write the grammar</summary><ul>
+  <li>One rule per line: <code>S -> NP VP</code> means “an S is an NP followed by a VP”.</li>
+  <li><code>|</code> separates alternatives: <code>NP -> Det N | NP PP</code>.</li>
+  <li>Words go in quotes and must match the sentence exactly: <code>'John'</code> is not <code>'john'</code>.</li>
+  <li>The <b>first</b> rule must be the <code>S</code> rule. It is the top of the tree.</li>
+  <li>Lines that start with <code>#</code> are comments. The computer ignores them.</li>
+  <li>Category names are up to you (<code>Vt</code>, <code>Vput</code>…), but they cannot contain an apostrophe.</li></ul></details>`;
+const HELP_TESTS = `<details class="help"><summary>Constituency tests</summary><div class="tblwrap"><table>
+  <tr><th>Test</th><th>What you do</th><th>Example</th></tr>
+  <tr><td>Substitution</td><td>Replace the string with <em>it, she, they, there, then, do so</em></td><td><em>the girl with the hat</em> → <em>she</em></td></tr>
+  <tr><td>Movement</td><td>Move the string to the front of the sentence</td><td><em>On the desk, John put the book.</em></td></tr>
+  <tr><td>Question</td><td>Ask a question; the string can be the short answer</td><td><em>Where did John put the book? On the desk.</em></td></tr>
+  <tr><td>Coordination</td><td>Join the string with another of the same kind using <em>and</em></td><td><em>on the desk and under the chair</em></td></tr>
+  </table></div><p class="hint">A string that passes these tests is a constituent, so it should be one node in the tree.</p></details>`;
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad2 = n => String(n).padStart(2, "0");
+const wordsOf = s => s.trim().replace(/[.!?]+$/, "").split(/\s+/).filter(Boolean);
+
+/* ---------- 讀文法：照 nltk.CFG.fromstring 的格式 ----------
+   規則 LHS -> RHS | RHS；詞用單引號或雙引號；# 之後是註解；行首是 | 的話接在上一條規則後面（NLTK 也收）。
+   多收兩種：→ 箭頭、彎引號（從 Word 或簡報貼過來常會變成這樣），先換成一般寫法。 */
+function readGrammar(text){
+  const rules = [], errors = [];
+  let last = null;
+  const t = text.replace(/[‘’′]/g, "'").replace(/[“”]/g, '"').replace(/→/g, "->");
+  t.split(/\r?\n/).forEach((raw, n) => {
+    let line = "", q = null;
+    for(const ch of raw){ if(q){ if(ch === q) q = null; } else if(ch === "'" || ch === '"') q = ch; else if(ch === "#") break; line += ch; }
+    line = line.trim();
+    if(!line) return;
+    let lhs, rhs;
+    if(line.startsWith("|")){
+      if(!last){ errors.push(`Line ${n+1}: <code>${esc(line)}</code> starts with | but there is no rule above it.`); return; }
+      lhs = last; rhs = line.slice(1);
+    } else {
+      const k = line.indexOf("->");
+      if(k < 0){ errors.push(`Line ${n+1}: <code>${esc(line)}</code> has no arrow <code>-></code>.`); return; }
+      lhs = line.slice(0, k).trim(); rhs = line.slice(k + 2);
+      if(!/^[A-Za-z_][\w\-^\/<>]*$/.test(lhs)){
+        errors.push(`Line ${n+1}: <code>${esc(lhs || "(nothing)")}</code> can't be on the left of the arrow. The left side is one category name, like <code>NP</code>, without quotes.`); return;
+      }
+      last = lhs;
+    }
+    // 切出符號：'詞'、"詞"、|、類別名稱
+    const re = /\s*(?:'([^']*)'|"([^"]*)"|(\|)|([^\s'"|]+)|(['"]))/y;
+    let alt = [], alts = [], m, bad = false;
+    re.lastIndex = 0;
+    while(re.lastIndex < rhs.length && (m = re.exec(rhs))){
+      if(m[5]){ errors.push(`Line ${n+1}: a quote is opened but never closed.`); bad = true; break; }
+      if(m[3]){ alts.push(alt); alt = []; continue; }
+      if(m[1] !== undefined || m[2] !== undefined){
+        const w = m[1] !== undefined ? m[1] : m[2];
+        if(!w.trim() || /\s/.test(w.trim())){ errors.push(`Line ${n+1}: <code>'${esc(w)}'</code> — put each word in its own quotes.`); bad = true; break; }
+        alt.push({t:true, v:w.trim()});
+      } else if(m[4] === "->"){ errors.push(`Line ${n+1}: two arrows in one line. Put each rule on its own line.`); bad = true; break; }
+      else if(m[4] !== undefined){
+        if(!/^[A-Za-z_][\w\-^\/<>]*$/.test(m[4])){ errors.push(`Line ${n+1}: <code>${esc(m[4])}</code> is not a category name. If it is a word, put it in quotes.`); bad = true; break; }
+        alt.push({t:false, v:m[4]});
+      }
+    }
+    if(bad) return;
+    alts.push(alt);
+    if(alts.some(a => !a.length)){ errors.push(`Line ${n+1}: there is an empty alternative (nothing before or after a <code>|</code>).`); return; }
+    alts.forEach(a => rules.push({lhs, rhs:a, line:n+1}));
+  });
+  if(!errors.length && !rules.length) errors.push("The grammar is empty.");
+  const byLhs = {};
+  rules.forEach(r => (byLhs[r.lhs] = byLhs[r.lhs] || []).push(r));
+  return {rules, errors, byLhs, start: rules.length ? rules[0].lhs : null,
+          lexicon: new Set(rules.flatMap(r => r.rhs.filter(s => s.t).map(s => s.v)))};
+}
+
+function grammarWarnings(G){
+  const out = [];
+  if(G.start !== "S") out.push(`Your first rule starts with <code>${esc(G.start)}</code>, so it is treated as the top of the tree. Put the <code>S</code> rule first.`);
+  const undef = [...new Set(G.rules.flatMap(r => r.rhs.filter(s => !s.t && !G.byLhs[s.v]).map(s => s.v)))];
+  if(undef.length) out.push(`These symbols appear on the right of an arrow but never on the left: <code>${undef.map(esc).join("</code>, <code>")}</code>. If they are words, put them in quotes (<code>'book'</code>). If they are categories, add a rule for them.`);
+  const loops = [...new Set(G.rules.filter(r => r.rhs.length === 1 && !r.rhs[0].t && r.rhs[0].v === r.lhs).map(r => r.lhs))];
+  if(loops.length) out.push(`A rule like <code>${loops.map(x => `${esc(x)} -> ${esc(x)}`).join("</code>, <code>")}</code> just puts a node on top of itself. Remove it.`);
+  return out;
+}
+
+/* ---------- 剖析：列出這份文法給這串詞的所有樹 ----------
+   對每個 (類別, 起點, 終點) 記下所有樹。沒有空規則，所以多於一個子節點的規則，每個子節點都比父節點短；
+   只有一元規則（A -> B）會在同一段上繞圈，用 busy 擋掉，效果跟 NLTK 一樣只是不會無限多棵。 */
+function parse(G, words, cap=MAX_TREES + 1){
+  const memo = new Map(), busy = new Set();
+  function sym(A, i, j){
+    const key = `${A}|${i}|${j}`;
+    if(memo.has(key)) return memo.get(key);
+    if(busy.has(key)) return [];
+    busy.add(key);
+    const out = [], seen = new Set();
+    for(const r of G.byLhs[A] || []){
+      for(const kids of seq(r.rhs, 0, i, j)){
+        const t = {l:A, k:kids}, b = bracket(t);
+        if(!seen.has(b)){ seen.add(b); out.push(t); }
+        if(out.length >= cap) break;
+      }
+      if(out.length >= cap) break;
+    }
+    busy.delete(key); memo.set(key, out);
+    return out;
+  }
+  function seq(rhs, k, i, j){
+    if(k === rhs.length) return i === j ? [[]] : [];
+    const rest = rhs.length - k - 1;
+    if(j - i < rest + 1) return [];
+    const s = rhs[k], res = [];
+    if(s.t){
+      if(words[i] !== s.v) return [];
+      for(const tail of seq(rhs, k+1, i+1, j)) res.push([{w:s.v}, ...tail]);
+      return res;
+    }
+    for(let m = rest ? i+1 : j; m <= j - rest; m++){
+      const heads = sym(s.v, i, m); if(!heads.length) continue;
+      const tails = seq(rhs, k+1, m, j); if(!tails.length) continue;
+      for(const h of heads) for(const tl of tails){ res.push([h, ...tl]); if(res.length >= cap) return res; }
+    }
+    return res;
+  }
+  const trees = G.start ? sym(G.start, 0, words.length) : [];
+  // 剖析失敗時用：文法組得出來的片語（兩個詞以上）
+  const built = [];
+  for(const [key, v] of memo) if(v.length){ const [A, i, j] = key.split("|"); if(j - i >= 2) built.push({A, i:+i, j:+j}); }
+  built.sort((a, b) => a.i - b.i || b.j - a.j);
+  return {trees, built};
+}
+
+function bracket(n){ return n.w !== undefined ? n.w : `(${n.l} ${n.k.map(bracket).join(" ")})`; }
+function fromBracket(s){   // NLTK 括號寫法 → 樹
+  const tk = s.match(/\(|\)|[^\s()]+/g); let p = 0;
+  function node(){ p++; const n = {l:tk[p++], k:[]}; while(tk[p] !== ")"){ n.k.push(tk[p] === "(" ? node() : {w:tk[p++]}); } p++; return n; }
+  return node();
+}
+
+/* ---------- 畫樹 ---------- */
+const ctx = document.createElement("canvas").getContext("2d");
+const LF = '600 16px "IBM Plex Serif", Georgia, serif', WF = 'italic 500 16px "IBM Plex Serif", Georgia, serif';
+const tw = (s, f) => { ctx.font = f; return ctx.measureText(s).width; };
+function draw(root, label){
+  const DY = 54, TOP = 20; let x = 0, maxY = 0, g = "";
+  (function lay(n, d, parent){
+    if(n.w !== undefined){
+      const only = parent.k.length === 1;
+      const cw = Math.max(tw(n.w, WF) + 16, only ? tw(parent.l, LF) + 24 : 0, 40);
+      n.y = only ? parent.y + 28 : TOP + d*DY;
+      n.x = x + cw/2; x += cw; maxY = Math.max(maxY, n.y); return;
+    }
+    n.y = TOP + d*DY;
+    n.k.forEach(c => lay(c, d+1, n));
+    n.x = (n.k[0].x + n.k[n.k.length-1].x)/2;
+  })(root, 0, null);
+  (function walk(n){
+    if(n.w !== undefined){ g += `<text class="wd" x="${n.x}" y="${n.y}" text-anchor="middle">${esc(n.w)}</text>`; return; }
+    n.k.forEach(c => { g += `<line class="ln" x1="${n.x}" y1="${n.y+7}" x2="${c.x}" y2="${c.y-17}"/>`; walk(c); });
+    g += `<text class="lab" x="${n.x}" y="${n.y}" text-anchor="middle">${esc(n.l)}</text>`;
+  })(root);
+  const W = Math.ceil(x + 8), H = Math.ceil(maxY + 10);
+  return `<svg class="tree" viewBox="-4 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(label || bracket(root))}">${g}</svg>`;
+}
+
+/* 跑一次文法，回傳畫面用的 HTML 和要記進 Sheet 的摘要 */
+function runGrammar(text, it){
+  const G = readGrammar(text);
+  if(G.errors.length) return {html:`<p class="msg bad">Your grammar could not be read.<ul>${G.errors.map(e => `<li>${e}</li>`).join("")}</ul></p>`, summary:"grammar error", n:-1};
+  const warn = grammarWarnings(G).map(w => `<p class="msg warn">${w}</p>`).join("");
+  if(it.final) return runChecks(G, it, warn);
+  const words = wordsOf(it.say);
+  const missing = [...new Set(words.filter(w => !G.lexicon.has(w)))];
+  if(missing.length) return {html: warn + `<p class="msg bad">These words are not in your lexicon: <code>${missing.map(esc).join("</code>, <code>")}</code>. Capital letters count: <code>'The'</code> and <code>'the'</code> are different words.</p>`, summary:"missing words: " + missing.join(" "), n:0};
+  const {trees, built} = parse(G, words);
+  if(!trees.length){
+    const b = built.map(x => `<li><b>${esc(x.A)}</b>: <em>${esc(words.slice(x.i, x.j).join(" "))}</em></li>`).join("");
+    return {html: warn + `<p class="msg bad">Your grammar does not generate <em>${esc(it.say)}</em>.${b ? ` These are the phrases it can build:<ul>${b}</ul>Look for the part of the sentence that no rule puts together.` : ""}</p>`, summary:"no tree", n:0};
+  }
+  const more = trees.length > MAX_TREES, shown = trees.slice(0, MAX_TREES);
+  const head = more ? `<p class="msg info">Your grammar gives more than ${MAX_TREES} trees for this sentence. Here are the first ${MAX_TREES}.</p>`
+    : shown.length === 1 ? `<p class="msg ok">Your grammar gives 1 tree.</p>`
+    : `<p class="msg info">Your grammar gives ${shown.length} trees, so it is ambiguous for this sentence. Use constituency tests to decide which tree matches the meaning.</p>`;
+  const body = shown.map((t, k) => `<div class="treebox"><span class="tlabel">Tree ${k+1}</span><div class="treewrap">${draw(t)}</div><code class="br">${esc(bracket(t))}</code></div>`).join("");
+  return {html: warn + head + body, summary:`${more ? `>${MAX_TREES}` : shown.length} tree(s): ` + shown.map(bracket).join(" || "), n:shown.length};
+}
+function runChecks(G, it, warn){
+  const rows = [], parse1 = s => { const w = wordsOf(s), miss = w.filter(x => !G.lexicon.has(x)); return miss.length ? {miss} : {n: parse(G, w, 1).trees.length}; };
+  let pass = 0;
+  [...it.good.map(s => [s, true]), ...it.bad.map(s => [s, false])].forEach(([s, good]) => {
+    const r = parse1(s), ok = !r.miss && (r.n > 0) === good;
+    if(ok) pass++;
+    const note = r.miss ? `missing words: ${r.miss.join(", ")}` : r.n ? "has a tree" : "no tree";
+    rows.push(`<li>${ok ? "✅" : "❌"} ${good ? "" : "*"}${esc(s)} <span class="hint">· ${esc(note)}${!r.miss && !ok ? (good ? " (it should have one)" : " (it should not)") : ""}</span></li>`);
+  });
+  const total = it.good.length + it.bad.length;
+  return {html: warn + `<p class="msg ${pass === total ? "ok" : "info"}">${pass} of ${total} checks pass. Good sentences need a tree; starred ones must have none.</p><ul class="checks">${rows.join("")}</ul>`,
+          summary:`${pass}/${total} checks pass`, n:pass, pass:pass === total};
+}
+
+/* ---------- 學生登入與成績記錄（跟句法頁同一套，記在自己的 Sheet） ----------
+   build_site.py 會把 https://script.google.com/macros/s/AKfycby9PDgxL0Ry8eabFqauesQ1ZUg1jO9v5pFX63ygP_2LXuXsQwIOSuRu8d4Nj6pDLVML6g/exec 換成這一章的 Apps Script 網址；沒換就只存在本機。
+   各頁在同一個網域，localStorage 共用：學生資料（ling_student）共用，上傳佇列一定要帶 quiz id 分開。 */
+const ENDPOINT = "https://script.google.com/macros/s/AKfycby9PDgxL0Ry8eabFqauesQ1ZUg1jO9v5pFX63ygP_2LXuXsQwIOSuRu8d4Nj6pDLVML6g/exec";
+const QUIZ_ID = "ch02_cfg";
+const ONLINE = /^https:\/\//.test(ENDPOINT);
+const QKEY = `ling_queue_${QUIZ_ID}`, DLKEY = `ling_deadletter_${QUIZ_ID}`;
+const URL_MAX = 6000;
+const LS = {
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+let student = LS.get("ling_student", null);
+const progKey = () => `ling_prog_v1_${QUIZ_ID}_${student.sid}`;
+const fresh = it => ({g:it.start || STARTER, ran:false, choice:null, why:"", done:false, ok:null, attempt:1, gdone:false});
+let S = ITEMS.map(fresh), cur = 0;
+function saveProg(){ if(student) LS.set(progKey(), {v:1, cur, items:S}); }
+function loadProg(){
+  S = ITEMS.map(fresh); cur = 0;
+  const p = LS.get(progKey(), null);
+  if(!p || p.v !== 1 || !Array.isArray(p.items)) return;
+  p.items.forEach((x, k) => { if(k < S.length && x && typeof x.g === "string") Object.assign(S[k], x); });
+  cur = Math.min(Math.max(0, p.cur|0), ITEMS.length - 1);
+}
+
+let seq = 0;
+const urlLen = p => ENDPOINT.length + 40 + encodeURIComponent(JSON.stringify(p)).length;
+function record(level, qid, prompt, response, correct, attempt, reasoning){
+  const t = Date.now();
+  const p = {event_id:`${student.sid}|${QUIZ_ID}|${qid}|${attempt}|${t}-${seq++}`,
+    client_time:new Date(t).toISOString(), quiz:QUIZ_ID, student_id:student.sid, name:student.name,
+    part:"S", level, qid, prompt:prompt.slice(0,120), response:response.slice(0,300),
+    correct: correct===null ? "" : (correct?1:0), attempt, reasoning};
+  while(urlLen(p) > URL_MAX && p.reasoning.length > 0){ p.reasoning = p.reasoning.slice(0, Math.floor(p.reasoning.length*0.8)); p.truncated = 1; }
+  if(!ONLINE) return null;
+  const q = LS.get(QKEY, []); q.push(p); LS.set(QKEY, q);
+  flush();
+  return p.event_id;
+}
+function jsonp(p, ms=15000){
+  return new Promise((res,rej)=>{
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    const t = setTimeout(()=>{cleanup();rej({server:false,error:"timeout"})}, ms);
+    function cleanup(){clearTimeout(t);delete window[cb];s.remove()}
+    window[cb] = r => {cleanup(); if(r&&r.ok) res(r); else rej({server:!(r&&r.retry), error:(r&&r.error)||"rejected"}); };
+    s.onerror = () => {cleanup();rej({server:false,error:"network"})};
+    s.src = ENDPOINT + "?callback=" + cb + "&data=" + encodeURIComponent(JSON.stringify(p));
+    document.body.appendChild(s);
+  });
+}
+let flushing = false, misconfig = false;
+async function flush(){
+  if(!ONLINE || flushing) return;
+  flushing = true; renderSync();
+  let q = LS.get(QKEY, []);
+  while(q.length){
+    const sent = q[0];
+    try{ await jsonp(sent); misconfig = false; }
+    catch(e){
+      if(e && e.error === "unknown quiz"){ misconfig = true; break; }
+      if(e && e.server){ const dl = LS.get(DLKEY, []); dl.push({payload:sent, error:e.error}); LS.set(DLKEY, dl); }
+      else break;
+    }
+    q = LS.get(QKEY, []).filter(x => x.event_id !== sent.event_id); LS.set(QKEY, q);
+  }
+  flushing = false; renderSync();
+}
+function renderSync(){
+  const el = document.getElementById("sync"); if(!el) return;
+  if(!ONLINE){ el.innerHTML = '<span class="pend">Saved on this device only</span>'; return; }
+  const n = LS.get(QKEY, []).length, dl = LS.get(DLKEY, []).length;
+  let s = misconfig ? `<span class="pend">The grade sheet is not ready yet. Your ${n} answer(s) are kept on this device and will be sent later. Please tell your TA.</span>`
+    : n ? `<span class="pend">Uploading, ${n} left</span>` : '<span class="ok">Answers recorded</span>';
+  if(dl) s += ` <span class="pend">${dl} answer(s) were not accepted. Please tell your TA.</span>`;
+  el.innerHTML = s;
+}
+function renderWho(){
+  const el = document.getElementById("who");
+  if(!student){ el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<span>Signed in as <b>${esc(student.sid)}</b> ${esc(student.name)} · <button class="linkbtn" id="logout">Switch student</button></span><span class="sync" id="sync"></span>`;
+  document.getElementById("logout").onclick = () => { student = null; LS.set("ling_student", null); S = ITEMS.map(fresh); cur = 0; renderWho(); route(); };
+  renderSync();
+}
+function renderLogin(){
+  stage.innerHTML = `<section class="card"><form class="login" id="login" novalidate>
+    <p class="q">Enter your student ID and name to begin.</p>
+    <div class="field"><label for="sid">Student ID</label><input id="sid" autocomplete="off" placeholder="e.g. B13012345" maxlength="9"></div>
+    <div class="field"><label for="sname">Name</label><input id="sname" autocomplete="name" maxlength="30"></div>
+    <p class="err" id="lerr"></p>
+    <div><button class="btn primary" type="submit">Start</button></div></form></section>`;
+  document.getElementById("login").onsubmit = e => {
+    e.preventDefault();
+    const sid = document.getElementById("sid").value.trim().toUpperCase();
+    const nm = document.getElementById("sname").value.trim();
+    const err = document.getElementById("lerr");
+    if(!/^[A-Z][0-9]{8}$/.test(sid)){ err.textContent = "A student ID is one letter followed by 8 digits, e.g. B13012345."; return; }
+    if(!nm){ err.textContent = "Please enter your name."; return; }
+    student = {sid, name:nm}; LS.set("ling_student", student);
+    loadProg(); renderWho(); route();
+  };
+}
+function route(){ if(!student){ renderLogin(); return; } render(); }
+
+/* ---------- 頁面 ---------- */
+const stage = document.getElementById("stage");
+const scoredN = ITEMS.filter(it => it.opts).length;
+function render(){
+  const it = ITEMS[cur], st = S[cur];
+  const dots = ITEMS.map((x, k) => `<button class="dot ${S[k].ok===true?"ok":S[k].ok===false?"no":S[k].gdone?"done":""} ${k===cur?"cur":""}" data-go="${k}" aria-label="${esc(x.ex)}"></button>`).join("");
+  const score = S.filter((s, k) => ITEMS[k].opts && s.ok === true).length;
+  const L = "AB";
+  const opts = it.opts ? it.opts.map((b, k) => {
+    const cls = st.done ? (k === it.ans ? "right" : k === st.choice ? "wrong" : "") : st.choice === k ? "sel" : "";
+    return `<label class="opt ${cls} ${st.done ? "locked" : ""}"><span class="head"><input type="radio" name="pick" value="${k}" ${st.choice === k ? "checked" : ""} ${st.done ? "disabled" : ""}>Tree ${L[k]}</span><div class="treewrap">${draw(fromBracket(b), `Tree ${L[k]}`)}</div></label>`;
+  }).join("") : "";
+  stage.innerHTML = `<section class="card">
+    <div class="meta"><span>${it.tut ? "Practice · not scored" : `${esc(it.ex)} of ${ITEMS.length-1} · Score ${score}/${scoredN}`}</span><div class="dots">${dots}</div></div>
+    <p class="q">${it.final ? esc(it.say) : `<em>${esc(it.say)}.</em>`}</p>
+    <p class="task">${it.task}</p>
+    ${HELP_FORMAT}${it.tut ? "" : HELP_TESTS}
+    <div class="step">
+      <h2>${it.opts ? "Step 1. " : ""}Your grammar</h2>
+      <textarea class="gram" id="gram" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Your grammar">${esc(st.g)}</textarea>
+      <div class="row"><div class="btns"><button class="btn primary" id="run">${it.final ? "Check my grammar" : "Draw the trees"}</button><button class="btn" id="reset">Start over</button></div>
+        ${it.final ? `<div class="btns"><span class="status" id="gneed"></span><button class="btn" id="gsub">${st.gdone ? "Submit again" : "Submit my grammar"}</button></div>` : ""}</div>
+      <div class="out" id="out" aria-live="polite"></div>
+    </div>
+    ${it.opts ? `<div class="step">
+      <h2>Step 2. Which tree is right${it.mean ? ` for the meaning “${esc(it.mean)}”` : ""}?</h2>
+      <div class="opts" id="opts">${opts}</div>
+      <div class="why"><label for="why">Argue for your choice with at least one constituency test.</label>
+        <textarea id="why" maxlength="${WHY_MAX}" placeholder="For example: I can replace … with “it”, so … is one constituent." ${st.done ? "disabled" : ""}></textarea>
+        <span class="cnt" id="cnt"></span></div>
+      <div class="row"><div class="btns">${st.done ? `<button class="btn" id="again">Try again</button>` : ""}</div>
+        <div class="btns"><span class="status" id="need"></span>${st.done ? "" : `<button class="btn primary" id="submit">Submit</button>`}</div></div>
+    </div>` : ""}
+    <div id="result"></div>
+    <div class="row"><div class="btns"><button class="btn" id="prev" ${cur?"":"disabled"}>Previous</button></div>
+      <div class="btns"><button class="btn primary" id="next" ${cur<ITEMS.length-1?"":"disabled"}>Next</button></div></div>
+  </section>`;
+  const $ = q => stage.querySelector(q);
+  if(it.tut) $("#h-format").open = true;
+  stage.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { cur = +b.dataset.go; go(); });
+  const gram = $("#gram");
+  gram.oninput = () => { st.g = gram.value; saveProg(); };
+  gram.onkeydown = e => {   // Tab 鍵插入空白，不要跳出輸入框
+    if(e.key === "Tab" && !e.shiftKey){ e.preventDefault(); const a = gram.selectionStart; gram.setRangeText("    ", a, gram.selectionEnd, "end"); st.g = gram.value; saveProg(); }
+  };
+  let last = null;
+  const run = () => { last = runGrammar(gram.value, it); $("#out").innerHTML = last.html; st.ran = true; saveProg(); gstatus(); };
+  $("#run").onclick = run;
+  $("#reset").onclick = () => { if(gram.value !== (it.start || STARTER) && !confirm("Erase your grammar and start over?")) return; gram.value = st.g = it.start || STARTER; $("#out").innerHTML = ""; last = null; saveProg(); };
+  if(st.ran) run();
+  function gstatus(){ const n = $("#gneed"); if(n) n.textContent = last ? "" : "Press Check my grammar first."; }
+  if($("#gsub")) { gstatus(); $("#gsub").onclick = () => {
+    if(!last) run();
+    st.gdone = true; st.ok = null;
+    record(2, `S2-${pad2(cur)}`, it.say, last.summary, null, st.attempt, st.g);
+    st.attempt++; saveProg(); render();
+  }; }
+  if(st.gdone && it.final && !$("#result").innerHTML) $("#result").innerHTML = `<div class="expl plain"><span class="verdict">Grammar submitted</span><span>${it.e}</span><span>One grammar that works:</span><pre class="sample">${esc(it.sample)}</pre></div>`;
+
+  if(it.opts){
+    const why = $("#why");
+    why.value = st.why || "";
+    const status = () => {
+      const n = $("#need"); if(!n) return;
+      if(st.done){ n.textContent = ""; return; }
+      const len = (st.why || "").trim().length;
+      $("#cnt").textContent = `${len}/${WHY_MAX}`;
+      const msg = st.choice === null ? "Choose a tree." : len < WHY_MIN ? `Write your argument (at least ${WHY_MIN} characters).` : "";
+      n.textContent = msg || "Ready to submit."; n.className = "status" + (msg ? "" : " ready");
+      if($("#submit")) $("#submit").disabled = !!msg;
+    };
+    why.oninput = () => { st.why = why.value; saveProg(); status(); };
+    stage.querySelectorAll('input[name="pick"]').forEach(r => r.onchange = () => {
+      st.choice = +r.value; saveProg();
+      stage.querySelectorAll(".opt").forEach((o, k) => o.classList.toggle("sel", k === st.choice));
+      status();
+    });
+    status();
+    if($("#submit")) $("#submit").onclick = () => {
+      if(st.choice === null || st.why.trim().length < WHY_MIN) return;
+      st.why = st.why.trim(); st.ok = st.choice === it.ans; st.done = true;
+      const prompt = it.mean ? `${it.say} (${it.mean})` : it.say;
+      record(1, `S1-${pad2(cur)}`, prompt, `Tree ${L[st.choice]}: ${it.opts[st.choice]}`, st.ok, st.attempt, st.why);
+      const g = last || runGrammar(st.g, it);   // 文法跟著一起存（不計分），老師看得到學生寫了什麼
+      record(2, `S2-${pad2(cur)}`, it.say, g.summary, null, st.attempt, st.g);
+      st.gdone = true; saveProg(); render();
+    };
+    if($("#again")) $("#again").onclick = () => { st.done = false; st.ok = null; st.choice = null; st.why = ""; st.attempt = (st.attempt || 1) + 1; saveProg(); render(); };
+    if(st.done) $("#result").innerHTML = `<div class="expl ${st.ok ? "" : "bad"}"><span class="verdict">${st.ok ? "Correct" : "Not quite"}</span><span>${it.e}</span><details><summary>A grammar that gives the right tree</summary><pre class="sample">${esc(it.sample)}</pre></details></div>`;
+  }
+  $("#prev").onclick = () => { cur--; go(); };
+  $("#next").onclick = () => { cur++; go(); };
+}
+function go(){ saveProg(); render(); stage.scrollIntoView({block:"start"}); }
+
+if(student) loadProg();
+renderWho(); route();
+flush(); setInterval(flush, 20000);
+window.addEventListener("online", flush);
+document.fonts?.ready.then(() => { if(student) render(); });   // 字型載入後重量字寬
+</script>
+
+</body>
+</html>

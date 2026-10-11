@@ -136,3 +136,17 @@ C:\Python313\python.exe clasp_deploy\deploy_clasp.py ch03_morph_tree
 ```
 
 計分題 `S1-01`～`S1-14`，練習題 reusable 不送。歧義詞那四題的 `prompt` 會帶意思，例如 `unlockable (able to be unlocked)`。
+
+## 8. 詞組結構律頁（資料夾 ch02-2_cfg，quiz id ch02_cfg）：第四份 Sheet
+
+2026-10-12 用 clasp 建好，Sheet 叫「語言學概論 詞組結構律練習成績」（https://drive.google.com/open?id=1KQJSK3pQcRVI7uZ1vEajzI1Ls13-2pv3BM8-1h6ERx8 ），clasp 設定在 `clasp_deploy/ch02_cfg/`，網址已寫進 `endpoints.json`。改了 `apps_script/Code.gs` 之後這樣更新後端：
+
+```
+C:\Python313\python.exe clasp_deploy\deploy_clasp.py ch02_cfg
+```
+
+每句送兩筆，attempt 相同：
+
+- `S1-01`～`S1-04`：選哪棵樹，計分。`response` 是 `Tree A: (S …)`，`reasoning` 是學生用詞組測試法寫的論證（至少 20 字元）。
+- `S2-01`～`S2-05`：學生寫的文法，不計分（correct 空白）。`reasoning` 是文法全文，`response` 是剖析結果摘要（幾棵樹和括號寫法、no tree、missing words、grammar error；第 5 題是 `x/7 checks pass`）。第 5 題只有這一筆，學生按 Submit my grammar 才送。
+- 練習題（Mary saw Bob）不送。
