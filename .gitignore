@@ -12,3 +12,4 @@ clasp_deploy/create.log
 
 # 學生作答資料（有姓名學號），不推上 public repo
 _output/private/
+_output/answer_keys/
