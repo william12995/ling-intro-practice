@@ -1,4 +1,4 @@
-"""本機跑整頁：登入、每題用標準文法畫樹、選答案送出；另外直接測剖析器的邊界情況。結果寫 t_<w>.log（UTF-8）。"""
+"""本機跑整頁：登入、每題用標準文法畫樹、寫論證送出；另外直接測剖析器的邊界情況。結果寫 t_<w>.log（UTF-8）。"""
 import sys, pathlib, json
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 from build_site import wrap
@@ -40,21 +40,20 @@ with sync_playwright() as p:
             sample = pg.evaluate(f"ITEMS[{k}].sample")
             pg.fill("#gram", sample); pg.click("#run"); pg.wait_for_timeout(150)
             log.append(f"item {k} out: " + pg.locator("#out").inner_text()[:120].replace("\n", " | "))
-            if pg.evaluate(f"!!ITEMS[{k}].opts"):
-                ans = pg.evaluate(f"ITEMS[{k}].ans")
-                pg.locator('input[name="pick"]').nth(ans).check()
+            if not pg.evaluate(f"!!ITEMS[{k}].final"):
+                log.append(f"item {k} before: " + pg.locator("#need").inner_text())
                 pg.fill("#why", "Substitution test: I can replace the phrase with it.")
+                log.append(f"item {k} ready: " + pg.locator("#need").inner_text())
                 pg.click("#submit"); pg.wait_for_timeout(150)
-                log.append(f"item {k} verdict: " + pg.locator(".verdict").inner_text())
             else:
                 pg.click("#gsub"); pg.wait_for_timeout(150)
-                log.append(f"item {k} verdict: " + pg.locator(".verdict").inner_text())
+            log.append(f"item {k} verdict: " + pg.locator(".verdict").inner_text())
             pg.screenshot(path=str(HERE / f"p{k}_{vw[0]}.png"), full_page=True)
-        prog = pg.evaluate("JSON.stringify(S.map(s=>[s.ok,s.gdone,s.attempt]))")
+        prog = pg.evaluate("JSON.stringify(S.map(s=>[s.done,s.gdone,s.attempt]))")
         log.append("state: " + prog)
         # 重新整理後進度還在
         pg.reload(); pg.wait_for_timeout(400)
-        log.append("after reload dots ok: " + str(pg.locator(".dot.ok").count()))
+        log.append("after reload dots done: " + str(pg.locator(".dot.done").count()))
         sw = pg.evaluate("document.documentElement.scrollWidth"); log.append(f"scrollWidth {sw} vs {vw[0]}")
         log.append("errors: " + json.dumps(errs))
         (HERE / f"t_{vw[0]}.log").write_text("\n".join(log), encoding="utf-8")

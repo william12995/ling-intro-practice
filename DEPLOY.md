@@ -147,6 +147,6 @@ C:\Python313\python.exe clasp_deploy\deploy_clasp.py ch02_cfg
 
 每句送兩筆，attempt 相同：
 
-- `S1-01`～`S1-04`：選哪棵樹，計分。`response` 是 `Tree A: (S …)`，`reasoning` 是學生用詞組測試法寫的論證（至少 20 字元）。
+- `S1-01`～`S1-04`：學生用詞組測試法論證自己文法畫出的樹，不計分（correct 空白）。`response` 是剖析結果摘要（同 S2），`reasoning` 是論證（至少 20 字元）。文法要畫得出樹才能送出。10-13 以前是「兩棵樹選一棵」的計分題，已拿掉，`Code.gs` 的 FIXED 也不再替 ch02_cfg 列 S1 欄。
 - `S2-01`～`S2-05`：學生寫的文法，不計分（correct 空白）。`reasoning` 是文法全文，`response` 是剖析結果摘要（幾棵樹和括號寫法、no tree、missing words、grammar error；第 5 題是 `x/7 checks pass`）。第 5 題只有這一筆，學生按 Submit my grammar 才送。
 - 練習題（Mary saw Bob）不送。

@@ -112,20 +112,8 @@ svg.tree .wd{font:italic 500 16px var(--serif);fill:var(--ink)}
 svg.tree .ln{stroke:var(--muted);stroke-width:1.2;fill:none}
 .br{font-size:13px;color:var(--muted);word-break:break-word}
 
-/* 選哪棵樹 */
-.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-.opt{border:1.5px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;cursor:pointer;background:var(--surface)}
-.opt:hover{border-color:var(--accent)}
-.opt input{margin:0 6px 0 0;accent-color:var(--accent)}
-.opt .head{font-weight:600;display:flex;align-items:center}
-.opt.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
-.opt.right{border-color:var(--ok);background:var(--ok-soft)}
-.opt.wrong{border-color:var(--cut);background:var(--cut-soft)}
-.opt.locked{cursor:default}
-.opt .treewrap{border:0}
-.opt svg.tree{max-width:100%}
 pre.sample{margin:0;padding:10px 12px;background:var(--ground);border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.5}
-@media (max-width:480px){.card{padding:16px}.opts{grid-template-columns:1fr}}
+@media (max-width:480px){.card{padding:16px}}
 </style>
 
 </head>
@@ -135,7 +123,7 @@ pre.sample{margin:0;padding:10px 12px;background:var(--ground);border-radius:8px
     <div>
       <div class="eyebrow">Syntax</div>
       <h1>Write a phrase structure grammar</h1>
-      <p class="lede">Write rules and a lexicon, see the trees they give, then decide which tree is right.</p>
+      <p class="lede">Write rules and a lexicon, see the trees they give, then use constituency tests to argue that your tree is right.</p>
     </div>
   </header>
   <div class="who" id="who" hidden></div>
@@ -146,9 +134,10 @@ pre.sample{margin:0;padding:10px 12px;background:var(--ground);border-radius:8px
 <script>
 /* ---------- 題目 ----------
    10-12 老師來信：拖拉畫樹不適合評分。改成 (1) 學生照老師 Colab 的 nltk.CFG.fromstring 格式寫詞組結構律和 lexicon，
-   頁面畫出這份文法產生的樹（不判對錯、不計分，S2-xx）；(2) 給兩棵樹選哪棵對，再用詞組測試法論證（計分，S1-xx）。
+   頁面畫出這份文法產生的樹（不判對錯，S2-xx）；(2) 學生用詞組測試法論證自己那棵樹（S1-xx）。
+   10-13 照老師原信簡化：原本 (2) 是另外給兩棵樹選一棵（計分），信裡沒有這個要求，拿掉了。整頁都不計分，對錯由老師或助教看論證。
    記法照老師的 Colab：S -> NP VP，沒有 T 節點、沒有 bar 層。補語接在 V 旁邊（VP -> V NP PP），附加語往上疊（VP -> VP PP、NP -> NP PP）。
-   opts 是兩棵樹（NLTK 括號寫法），ans 是對的那棵的位置。標準答案和解說是 AI 寫的，要老師核。
+   e 是送出後才顯示的解說，sample 是一份可行的文法。解說和文法是 AI 寫的，要老師核。
    題號照陣列位置編（ITEMS[1] 是 S1-01／S2-01），學生開始作答後只能在最後加題，不能調換或替換。ITEMS[0] 是練習，不送成績。 */
 const STARTER = `# Phrase structure rules
 S -> NP VP
@@ -172,10 +161,7 @@ P -> 'in' | 'on' | 'by' | 'with'
 ` },
   { ex:"Sentence 1", say:"John put the book on the desk",
     task:"Write rules and a lexicon that generate this sentence. Note that <em>put</em> needs both an object and a place: <em>*John put the book</em> is not a sentence.",
-    opts:["(S (NP John) (VP (V put) (NP (Det the) (N book)) (PP (P on) (NP (Det the) (N desk)))))",
-          "(S (NP John) (VP (V put) (NP (NP (Det the) (N book)) (PP (P on) (NP (Det the) (N desk))))))"],
-    ans:0,
-    e:"Tree A is right: <em>the book</em> and <em>on the desk</em> are two separate sisters of the verb. Substitution: <em>John put it on the desk</em> works with <em>it</em> = the book, but <em>*John put it</em> (with <em>it</em> = the book on the desk) is bad, so <em>the book on the desk</em> is not one NP here. Question: <em>Where did John put the book? On the desk.</em> Movement: <em>On the desk, John put the book.</em> In tree B the verb has no place phrase of its own, which <em>put</em> needs.",
+    e:"The usual tree has <em>the book</em> and <em>on the desk</em> as two separate sisters of the verb (<code>VP -> V NP PP</code>). Substitution: <em>John put it on the desk</em> works with <em>it</em> = the book, but <em>*John put it</em> (with <em>it</em> = the book on the desk) is bad, so <em>the book on the desk</em> is not one NP here. Question: <em>Where did John put the book? On the desk.</em> Movement: <em>On the desk, John put the book.</em> If your grammar puts the PP inside the object NP, the verb has no place phrase of its own, which <em>put</em> needs.",
     sample:`S -> NP VP
 VP -> V NP PP
 NP -> 'John' | Det N
@@ -186,10 +172,7 @@ N -> 'book' | 'desk'
 P -> 'on'` },
   { ex:"Sentence 2", say:"The girl with the hat smiled",
     task:"Write a grammar for this sentence. <em>Smiled</em> has no object. Watch the capital letter: the sentence starts with <code>'The'</code>, not <code>'the'</code>.",
-    opts:["(S (NP (Det The) (N girl)) (PP (P with) (NP (Det the) (N hat))) (VP (V smiled)))",
-          "(S (NP (NP (Det The) (N girl)) (PP (P with) (NP (Det the) (N hat)))) (VP (V smiled)))"],
-    ans:1,
-    e:"Tree B is right: <em>the girl with the hat</em> is one NP, the subject. Substitution: <em>She smiled</em>, with <em>she</em> = the girl with the hat. Question: <em>Who smiled? The girl with the hat.</em> Coordination: <em>The girl with the hat and the boy smiled.</em> Tree A splits the subject into two pieces and makes the PP a direct part of S, so nothing in the tree says the hat belongs to the girl.",
+    e:"<em>The girl with the hat</em> is one NP, the subject, so the PP sits inside it (for example <code>NP -> NP PP</code>). Substitution: <em>She smiled</em>, with <em>she</em> = the girl with the hat. Question: <em>Who smiled? The girl with the hat.</em> Coordination: <em>The girl with the hat and the boy smiled.</em> If your tree hangs the PP directly under S, the subject is split into two pieces and nothing in the tree says the hat belongs to the girl.",
     sample:`S -> NP VP
 NP -> Det N | NP PP
 PP -> P NP
@@ -200,10 +183,7 @@ P -> 'with'
 V -> 'smiled'` },
   { ex:"Sentence 3", say:"Bob ate the cake with a fork",
     task:"Write a grammar for this sentence. Think about what <em>with a fork</em> goes with: the cake, or the eating?",
-    opts:["(S (NP Bob) (VP (VP (V ate) (NP (Det the) (N cake))) (PP (P with) (NP (Det a) (N fork)))))",
-          "(S (NP Bob) (VP (V ate) (NP (NP (Det the) (N cake)) (PP (P with) (NP (Det a) (N fork))))))"],
-    ans:0,
-    e:"Tree A is right: the fork is what Bob ate with, so <em>with a fork</em> modifies the eating and sits outside the object NP. Substitution: <em>Bob ate it with a fork</em> (<em>it</em> = the cake). <em>Do so</em>: <em>Bob ate the cake with a fork, and Mary did so with a spoon</em>: <em>did so</em> replaces <em>ate the cake</em>, so <em>ate the cake</em> is a VP without the PP. Question: <em>What did Bob eat? The cake</em>, not <em>the cake with a fork</em>. Tree B would mean a cake that comes with a fork.",
+    e:"The fork is what Bob ate with, so <em>with a fork</em> modifies the eating and attaches to the VP (<code>VP -> VP PP</code>), outside the object NP. Substitution: <em>Bob ate it with a fork</em> (<em>it</em> = the cake). <em>Do so</em>: <em>Bob ate the cake with a fork, and Mary did so with a spoon</em>: <em>did so</em> replaces <em>ate the cake</em>, so <em>ate the cake</em> is a VP without the PP. Question: <em>What did Bob eat? The cake</em>, not <em>the cake with a fork</em>. A tree with the PP inside the object NP would mean a cake that comes with a fork.",
     sample:`S -> NP VP
 VP -> V NP | VP PP
 NP -> 'Bob' | Det N
@@ -212,12 +192,9 @@ V -> 'ate'
 Det -> 'the' | 'a'
 N -> 'cake' | 'fork'
 P -> 'with'` },
-  { ex:"Sentence 4", say:"Mary saw the man with the telescope", mean:"the man was holding the telescope",
-    task:"This sentence has two meanings. Write <b>one</b> grammar that gives <b>two</b> trees, one for each meaning. Then choose the tree for the meaning <em>the man was holding the telescope</em>.",
-    opts:["(S (NP Mary) (VP (VP (V saw) (NP (Det the) (N man))) (PP (P with) (NP (Det the) (N telescope)))))",
-          "(S (NP Mary) (VP (V saw) (NP (NP (Det the) (N man)) (PP (P with) (NP (Det the) (N telescope))))))"],
-    ans:1,
-    e:"Tree B is right for this meaning: <em>with the telescope</em> describes the man, so it is inside the object NP. Substitution: <em>Mary saw him</em>, with <em>him</em> = the man with the telescope. Question: <em>Who did Mary see? The man with the telescope.</em> Tree A is the other meaning, where Mary used the telescope to see: there <em>Mary saw him with the telescope</em> (<em>him</em> = the man) keeps the meaning, and <em>do so</em> can replace <em>saw the man</em>.",
+  { ex:"Sentence 4", say:"Mary saw the man with the telescope",
+    task:"This sentence has two meanings. Write <b>one</b> grammar that gives <b>two</b> trees, one for each meaning. In your argument, say which tree means <em>the man was holding the telescope</em>.",
+    e:"For <em>the man was holding the telescope</em>, <em>with the telescope</em> describes the man, so it is inside the object NP (<code>NP -> NP PP</code>). Substitution: <em>Mary saw him</em>, with <em>him</em> = the man with the telescope. Question: <em>Who did Mary see? The man with the telescope.</em> The other tree (<code>VP -> VP PP</code>) is the meaning where Mary used the telescope to see: there <em>Mary saw him with the telescope</em> (<em>him</em> = the man) keeps the meaning, and <em>do so</em> can replace <em>saw the man</em>.",
     sample:`S -> NP VP
 VP -> V NP | VP PP
 NP -> 'Mary' | Det N | NP PP
@@ -455,14 +432,14 @@ const LS = {
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 };
 let student = LS.get("ling_student", null);
-const progKey = () => `ling_prog_v1_${QUIZ_ID}_${student.sid}`;
-const fresh = it => ({g:it.start || STARTER, ran:false, choice:null, why:"", done:false, ok:null, attempt:1, gdone:false});
+const progKey = () => `ling_prog_v2_${QUIZ_ID}_${student.sid}`;
+const fresh = it => ({g:it.start || STARTER, ran:false, why:"", done:false, attempt:1, gdone:false});
 let S = ITEMS.map(fresh), cur = 0;
-function saveProg(){ if(student) LS.set(progKey(), {v:1, cur, items:S}); }
+function saveProg(){ if(student) LS.set(progKey(), {v:2, cur, items:S}); }
 function loadProg(){
   S = ITEMS.map(fresh); cur = 0;
   const p = LS.get(progKey(), null);
-  if(!p || p.v !== 1 || !Array.isArray(p.items)) return;
+  if(!p || p.v !== 2 || !Array.isArray(p.items)) return;
   p.items.forEach((x, k) => { if(k < S.length && x && typeof x.g === "string") Object.assign(S[k], x); });
   cur = Math.min(Math.max(0, p.cur|0), ITEMS.length - 1);
 }
@@ -549,35 +526,28 @@ function route(){ if(!student){ renderLogin(); return; } render(); }
 
 /* ---------- 頁面 ---------- */
 const stage = document.getElementById("stage");
-const scoredN = ITEMS.filter(it => it.opts).length;
+const isArg = it => !it.tut && !it.final;   // 要寫論證的題目
 function render(){
   const it = ITEMS[cur], st = S[cur];
-  const dots = ITEMS.map((x, k) => `<button class="dot ${S[k].ok===true?"ok":S[k].ok===false?"no":S[k].gdone?"done":""} ${k===cur?"cur":""}" data-go="${k}" aria-label="${esc(x.ex)}"></button>`).join("");
-  const score = S.filter((s, k) => ITEMS[k].opts && s.ok === true).length;
-  const L = "AB";
-  const opts = it.opts ? it.opts.map((b, k) => {
-    const cls = st.done ? (k === it.ans ? "right" : k === st.choice ? "wrong" : "") : st.choice === k ? "sel" : "";
-    return `<label class="opt ${cls} ${st.done ? "locked" : ""}"><span class="head"><input type="radio" name="pick" value="${k}" ${st.choice === k ? "checked" : ""} ${st.done ? "disabled" : ""}>Tree ${L[k]}</span><div class="treewrap">${draw(fromBracket(b), `Tree ${L[k]}`)}</div></label>`;
-  }).join("") : "";
+  const dots = ITEMS.map((x, k) => `<button class="dot ${S[k].gdone?"done":""} ${k===cur?"cur":""}" data-go="${k}" aria-label="${esc(x.ex)}"></button>`).join("");
   stage.innerHTML = `<section class="card">
-    <div class="meta"><span>${it.tut ? "Practice · not scored" : `${esc(it.ex)} of ${ITEMS.length-1} · Score ${score}/${scoredN}`}</span><div class="dots">${dots}</div></div>
+    <div class="meta"><span>${it.tut ? "Practice" : `${esc(it.ex)} of ${ITEMS.length-1}`}</span><div class="dots">${dots}</div></div>
     <p class="q">${it.final ? esc(it.say) : `<em>${esc(it.say)}.</em>`}</p>
     <p class="task">${it.task}</p>
-    ${HELP_FORMAT}${it.tut ? "" : HELP_TESTS}
+    ${HELP_FORMAT}${isArg(it) ? HELP_TESTS : ""}
     <div class="step">
-      <h2>${it.opts ? "Step 1. " : ""}Your grammar</h2>
+      <h2>${isArg(it) ? "Step 1. " : ""}Your grammar</h2>
       <textarea class="gram" id="gram" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Your grammar">${esc(st.g)}</textarea>
       <div class="row"><div class="btns"><button class="btn primary" id="run">${it.final ? "Check my grammar" : "Draw the trees"}</button><button class="btn" id="reset">Start over</button></div>
         ${it.final ? `<div class="btns"><span class="status" id="gneed"></span><button class="btn" id="gsub">${st.gdone ? "Submit again" : "Submit my grammar"}</button></div>` : ""}</div>
       <div class="out" id="out" aria-live="polite"></div>
     </div>
-    ${it.opts ? `<div class="step">
-      <h2>Step 2. Which tree is right${it.mean ? ` for the meaning “${esc(it.mean)}”` : ""}?</h2>
-      <div class="opts" id="opts">${opts}</div>
-      <div class="why"><label for="why">Argue for your choice with at least one constituency test.</label>
-        <textarea id="why" maxlength="${WHY_MAX}" placeholder="For example: I can replace … with “it”, so … is one constituent." ${st.done ? "disabled" : ""}></textarea>
+    ${isArg(it) ? `<div class="step">
+      <h2>Step 2. Is your tree right?</h2>
+      <div class="why"><label for="why">Pick at least one phrase in your tree and use a constituency test to show that it is a constituent. If your grammar gives more than one tree, say which tree you mean.</label>
+        <textarea id="why" maxlength="${WHY_MAX}" placeholder="For example: In Tree 1, “the book” is an NP. I can replace it with “it”: John put it on the desk." ${st.done ? "disabled" : ""}></textarea>
         <span class="cnt" id="cnt"></span></div>
-      <div class="row"><div class="btns">${st.done ? `<button class="btn" id="again">Try again</button>` : ""}</div>
+      <div class="row"><div class="btns">${st.done ? `<button class="btn" id="again">Edit and submit again</button>` : ""}</div>
         <div class="btns"><span class="status" id="need"></span>${st.done ? "" : `<button class="btn primary" id="submit">Submit</button>`}</div></div>
     </div>` : ""}
     <div id="result"></div>
@@ -588,54 +558,49 @@ function render(){
   if(it.tut) $("#h-format").open = true;
   stage.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { cur = +b.dataset.go; go(); });
   const gram = $("#gram");
-  gram.oninput = () => { st.g = gram.value; saveProg(); };
+  gram.readOnly = !!st.done;
+  gram.oninput = () => { st.g = gram.value; last = null; saveProg(); status(); };
   gram.onkeydown = e => {   // Tab 鍵插入空白，不要跳出輸入框
-    if(e.key === "Tab" && !e.shiftKey){ e.preventDefault(); const a = gram.selectionStart; gram.setRangeText("    ", a, gram.selectionEnd, "end"); st.g = gram.value; saveProg(); }
+    if(e.key === "Tab" && !e.shiftKey){ e.preventDefault(); const a = gram.selectionStart; gram.setRangeText("    ", a, gram.selectionEnd, "end"); st.g = gram.value; last = null; saveProg(); status(); }
   };
   let last = null;
-  const run = () => { last = runGrammar(gram.value, it); $("#out").innerHTML = last.html; st.ran = true; saveProg(); gstatus(); };
+  const run = () => { last = runGrammar(gram.value, it); $("#out").innerHTML = last.html; st.ran = true; saveProg(); gstatus(); status(); };
   $("#run").onclick = run;
-  $("#reset").onclick = () => { if(gram.value !== (it.start || STARTER) && !confirm("Erase your grammar and start over?")) return; gram.value = st.g = it.start || STARTER; $("#out").innerHTML = ""; last = null; saveProg(); };
-  if(st.ran) run();
+  $("#reset").onclick = () => { if(st.done) return; if(gram.value !== (it.start || STARTER) && !confirm("Erase your grammar and start over?")) return; gram.value = st.g = it.start || STARTER; $("#out").innerHTML = ""; last = null; saveProg(); status(); };
   function gstatus(){ const n = $("#gneed"); if(n) n.textContent = last ? "" : "Press Check my grammar first."; }
+  // 論證題：文法要先畫得出樹（用目前的文法，畫過才算），論證至少 WHY_MIN 字元
+  function status(){
+    const n = $("#need"); if(!n) return;
+    if(st.done){ n.textContent = ""; return; }
+    const len = (st.why || "").trim().length;
+    $("#cnt").textContent = `${len}/${WHY_MAX}`;
+    const msg = !last ? "Press Draw the trees first." : last.n < 1 ? "Your grammar must give a tree for the sentence." : len < WHY_MIN ? `Write your argument (at least ${WHY_MIN} characters).` : "";
+    n.textContent = msg || "Ready to submit."; n.className = "status" + (msg ? "" : " ready");
+    if($("#submit")) $("#submit").disabled = !!msg;
+  }
+  if(st.ran) run();
   if($("#gsub")) { gstatus(); $("#gsub").onclick = () => {
     if(!last) run();
-    st.gdone = true; st.ok = null;
+    st.gdone = true;
     record(2, `S2-${pad2(cur)}`, it.say, last.summary, null, st.attempt, st.g);
     st.attempt++; saveProg(); render();
   }; }
   if(st.gdone && it.final && !$("#result").innerHTML) $("#result").innerHTML = `<div class="expl plain"><span class="verdict">Grammar submitted</span><span>${it.e}</span><span>One grammar that works:</span><pre class="sample">${esc(it.sample)}</pre></div>`;
 
-  if(it.opts){
+  if(isArg(it)){
     const why = $("#why");
     why.value = st.why || "";
-    const status = () => {
-      const n = $("#need"); if(!n) return;
-      if(st.done){ n.textContent = ""; return; }
-      const len = (st.why || "").trim().length;
-      $("#cnt").textContent = `${len}/${WHY_MAX}`;
-      const msg = st.choice === null ? "Choose a tree." : len < WHY_MIN ? `Write your argument (at least ${WHY_MIN} characters).` : "";
-      n.textContent = msg || "Ready to submit."; n.className = "status" + (msg ? "" : " ready");
-      if($("#submit")) $("#submit").disabled = !!msg;
-    };
     why.oninput = () => { st.why = why.value; saveProg(); status(); };
-    stage.querySelectorAll('input[name="pick"]').forEach(r => r.onchange = () => {
-      st.choice = +r.value; saveProg();
-      stage.querySelectorAll(".opt").forEach((o, k) => o.classList.toggle("sel", k === st.choice));
-      status();
-    });
     status();
     if($("#submit")) $("#submit").onclick = () => {
-      if(st.choice === null || st.why.trim().length < WHY_MIN) return;
-      st.why = st.why.trim(); st.ok = st.choice === it.ans; st.done = true;
-      const prompt = it.mean ? `${it.say} (${it.mean})` : it.say;
-      record(1, `S1-${pad2(cur)}`, prompt, `Tree ${L[st.choice]}: ${it.opts[st.choice]}`, st.ok, st.attempt, st.why);
-      const g = last || runGrammar(st.g, it);   // 文法跟著一起存（不計分），老師看得到學生寫了什麼
-      record(2, `S2-${pad2(cur)}`, it.say, g.summary, null, st.attempt, st.g);
-      st.gdone = true; saveProg(); render();
+      if(!last || last.n < 1 || st.why.trim().length < WHY_MIN) return;
+      st.why = st.why.trim(); st.done = true; st.gdone = true;
+      record(1, `S1-${pad2(cur)}`, it.say, last.summary, null, st.attempt, st.why);   // 論證，不計分
+      record(2, `S2-${pad2(cur)}`, it.say, last.summary, null, st.attempt, st.g);     // 文法全文
+      saveProg(); render();
     };
-    if($("#again")) $("#again").onclick = () => { st.done = false; st.ok = null; st.choice = null; st.why = ""; st.attempt = (st.attempt || 1) + 1; saveProg(); render(); };
-    if(st.done) $("#result").innerHTML = `<div class="expl ${st.ok ? "" : "bad"}"><span class="verdict">${st.ok ? "Correct" : "Not quite"}</span><span>${it.e}</span><details><summary>A grammar that gives the right tree</summary><pre class="sample">${esc(it.sample)}</pre></details></div>`;
+    if($("#again")) $("#again").onclick = () => { st.done = false; st.attempt = (st.attempt || 1) + 1; saveProg(); render(); };
+    if(st.done) $("#result").innerHTML = `<div class="expl plain"><span class="verdict">Submitted</span><span>${it.e}</span><details><summary>One grammar that gives this tree</summary><pre class="sample">${esc(it.sample)}</pre></details></div>`;
   }
   $("#prev").onclick = () => { cur--; go(); };
   $("#next").onclick = () => { cur++; go(); };
