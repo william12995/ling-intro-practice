@@ -35,7 +35,9 @@ function doGet(e) {
   if (d.action === 'config') return jsonp_(cb, {ok: true, feedback: feedbackOn_(), missing: feedbackMissing_(), quizzes: Object.keys(quizzes_())});
   if (!quizzes_()[d.quiz]) return jsonp_(cb, {ok: false, error: 'unknown quiz'});
   if (!/^[A-Z][0-9]{8}$/.test(String(d.student_id))) return jsonp_(cb, {ok: false, error: 'bad student_id'});
+  if (d.action === 'history') return jsonp_(cb, history_(d));
   if (!d.event_id) return jsonp_(cb, {ok: false, error: 'missing event_id'});
+  if (d.action === 'report') return jsonp_(cb, report_(d));
   if (d.action === 'feedback') return jsonp_(cb, feedback_(d));
   if (d.action === 'disagree') return jsonp_(cb, disagree_(d));
   try {
@@ -225,6 +227,55 @@ function disagree_(d) {
   if (String(sh.getRange(hit.getRow(), 4).getValue()) !== String(d.student_id)) return {ok: false, error: 'not yours'};
   sh.getRange(hit.getRow(), 9, 1, 2).setValues([[1, safe_(String(d.note || '').slice(0, 500))]]);
   return {ok: true};
+}
+
+/* ---------- 學生回報題目有問題、登入後複習 ----------
+ * reports 分頁：學生在某一題按「Report a problem with this question」寫的意見（題目寫錯、標準答案有爭議等）。
+ * 送出前後都能按，response 空白表示還沒作答。status／ta_note 留給助教處理時填。
+ */
+var REPORTS = 'reports';
+var RP_HEADER = ['event_id', 'server_time', 'quiz', 'student_id', 'name', 'qid', 'attempt', 'prompt',
+                 'response', 'note', 'status', 'ta_note'];
+var RP_PER_MINUTE = 5;
+
+function report_(d) {
+  var note = String(d.note || '').trim();
+  if (!note) return {ok: false, error: 'empty note'};
+  var cache = CacheService.getScriptCache(), ck = 'rp|' + d.student_id;
+  var n = Number(cache.get(ck) || 0);
+  if (n >= RP_PER_MINUTE) return {ok: false, retry: true, error: 'too many requests'};
+  cache.put(ck, String(n + 1), 60);
+  try {
+    var clip = function (v, k) { return safe_(String(v == null ? '' : v).slice(0, k)); };
+    sheet_(REPORTS, RP_HEADER).appendRow([clip(d.event_id, 200), new Date(), d.quiz, d.student_id, clip(d.name, 30),
+      clip(d.qid, 20), Number(d.attempt) || '', clip(d.prompt, 200), clip(d.response, 200), clip(note, 1000), '', '']);
+    return {ok: true};
+  } catch (err) {
+    return {ok: false, retry: true, error: String(err)};
+  }
+}
+
+// 學生換裝置或清掉瀏覽器之後複習用：回傳這個學號在這一章的所有作答（依伺服器時間排序，重送的重複列去掉）。
+// 只靠學號，沒有密碼；使用者 2026-10-14 決定練習頁這樣就好。
+function history_(d) {
+  var sh = sheet_(ANSWERS, HEADER);
+  var col = {}; HEADER.forEach(function (k, i) { col[k] = i; });
+  // 一次讀整張表比逐列 getRange 快（一班幾千列，逐列要好幾秒）
+  var last = sh.getLastRow();
+  var rows = last < 2 ? [] : sh.getRange(2, 1, last - 1, HEADER.length).getValues();
+  var seen = {}, out = [];
+  rows.forEach(function (r) {
+    if (String(r[col.student_id]) !== String(d.student_id)) return;
+    if (String(r[col.quiz]) !== String(d.quiz)) return;
+    var eid = String(r[col.event_id]);
+    if (seen[eid]) return; seen[eid] = true;
+    var t = new Date(r[col.server_time] || r[col.client_time]);
+    out.push({qid: String(r[col.qid]), attempt: r[col.attempt], response: String(r[col.response]),
+              correct: r[col.correct] === '' ? '' : Number(r[col.correct]), reasoning: String(r[col.reasoning]),
+              t: isNaN(t.getTime()) ? 0 : t.getTime()});
+  });
+  out.sort(function (a, b) { return a.t - b.t; });
+  return {ok: true, rows: out};
 }
 
 // 在 Apps Script 編輯器裡直接跑，看回饋品質。四種情況：答對推理好、答對推理錯、答錯、申論。

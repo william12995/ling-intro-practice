@@ -109,6 +109,20 @@ svg.tree .ln{stroke:var(--muted);stroke-width:1.2;fill:none}
 
 pre.sample{margin:0;padding:10px 12px;background:var(--ground);border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.5}
 @media (max-width:480px){.card{padding:16px}}
+/* 回報題目、複習自己的作答（四頁共用） */
+.report{margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font-size:14px}
+.report .hint{margin:0 0 6px}
+.hitem{border-top:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:8px}
+.hitem h3{margin:0;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hitem .hq{margin:0}
+.hatt{background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:14px;overflow-wrap:anywhere}
+.hatt .hh{font-size:13px;color:var(--muted)}
+.hatt .hh b.ok{color:var(--ok)}
+.hatt .hh b.no{color:var(--cut)}
+.hatt .hw{white-space:pre-wrap}
+.hatt pre{margin:0;font-family:var(--mono);font-size:13px;white-space:pre-wrap}
+.hitem details{font-size:14px}
+.hitem summary{cursor:pointer;color:var(--accent)}
 </style>
 
 <div class="wrap">
@@ -544,6 +558,7 @@ function render(){
         <div class="btns"><span class="status" id="need"></span>${st.done ? "" : `<button class="btn primary" id="submit">Submit</button>`}</div></div>
     </div>` : ""}
     <div id="result"></div>
+    ${reportHTML()}
     <div class="row"><div class="btns"><button class="btn" id="prev" ${cur?"":"disabled"}>Previous</button></div>
       <div class="btns"><button class="btn primary" id="next" ${cur<ITEMS.length-1?"":"disabled"}>Next</button></div></div>
   </section>`;
@@ -595,14 +610,84 @@ function render(){
     if($("#again")) $("#again").onclick = () => { st.done = false; st.attempt = (st.attempt || 1) + 1; saveProg(); render(); };
     if(st.done) $("#result").innerHTML = `<div class="expl plain"><span class="verdict">Submitted</span><span>${it.e}</span><details><summary>One grammar that gives this tree</summary><pre class="sample">${esc(it.sample)}</pre></details></div>`;
   }
+  mountReport(stage, {qid: it.tut ? "practice" : `S${isArg(it) ? 1 : 2}-${pad2(cur)}`, prompt: it.say, response: "", attempt: st.attempt});
   $("#prev").onclick = () => { cur--; go(); };
   $("#next").onclick = () => { cur++; go(); };
 }
 function go(){ saveProg(); render(); stage.scrollIntoView({block:"start"}); }
 
+/* ---------- 回報題目有問題、複習自己的作答（四頁共用同一段，改的時候四頁一起改） ----------
+   回報送到後端 action=report，記在該章 Sheet 的 reports 分頁。複習用 action=history 把這個學號的作答紀錄抓回來，
+   換裝置或清掉瀏覽器也看得到；只列出來看，不還原成可作答的狀態。各頁自己定義 histItem(qid) 告訴這段題目長什麼樣。 */
+const RPKEY = () => `ling_reported_${QUIZ_ID}_${student.sid}`;
+const reportHTML = () => ONLINE ? '<div class="report" data-report></div>' : "";
+function mountReport(root, info){   // info: {qid, prompt, response, attempt}
+  const box = root.querySelector("[data-report]"); if(!box || !student) return;
+  const sent = LS.get(RPKEY(), {})[info.qid];
+  box.innerHTML = `${sent ? '<p class="hint">Thanks. Your TA will check this question.</p>' : ""}<button class="linkbtn" data-open>${sent ? "Report another problem" : "Something wrong with this question? Tell your TA"}</button>`;
+  box.querySelector("[data-open]").onclick = () => {
+    box.innerHTML = `<div class="why"><label for="rnote">What is wrong? For example, a typo, an unclear question, or an answer you think is marked wrong.</label>
+      <textarea id="rnote" maxlength="500"></textarea>
+      <div class="row"><div class="btns"><button class="btn" data-cancel>Cancel</button></div><div class="btns"><button class="btn primary" data-send>Send to TA</button></div></div></div>`;
+    const note = box.querySelector("#rnote"), send = box.querySelector("[data-send]");
+    note.focus();
+    box.querySelector("[data-cancel]").onclick = () => mountReport(root, info);
+    send.onclick = async () => {
+      const n = note.value.trim(); if(!n){ note.focus(); return; }
+      send.disabled = true; send.textContent = "Sending…";
+      const p = {action:"report", event_id:`${student.sid}|${QUIZ_ID}|${info.qid}|report|${Date.now()}`, quiz:QUIZ_ID,
+        student_id:student.sid, name:student.name, qid:info.qid, attempt:info.attempt || "",
+        prompt:String(info.prompt || "").slice(0,200), response:String(info.response || "").slice(0,200), note:n};
+      try{ await jsonp(p); const r = LS.get(RPKEY(), {}); r[info.qid] = (r[info.qid] || 0) + 1; LS.set(RPKEY(), r); mountReport(root, info); }
+      catch(e){ send.disabled = false; send.textContent = "Couldn't send. Try again"; }
+    };
+  };
+}
+async function showHistory(){
+  if(typeof levelsEl !== "undefined") levelsEl.hidden = true;
+  stage.innerHTML = `<section class="card"><div class="meta"><span>My answers</span></div>
+    <p class="hint" id="hstat">Loading your answers…</p><div id="hlist"></div>
+    <div class="row"><div class="btns"><button class="btn primary" id="hback">Back to practice</button></div></div></section>`;
+  stage.querySelector("#hback").onclick = () => route();
+  stage.scrollIntoView({block:"start"});
+  let rows;
+  try{ rows = (await jsonp({action:"history", quiz:QUIZ_ID, student_id:student.sid}, 30000)).rows || []; }
+  catch(e){ const s = document.getElementById("hstat"); if(s) s.textContent = "Couldn't load your answers. Check your connection and try again."; return; }
+  const list = document.getElementById("hlist"); if(!list) return;   // 載入時已經按了返回
+  const by = {};
+  rows.forEach(r => { const h = histItem(r.qid); if(h) (by[r.qid] = by[r.qid] || {h, at:[]}).at.push(r); });
+  const qs = Object.keys(by).sort((a, b) => by[a].h.order - by[b].h.order);
+  const pending = LS.get(QKEY, []).length;
+  document.getElementById("hstat").textContent = (qs.length ? `Your answers to ${qs.length} question(s), from the grade sheet. Your first attempt at each question is the one that counts.` : "No answers recorded yet for this student ID.")
+    + (pending ? ` ${pending} answer(s) from this device are still uploading and will show up after they are sent.` : "");
+  list.innerHTML = qs.map(q => { const {h, at} = by[q];
+    return `<div class="hitem"><h3>${h.title}</h3><p class="hq">${h.q}</p>
+      ${at.map((r, k) => `<div class="hatt"><span class="hh">Attempt ${k+1} · ${r.correct === "" ? "<b>Submitted</b>" : r.correct ? '<b class="ok">Correct</b>' : '<b class="no">Incorrect</b>'}${r.t ? " · " + esc(new Date(r.t).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})) : ""}</span>
+        ${r.response ? `<span>${esc(h.respLabel || "Your answer")}: ${esc(r.response)}</span>` : ""}
+        ${r.reasoning ? (h.pre ? `<span>${esc(h.whyLabel || "Your reasoning")}:</span><pre>${esc(r.reasoning)}</pre>` : `<span class="hw">${esc(h.whyLabel || "Your reasoning")}: ${esc(r.reasoning)}</span>`) : ""}</div>`).join("")}
+      ${h.expl ? `<details><summary>Explanation</summary><div class="expl plain">${h.expl}</div></details>` : ""}</div>`; }).join("");
+}
+function histItem(qid){   // S1-xx 論證、S2-xx 文法全文，xx 是 ITEMS 的位置
+  const m = /^S([12])-(\d+)$/.exec(qid), it = m && ITEMS[+m[2]];
+  if(!it || it.tut) return null;
+  const g = m[1] === "2";
+  return {order:+m[2]*10 + +m[1], title:`${esc(it.ex)} · ${g ? "your grammar" : "your argument"}`,
+    q:it.final ? esc(it.say) : `<em>${esc(it.say)}.</em>`, respLabel:"Trees your grammar gave",
+    whyLabel:g ? "Your grammar" : "Your argument", pre:g,
+    expl:g ? `<span>One grammar that works:</span><pre class="sample">${esc(it.sample)}</pre>` : `<span>${it.e}</span>`};
+}
+const renderWhoBase = renderWho;
+renderWho = function(){   // 在「Signed in as …」那一行加 My answers
+  renderWhoBase();
+  if(!student || !ONLINE) return;
+  const sp = document.querySelector("#who > span"); if(!sp) return;
+  sp.insertAdjacentHTML("beforeend", ' · <button class="linkbtn" id="hist">My answers</button>');
+  document.getElementById("hist").onclick = showHistory;
+};
+
 if(student) loadProg();
 renderWho(); route();
 flush(); setInterval(flush, 20000);
 window.addEventListener("online", flush);
-document.fonts?.ready.then(() => { if(student) render(); });   // 字型載入後重量字寬
+document.fonts?.ready.then(() => { if(student && !document.getElementById("hlist")) render(); });   // 字型載入後重量字寬
 </script>

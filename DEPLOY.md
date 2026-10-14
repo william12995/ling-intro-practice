@@ -75,6 +75,14 @@ C:\Python313\python.exe build_site.py --endpoint ch01_morphology=https://script.
 
 `feedback` 分頁的欄位：`disagree` 是學生按了「I disagree with this feedback」（`disagree_note` 是學生寫的理由），`ta_check`、`ta_note` 留給助教抽查時填。建議優先看三種：學生不同意的、答案對但回饋說推理有問題的、申論題。每個學號每分鐘最多 8 次回饋，擋住有人拿後端網址當免費聊天機器人。
 
+## 學生回報題目、複習自己的作答（2026-10-14 加，四頁都有）
+
+- 每題底下有「Something wrong with this question? Tell your TA」，送出前後都能按。學生寫的意見記在該章 Sheet 的 `reports` 分頁（第一次有人回報時自動建立）：題號、attempt、題目、學生當時的答案（還沒作答就空白）、意見。`status`、`ta_note` 兩欄留給助教處理時填。每個學號每分鐘最多 5 則。
+- 「Signed in as …」那一行有「My answers」，用 `action=history` 從 `answers` 分頁抓回這個學號在這一章的全部作答（每次 attempt 的答案、對錯、推理，加上解說），換電腦或清掉瀏覽器也看得到。只列出來看，不會還原成可以作答的畫面。只靠學號，沒有密碼，知道別人學號就看得到對方的作答；使用者 10-14 判斷練習頁可以接受。
+- 構詞（ch01）的段落結束畫面多了「Redo the N I got wrong」，只清掉答錯的題目重做，答對的保留，attempt 加 1。三個樹的頁面本來就能單題「Try again」。重做之前已經看過解說，所以成績要看 summary 的「首次答對」，不要看「最佳答對」。
+- 改了 `apps_script/Code.gs` 之後四份後端都要更新：三份跑 `deploy_clasp.py`，構詞那份在 repo 根目錄跑 `clasp push -f` 再 `clasp update-deployment <endpoints.json 裡 ch01 網址 /s/ 後面那段>`。
+- 測試：`ch02-2_cfg/tests/test_report_history.py`，接真的後端，學號 Z00000000，四份 Sheet 各會多一則測試回報和幾筆測試作答。
+
 ## 成績怎麼算
 
 - `answers` 每次作答都留一列，不覆蓋。學生按「重新作答」會開新的 attempt，舊的紀錄還在。
@@ -89,7 +97,7 @@ C:\Python313\python.exe build_site.py --endpoint ch01_morphology=https://script.
 ## 限制
 
 - 答案寫在網頁原始碼裡，懂得看原始碼的學生查得到。後端網址也在原始碼裡，理論上有人可以偽造紀錄。這套適合練習和參與分數，不適合當正式考試。
-- 學生換電腦或清掉瀏覽器資料，頁面上的進度會從頭開始，但 Sheet 裡的紀錄不受影響，首次作答仍以最早那筆為準。
+- 學生換電腦或清掉瀏覽器資料，頁面上的進度會從頭開始（舊的作答可以在 My answers 看），但 Sheet 裡的紀錄不受影響，首次作答仍以最早那筆為準。
 - 姓名是學生自己填的，對照點名單時以學號為準。
 
 ## 6. 句法頁（ch02_syntax）：另一份 Sheet

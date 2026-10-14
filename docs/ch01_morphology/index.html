@@ -129,6 +129,20 @@ h1 .plus{color:var(--cut);font-family:var(--mono);font-weight:500;padding:0 .12e
 .ai-t.wait{color:var(--muted)}
 .ai-note{margin:0;font-size:13px;color:var(--muted)}
 .ai textarea{font:inherit;font-size:14px;min-height:64px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+/* 回報題目、複習自己的作答（四頁共用） */
+.report{margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font-size:14px}
+.report .hint{margin:0 0 6px}
+.hitem{border-top:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:8px}
+.hitem h3{margin:0;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hitem .hq{margin:0}
+.hatt{background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:14px;overflow-wrap:anywhere}
+.hatt .hh{font-size:13px;color:var(--muted)}
+.hatt .hh b.ok{color:var(--ok)}
+.hatt .hh b.no{color:var(--cut)}
+.hatt .hw{white-space:pre-wrap}
+.hatt pre{margin:0;font-family:var(--mono);font-size:13px;white-space:pre-wrap}
+.hitem details{font-size:14px}
+.hitem summary{cursor:pointer;color:var(--accent)}
 </style>
 
 </head>
@@ -314,6 +328,8 @@ function saveProg(){ if(student) LS.set(progKey(), state); }
 function loadProg(){
   const s = LS.get(progKey(), null);
   state = (s && s.v===2 && Array.isArray(s.bySec) && s.bySec.length===SECTIONS.length) ? s : freshState();
+  // 「只重做答錯的」會在 res 留空洞，存成 JSON 變 null，讀回來會被當成「已送出的不計分題」。計分題不會是 null，改回未作答
+  state.bySec.forEach((S,k)=>S.res.forEach((r,j)=>{ if(r===null && SECTIONS[k].items[j] && SECTIONS[k].items[j].grade!==false) S.res[j]=undefined; }));
 }
 
 // 每次作答一筆，event_id 唯一；後端看到重複的 event_id 就跳過，所以重送不會多出列。
@@ -461,8 +477,14 @@ function renderSec(){
   saveProg();
   if(S.i>=SEC.items.length){
     const nextLv=lvI+1<SECTIONS.length;
+    // 只重做答錯的：清掉答錯那幾題，答對的留著；attempt 加 1，Sheet 上首次作答不受影響
+    const wrong=SEC.items.map((_,k)=>k).filter(k=>S.res[k]===false);
     doneCard(tally(S.res),graded(SEC),nextLv?"You've finished this section. The next one is harder.":"You've finished all the sections.",
-      ()=>{S.i=0;S.res=[];S.ans={};S.why={};S.fb={};S.attempt=(S.attempt||1)+1;renderSec()},nextLv?'<button class="btn primary" id="next-lv">Next section</button>':"");
+      ()=>{S.i=0;S.res=[];S.ans={};S.why={};S.fb={};S.attempt=(S.attempt||1)+1;renderSec()},
+      (wrong.length?`<button class="btn" id="redo-wrong">Redo the ${wrong.length} I got wrong</button>`:"")+(nextLv?'<button class="btn primary" id="next-lv">Next section</button>':""));
+    if(wrong.length)document.getElementById("redo-wrong").onclick=()=>{
+      wrong.forEach(k=>{delete S.res[k];delete S.ans[k];delete S.why[k];delete S.fb[k]});
+      S.attempt=(S.attempt||1)+1;S.i=wrong[0];renderSec()};
     if(nextLv)document.getElementById("next-lv").onclick=()=>{state.lv++;renderSec()};
     return;
   }
@@ -482,7 +504,8 @@ function renderSec(){
       <span class="cnt" id="cnt"></span>
       <span class="hint aidisc" ${FB_ON&&!done?"":"hidden"}>After you submit, an AI model will comment on your reasoning. Your answer and reasoning are sent to Google Gemini without your name or student ID.</span></div>
     <div class="row"><span class="hint" id="need"></span><div class="btns"><button class="btn primary" id="submit">Submit</button></div></div>
-    <div id="fb"></div>`;
+    <div id="fb"></div>
+    ${reportHTML()}`;
   const W=card.querySelector("#widget"), why=card.querySelector("#why"), btn=card.querySelector("#submit");
   why.value=S.why[S.i]||"";
 
@@ -602,7 +625,75 @@ function renderSec(){
   stage.innerHTML="";stage.appendChild(card);
   const nav=navRow(()=>{S.i--;renderSec()},()=>{S.i++;renderSec()},S.i>0,done,S.i===SEC.items.length-1?"See section score":"Next");
   card.appendChild(nav);
+  mountReport(card, {qid:`S${lvI+1}-${pad2(S.i+1)}`, prompt:it.type==="cut"?it.w:plain(it.q), response:(S.fb[S.i]||{}).response||"", attempt:S.attempt||1});
 }
+
+/* ---------- 回報題目有問題、複習自己的作答（四頁共用同一段，改的時候四頁一起改） ----------
+   回報送到後端 action=report，記在該章 Sheet 的 reports 分頁。複習用 action=history 把這個學號的作答紀錄抓回來，
+   換裝置或清掉瀏覽器也看得到；只列出來看，不還原成可作答的狀態。各頁自己定義 histItem(qid) 告訴這段題目長什麼樣。 */
+const RPKEY = () => `ling_reported_${QUIZ_ID}_${student.sid}`;
+const reportHTML = () => ONLINE ? '<div class="report" data-report></div>' : "";
+function mountReport(root, info){   // info: {qid, prompt, response, attempt}
+  const box = root.querySelector("[data-report]"); if(!box || !student) return;
+  const sent = LS.get(RPKEY(), {})[info.qid];
+  box.innerHTML = `${sent ? '<p class="hint">Thanks. Your TA will check this question.</p>' : ""}<button class="linkbtn" data-open>${sent ? "Report another problem" : "Something wrong with this question? Tell your TA"}</button>`;
+  box.querySelector("[data-open]").onclick = () => {
+    box.innerHTML = `<div class="why"><label for="rnote">What is wrong? For example, a typo, an unclear question, or an answer you think is marked wrong.</label>
+      <textarea id="rnote" maxlength="500"></textarea>
+      <div class="row"><div class="btns"><button class="btn" data-cancel>Cancel</button></div><div class="btns"><button class="btn primary" data-send>Send to TA</button></div></div></div>`;
+    const note = box.querySelector("#rnote"), send = box.querySelector("[data-send]");
+    note.focus();
+    box.querySelector("[data-cancel]").onclick = () => mountReport(root, info);
+    send.onclick = async () => {
+      const n = note.value.trim(); if(!n){ note.focus(); return; }
+      send.disabled = true; send.textContent = "Sending…";
+      const p = {action:"report", event_id:`${student.sid}|${QUIZ_ID}|${info.qid}|report|${Date.now()}`, quiz:QUIZ_ID,
+        student_id:student.sid, name:student.name, qid:info.qid, attempt:info.attempt || "",
+        prompt:String(info.prompt || "").slice(0,200), response:String(info.response || "").slice(0,200), note:n};
+      try{ await jsonp(p); const r = LS.get(RPKEY(), {}); r[info.qid] = (r[info.qid] || 0) + 1; LS.set(RPKEY(), r); mountReport(root, info); }
+      catch(e){ send.disabled = false; send.textContent = "Couldn't send. Try again"; }
+    };
+  };
+}
+async function showHistory(){
+  if(typeof levelsEl !== "undefined") levelsEl.hidden = true;
+  stage.innerHTML = `<section class="card"><div class="meta"><span>My answers</span></div>
+    <p class="hint" id="hstat">Loading your answers…</p><div id="hlist"></div>
+    <div class="row"><div class="btns"><button class="btn primary" id="hback">Back to practice</button></div></div></section>`;
+  stage.querySelector("#hback").onclick = () => route();
+  stage.scrollIntoView({block:"start"});
+  let rows;
+  try{ rows = (await jsonp({action:"history", quiz:QUIZ_ID, student_id:student.sid}, 30000)).rows || []; }
+  catch(e){ const s = document.getElementById("hstat"); if(s) s.textContent = "Couldn't load your answers. Check your connection and try again."; return; }
+  const list = document.getElementById("hlist"); if(!list) return;   // 載入時已經按了返回
+  const by = {};
+  rows.forEach(r => { const h = histItem(r.qid); if(h) (by[r.qid] = by[r.qid] || {h, at:[]}).at.push(r); });
+  const qs = Object.keys(by).sort((a, b) => by[a].h.order - by[b].h.order);
+  const pending = LS.get(QKEY, []).length;
+  document.getElementById("hstat").textContent = (qs.length ? `Your answers to ${qs.length} question(s), from the grade sheet. Your first attempt at each question is the one that counts.` : "No answers recorded yet for this student ID.")
+    + (pending ? ` ${pending} answer(s) from this device are still uploading and will show up after they are sent.` : "");
+  list.innerHTML = qs.map(q => { const {h, at} = by[q];
+    return `<div class="hitem"><h3>${h.title}</h3><p class="hq">${h.q}</p>
+      ${at.map((r, k) => `<div class="hatt"><span class="hh">Attempt ${k+1} · ${r.correct === "" ? "<b>Submitted</b>" : r.correct ? '<b class="ok">Correct</b>' : '<b class="no">Incorrect</b>'}${r.t ? " · " + esc(new Date(r.t).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})) : ""}</span>
+        ${r.response ? `<span>${esc(h.respLabel || "Your answer")}: ${esc(r.response)}</span>` : ""}
+        ${r.reasoning ? (h.pre ? `<span>${esc(h.whyLabel || "Your reasoning")}:</span><pre>${esc(r.reasoning)}</pre>` : `<span class="hw">${esc(h.whyLabel || "Your reasoning")}: ${esc(r.reasoning)}</span>`) : ""}</div>`).join("")}
+      ${h.expl ? `<details><summary>Explanation</summary><div class="expl plain">${h.expl}</div></details>` : ""}</div>`; }).join("");
+}
+function histItem(qid){   // S2-05 = 第 2 部分第 5 題
+  const m=/^S(\d+)-(\d+)$/.exec(qid), sec=m&&SECTIONS[m[1]-1], it=sec&&sec.items[m[2]-1];
+  if(!it) return null;
+  return {order:m[1]*100 + +m[2], title:`${esc(sec.name)} · ${esc(sec.ex)} · Question ${+m[2]}`,
+    q:it.type==="cut"?`Split <em>${esc(it.w)}</em> into its smallest morphemes.`:it.q,
+    expl:(it.grade===false?"":`<span class="verdict">Answer: ${esc(keyText(it))}</span>`)+`<span>${it.e}</span>`};
+}
+const renderWhoBase = renderWho;
+renderWho = function(){   // 在「Signed in as …」那一行加 My answers
+  renderWhoBase();
+  if(!student || !ONLINE) return;
+  const sp = document.querySelector("#who > span"); if(!sp) return;
+  sp.insertAdjacentHTML("beforeend", ' · <button class="linkbtn" id="hist">My answers</button>');
+  document.getElementById("hist").onclick = showHistory;
+};
 
 if(student) loadProg();
 renderWho(); route();

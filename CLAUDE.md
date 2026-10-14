@@ -39,6 +39,8 @@
 
 2026-09-26 老師要求頁面全英文（外文系），學生看得到的文字都是英文，程式註解和 Sheet 欄名維持中文。AI 回饋（Gemini，後端 `action=feedback`）程式預設關閉，開啟條件和步驟在 `DEPLOY.md` 第 5 節；構詞那份 Sheet 已經開了（10-03 看到 442 則回饋，83% 是備援的 flash-lite 寫的），句法那份沒開；每則回饋都固定附一句「AI 寫的，僅供參考」。
 
+2026-10-14 老師要求，四頁都加了：每題可以回報題目有問題（記在各 Sheet 的 `reports` 分頁）、「My answers」從 Sheet 抓回自己的作答複習、構詞頁可以只重做答錯的。共用的那段 JS 四頁各有一份，改的時候四頁一起改。細節在 DEPLOY.md。
+
 成績記錄：學生先填學號姓名，每答一題送一筆到 Google Sheet（`apps_script/Code.gs`）。部署步驟和成績算法在 `DEPLOY.md`。新增章節時：照 `clasp_deploy/ch02_syntax/` 的做法用 clasp 建 Sheet 和部署（`config.gs` 寫 `DEFAULT_QUIZZES`，擁有者要開一次網址按授權），或手動貼 Code.gs、設指令碼屬性 `QUIZZES`；根目錄 `.clasp.json` 是構詞那份，會把整個 `apps_script/` 推上去，別章的檔案不要放那裡；`build_site.py` 的 `PAGES` 加一列；新頁面的 `QUIZ_ID` 要一致，上傳佇列的 localStorage key 要帶 quiz id（兩頁同網域，共用 localStorage）。
 
 題號是照陣列位置編的（`S1-01`、`S5-07`），學生開始作答後不能調換或替換既有題目，只能在最後加。
