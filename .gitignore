@@ -16,3 +16,7 @@ _output/answer_keys/
 
 # 期中考出題參考（export_questions.py 產生），不推上 public repo
 _output/題目匯出/
+
+# 個人工作筆記，不放公開 repo（2026-10-27 使用者要求，老師的 agent 會讀這個 repo）
+CLAUDE.md
+_output/session_log_*.md
