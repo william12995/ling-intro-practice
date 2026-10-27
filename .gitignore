@@ -13,3 +13,6 @@ clasp_deploy/create.log
 # 學生作答資料（有姓名學號），不推上 public repo
 _output/private/
 _output/answer_keys/
+
+# 期中考出題參考（export_questions.py 產生），不推上 public repo
+_output/題目匯出/
